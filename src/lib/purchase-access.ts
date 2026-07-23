@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { bookPdfPath } from "./book-assets";
+import { bookPdfPath, extractBookSlugFromPdfAsset, normalizeBookPdfAsset } from "./book-assets";
 
 type PurchaseCheckParams = {
   userId: string;
@@ -12,17 +12,7 @@ function expectedPdfPath(bookId: string) {
 }
 
 function normalizePdfPath(url: string | null | undefined) {
-  if (!url) {
-    return null;
-  }
-
-  const trimmed = url.trim();
-
-  if (!trimmed) {
-    return null;
-  }
-
-  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return normalizeBookPdfAsset(url);
 }
 
 function downloadMatchesBook(
@@ -86,6 +76,5 @@ export function bookIdFromDownload(record: {
     return record.book_id;
   }
 
-  const match = record.download_url?.match(/\/images\/([a-z0-9_-]+)_book\.pdf/i);
-  return match?.[1] || null;
+  return extractBookSlugFromPdfAsset(record.download_url);
 }

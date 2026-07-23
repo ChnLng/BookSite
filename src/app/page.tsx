@@ -372,6 +372,7 @@ export default function HomePage() {
         subtitle="Bibliotheque visuelle bilingue"
         title={siteConfig.brand}
         onLoginClick={() => setAuthOpen(true)}
+        isHomePage={true}
       />
 
       <section className="hero-scene">

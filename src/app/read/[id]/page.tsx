@@ -3,10 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
-import { getStaticBookById } from "@/lib/books-service";
+import { resolveDisplayBookById, type DisplayBook } from "@/lib/books-service";
 import { hasPurchasedBook } from "@/lib/purchase-access";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
@@ -15,14 +15,40 @@ type ReaderState = "loading" | "ready" | "paywall" | "login" | "missing";
 export default function ReadBookPage() {
   const params = useParams<{ id: string }>();
   const bookId = params.id;
-  const book = useMemo(() => getStaticBookById(bookId), [bookId]);
   const { user, session, loading, isAdmin } = useAuth();
+  const [book, setBook] = useState<DisplayBook | null>(null);
+  const [bookLoading, setBookLoading] = useState(true);
   const [readerState, setReaderState] = useState<ReaderState>("loading");
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState("");
   const [paying, setPaying] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const loadBook = async () => {
+      setBookLoading(true);
+      const nextBook = await resolveDisplayBookById(bookId, true);
+
+      if (!cancelled) {
+        setBook(nextBook);
+        setBookLoading(false);
+      }
+    };
+
+    void loadBook();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [bookId]);
+
+  useEffect(() => {
+    if (bookLoading) {
+      setReaderState("loading");
+      return;
+    }
+
     if (!book) {
       setReaderState("missing");
       return;
@@ -60,7 +86,7 @@ export default function ReadBookPage() {
     };
 
     void verifyAccess();
-  }, [book, bookId, isAdmin, loading, user]);
+  }, [book, bookId, bookLoading, isAdmin, loading, user]);
 
   useEffect(() => {
     if (readerState !== "ready" || !session?.access_token || !book) {
@@ -147,6 +173,7 @@ export default function ReadBookPage() {
   if (!book) {
     return (
       <main className="page-shell">
+        <TopNav subtitle="Lecture en ligne" title="Lecture" />
         <section className="panel glass reader-panel">
           <h1 className="section-title">Livre introuvable</h1>
           <p className="section-caption">Ce titre n&apos;existe pas dans le catalogue.</p>

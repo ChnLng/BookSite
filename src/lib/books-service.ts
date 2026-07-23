@@ -39,6 +39,10 @@ function staticDisplayBooks(): DisplayBook[] {
   });
 }
 
+function fallbackBookById(bookId: string) {
+  return staticBooks.find((book) => book.id === bookId);
+}
+
 export function mapBookRow(row: BookRow, fallback?: Book): DisplayBook {
   const slug = row.slug || fallback?.id || row.id;
   const ext = bookAssetExtensions[slug] || "jpg";
@@ -87,6 +91,52 @@ export async function loadDisplayBooks(includeHidden = false): Promise<DisplayBo
     const fallback = staticBooks.find((book) => book.id === (row.slug || row.id));
     return mapBookRow(row, fallback);
   });
+}
+
+export async function resolveDisplayBookById(
+  bookId: string,
+  includeHidden = false,
+): Promise<DisplayBook | null> {
+  const supabase = getSupabaseBrowserClient();
+
+  if (hasSupabaseConfig && supabase) {
+    let query = supabase
+      .from("books")
+      .select(
+        "id, slug, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, created_at",
+      )
+      .or(`slug.eq.${bookId},id.eq.${bookId}`)
+      .limit(1);
+
+    if (!includeHidden) {
+      query = query.eq("visible", true);
+    }
+
+    const { data } = await query.maybeSingle();
+
+    if (data) {
+      const row = data as BookRow;
+      const fallback = staticBooks.find((book) => book.id === (row.slug || row.id));
+      return mapBookRow(row, fallback);
+    }
+  }
+
+  const fallback = fallbackBookById(bookId);
+  return fallback ? mapBookRow({
+    id: fallback.id,
+    slug: fallback.id,
+    title_fr: fallback.titleFr,
+    title_zh: fallback.titleZh,
+    visible: true,
+    price_eur: fallback.priceEur,
+    cover_image: null,
+    pdf_file: bookPdfPath(fallback.id),
+    synopsis_fr: fallback.synopsisFr,
+    synopsis_zh: fallback.synopsisZh || null,
+    amazon_ebook_url: fallback.amazonEbookUrl,
+    amazon_paperback_url: fallback.amazonPaperbackUrl,
+    asin: fallback.asin,
+  }, fallback) : null;
 }
 
 export function getStaticBookById(bookId: string) {

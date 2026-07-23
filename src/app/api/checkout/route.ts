@@ -13,7 +13,17 @@ type CheckoutBook = {
   synopsisFr: string;
   priceEur: number;
   pdfFile: string;
+  coverImage: string;
 };
+
+function resolveAssetUrl(assetPath: string, origin: string) {
+  if (/^https?:\/\//i.test(assetPath)) {
+    return assetPath;
+  }
+
+  const normalized = assetPath.startsWith("/") ? assetPath : `/${assetPath}`;
+  return new URL(normalized, origin).toString();
+}
 
 async function resolveBook(bookId: string): Promise<CheckoutBook | null> {
   const supabase = getSupabaseServiceClient();
@@ -21,19 +31,19 @@ async function resolveBook(bookId: string): Promise<CheckoutBook | null> {
   if (supabase) {
     const { data } = await supabase
       .from("books")
-      .select("slug, title_fr, synopsis_fr, price_eur, pdf_file")
+      .select("slug, title_fr, synopsis_fr, price_eur, pdf_file, cover_image")
       .or(`slug.eq.${bookId},id.eq.${bookId}`)
       .maybeSingle();
 
     if (data) {
       const slug = data.slug || bookId;
-      const ext = bookAssetExtensions[slug] || "jpg";
       return {
         id: slug,
         titleFr: data.title_fr,
         synopsisFr: data.synopsis_fr || "",
         priceEur: Number(data.price_eur ?? 0),
         pdfFile: data.pdf_file || bookPdfPath(slug),
+        coverImage: data.cover_image || bookCoverPath(slug, bookAssetExtensions[slug] || "jpg"),
       };
     }
   }
@@ -44,13 +54,13 @@ async function resolveBook(bookId: string): Promise<CheckoutBook | null> {
     return null;
   }
 
-  const ext = bookAssetExtensions[fallback.id] || "jpg";
   return {
     id: fallback.id,
     titleFr: fallback.titleFr,
     synopsisFr: fallback.synopsisFr,
     priceEur: fallback.priceEur,
     pdfFile: bookPdfPath(fallback.id),
+    coverImage: bookCoverPath(fallback.id, bookAssetExtensions[fallback.id] || "jpg"),
   };
 }
 
@@ -144,7 +154,7 @@ export async function POST(request: Request) {
           product_data: {
             name: book.titleFr,
             description: book.synopsisFr,
-            images: [new URL(bookCoverPath(book.id, bookAssetExtensions[book.id] || "jpg"), origin).toString()],
+              images: [resolveAssetUrl(book.coverImage, origin)],
           },
           unit_amount: Math.round(finalPrice * 100),
         },

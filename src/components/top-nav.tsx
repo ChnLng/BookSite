@@ -11,6 +11,7 @@ type TopNavProps = {
   className?: string;
   showAdmin?: boolean;
   showLogout?: boolean;
+  isHomePage?: boolean;
 };
 
 export function TopNav({
@@ -20,6 +21,7 @@ export function TopNav({
   className,
   showAdmin,
   showLogout,
+  isHomePage = false,
 }: TopNavProps) {
   const { user, isAdmin, signOut } = useAuth();
 
@@ -37,6 +39,7 @@ export function TopNav({
         ) : null}
       </div>
       <nav className="nav-links">
+        {!isHomePage ? <Link href="/">Accueil</Link> : null}
         <Link href="/catalogue">Catalogue</Link>
         {user ? (
           <>
