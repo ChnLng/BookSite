@@ -5,13 +5,13 @@ type CommentRecord = {
   name: string;
   content: string;
   badge: string;
-  warmWord: string;
+  icon: string;
   createdAt: string;
 };
 
 const comments: CommentRecord[] = [];
 
-const warmWords = ["douceur", "tendresse", "calme", "joie", "éclat", "sourire"];
+const icons = ["✨", "🛸", "📖", "🍵", "🌙", "💫"];
 const badgeTemplates = ["coup de cœur", "appréciation", "suggestion", "merci", "échange"];
 
 const formatDateTime = (date: Date) =>
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     name,
     content,
     badge: makeBadge(comments.length),
-    warmWord: warmWords[Math.floor(Math.random() * warmWords.length)],
+    icon: icons[Math.floor(Math.random() * icons.length)],
     createdAt: formatDateTime(new Date()),
   };
 

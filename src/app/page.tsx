@@ -31,26 +31,25 @@ type CommentItem = {
   id: string;
   name: string;
   content: string;
-  badge: string;
-  warmWord: string;
+  icon: string;
   createdAt: string;
 };
+
+const commentIcons = ["✨", "🛸", "📖", "🍵", "🌙", "💫", "🎐", "🫖"];
 
 const sampleComments: CommentItem[] = [
   {
     id: "sample-1",
     name: "Claire",
     content: "J'adore la douceur du concept et l'idee d'un espace de lecture tres visuel.",
-    badge: "1er coup de cœur",
-    warmWord: "douceur",
+    icon: "✨",
     createdAt: "Aujourd'hui",
   },
   {
     id: "sample-2",
     name: "Noa",
     content: "Les histoires donnent envie d'explorer le chinois sans pression, avec un vrai univers.",
-    badge: "2e appréciation",
-    warmWord: "calme",
+    icon: "📖",
     createdAt: "Hier",
   },
 ];
@@ -136,7 +135,12 @@ export default function HomePage() {
         const result = JSON.parse(text);
 
         if (response.ok && Array.isArray(result.comments) && result.comments.length > 0) {
-          setComments(result.comments.slice(-2));
+          setComments(
+            result.comments.slice(-2).map((comment: CommentItem, index: number) => ({
+              ...comment,
+              icon: commentIcons[index % commentIcons.length],
+            })),
+          );
         }
       } catch {
         // keep existing sample comments if the API is unavailable
@@ -285,7 +289,8 @@ export default function HomePage() {
       }
 
       if (result.comment) {
-        setComments((current) => [...current, result.comment as CommentItem].slice(-2));
+        const randomIcon = commentIcons[Math.floor(Math.random() * commentIcons.length)];
+        setComments((current) => [...current, { ...(result.comment as CommentItem), icon: randomIcon }].slice(-2));
       }
       setCommentName("");
       setCommentContent("");
@@ -309,7 +314,6 @@ export default function HomePage() {
         </div>
         <nav className="nav-links">
           <Link href="/catalogue">Catalogue</Link>
-          <Link href="/preview">Preview</Link>
           <a href="#scene">Selection</a>
           {viewer.isLoggedIn ? (
             <Link href="/account">Mes achats</Link>
@@ -345,11 +349,10 @@ export default function HomePage() {
                 <article className="comment-card" key={item.id}>
                   <div className="comment-card-header">
                     <strong>{item.name}</strong>
-                    <span className="comment-badge">{item.badge}</span>
                   </div>
                   <p className="muted comment-content">{item.content}</p>
                   <div className="comment-card-footer">
-                    <span className="comment-warm-word">{item.warmWord}</span>
+                    <span className="comment-warm-word">{item.icon}</span>
                     <span className="comment-time">{item.createdAt}</span>
                   </div>
                 </article>

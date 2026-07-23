@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
@@ -31,6 +32,7 @@ const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
   .filter(Boolean);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AuthProfile | null>(null);
@@ -163,11 +165,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = getSupabaseBrowserClient();
 
     if (!supabase) {
+      router.replace("/");
+      router.refresh();
       return;
     }
 
-    await supabase.auth.signOut();
-  }, []);
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } finally {
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      router.replace("/");
+      router.refresh();
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      }
+    }
+  }, [router]);
 
   const isAdmin = useMemo(() => {
     const normalizedEmail = user?.email?.toLowerCase() || profile?.email?.toLowerCase() || "";

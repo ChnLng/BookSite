@@ -463,14 +463,6 @@ select {
   flex-wrap: wrap;
 }
 
-.comment-badge {
-  font-size: 0.72rem;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: rgba(19, 52, 69, 0.08);
-  color: var(--ink-soft);
-}
-
 .comment-content {
   margin: 0;
 }
@@ -642,6 +634,34 @@ select {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.account-panel-list {
+  margin-top: 0;
+}
+
+.account-tab-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.account-tab {
+  border: 1px solid rgba(25, 52, 68, 0.08);
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 22px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.account-tab.active {
+  background: linear-gradient(135deg, #133445 0%, #27536a 100%);
+  color: white;
 }
 
 .actions-row {

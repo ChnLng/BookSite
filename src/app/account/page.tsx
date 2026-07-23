@@ -30,6 +30,7 @@ export default function AccountPage() {
   const [downloads, setDownloads] = useState<DownloadRecord[]>([]);
   const [donations, setDonations] = useState<DonationRecord[]>([]);
   const [fetching, setFetching] = useState(true);
+  const [activeTab, setActiveTab] = useState<"comments" | "downloads" | "donations">("comments");
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
@@ -57,6 +58,11 @@ export default function AccountPage() {
   }, [user]);
 
   const greeting = useMemo(() => profile?.displayName || user?.email || "Lecteur", [profile, user]);
+  const tabs = [
+    { key: "comments", label: "Commentaires", count: comments.length },
+    { key: "downloads", label: "Telechargements", count: downloads.length },
+    { key: "donations", label: "Donations", count: donations.length },
+  ] as const;
 
   return (
     <main className="page-shell">
@@ -83,52 +89,86 @@ export default function AccountPage() {
           Bonjour {greeting}
         </h1>
         <p className="section-caption">
-          Voici votre espace personnel avec vos commentaires, téléchargements et dons.
+          Votre espace lecteur affiche vos commentaires, vos telechargements et vos donations dans un seul panneau.
         </p>
 
         {loading || fetching ? (
           <p className="muted">Chargement…</p>
         ) : (
-          <div className="account-list">
-            <div className="account-card">
-              <div className="split-line">
-                <strong>Commentaires</strong>
-                <span>{comments.length}</span>
-              </div>
-              {comments.length === 0 ? <p className="muted">Aucun commentaire pour le moment.</p> : comments.map((comment) => (
-                <div key={comment.id} className="split-line" style={{ marginTop: 8 }}>
-                  <span>{comment.content || "Commentaire"}</span>
-                  <span className="tiny">{comment.created_at ? new Date(comment.created_at).toLocaleDateString("fr-FR") : "—"}</span>
-                </div>
+          <>
+            <div className="account-tab-strip" style={{ marginBottom: 18 }}>
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  className={activeTab === tab.key ? "account-tab active" : "account-tab"}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key as "comments" | "downloads" | "donations")}
+                >
+                  <span>{tab.label}</span>
+                  <strong>{tab.count}</strong>
+                </button>
               ))}
             </div>
 
-            <div className="account-card">
-              <div className="split-line">
-                <strong>Historique des téléchargements</strong>
-                <span>{downloads.length}</span>
-              </div>
-              {downloads.length === 0 ? <p className="muted">Aucun téléchargement enregistré.</p> : downloads.map((download) => (
-                <div key={download.id} className="split-line" style={{ marginTop: 8 }}>
-                  <span>{download.book_title || "Livre"}</span>
-                  <span className="tiny">{download.created_at ? new Date(download.created_at).toLocaleDateString("fr-FR") : "—"}</span>
+            <div className="account-list account-panel-list">
+              {activeTab === "comments" ? (
+                <div className="account-card">
+                  <div className="split-line">
+                    <strong>Commentaires</strong>
+                    <span>{comments.length}</span>
+                  </div>
+                  {comments.length === 0 ? (
+                    <p className="muted">Aucun commentaire pour le moment.</p>
+                  ) : (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="split-line" style={{ marginTop: 8 }}>
+                        <span>{comment.content || "Commentaire"}</span>
+                        <span className="tiny">{comment.created_at ? new Date(comment.created_at).toLocaleDateString("fr-FR") : "—"}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
-              ))}
-            </div>
+              ) : null}
 
-            <div className="account-card">
-              <div className="split-line">
-                <strong>Historique des donations</strong>
-                <span>{donations.length}</span>
-              </div>
-              {donations.length === 0 ? <p className="muted">Aucune donation enregistrée.</p> : donations.map((donation) => (
-                <div key={donation.id} className="split-line" style={{ marginTop: 8 }}>
-                  <span>{donation.note || "Donation"}</span>
-                  <span className="tiny">{donation.amount ? `${donation.amount.toFixed(2)} EUR` : "—"}</span>
+              {activeTab === "downloads" ? (
+                <div className="account-card">
+                  <div className="split-line">
+                    <strong>Historique des téléchargements</strong>
+                    <span>{downloads.length}</span>
+                  </div>
+                  {downloads.length === 0 ? (
+                    <p className="muted">Aucun telechargement enregistre.</p>
+                  ) : (
+                    downloads.map((download) => (
+                      <div key={download.id} className="split-line" style={{ marginTop: 8 }}>
+                        <span>{download.book_title || "Livre"}</span>
+                        <span className="tiny">{download.created_at ? new Date(download.created_at).toLocaleDateString("fr-FR") : "—"}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
-              ))}
+              ) : null}
+
+              {activeTab === "donations" ? (
+                <div className="account-card">
+                  <div className="split-line">
+                    <strong>Historique des donations</strong>
+                    <span>{donations.length}</span>
+                  </div>
+                  {donations.length === 0 ? (
+                    <p className="muted">Aucune donation enregistree.</p>
+                  ) : (
+                    donations.map((donation) => (
+                      <div key={donation.id} className="split-line" style={{ marginTop: 8 }}>
+                        <span>{donation.note || "Donation"}</span>
+                        <span className="tiny">{donation.amount ? `${donation.amount.toFixed(2)} EUR` : "—"}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : null}
             </div>
-          </div>
+          </>
         )}
       </section>
     </main>
