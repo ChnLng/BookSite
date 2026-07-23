@@ -6,6 +6,7 @@ import { hasSupabaseConfig } from "@/lib/site-config";
 export type BookRow = {
   id: string;
   slug: string | null;
+  sort_order?: number | null;
   title_fr: string;
   title_zh: string;
   visible: boolean;
@@ -77,8 +78,9 @@ export async function loadDisplayBooks(includeHidden = false): Promise<DisplayBo
   const query = supabase
     .from("books")
     .select(
-      "id, slug, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, created_at",
+      "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, created_at",
     )
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
   const { data } = includeHidden ? await query : await query.eq("visible", true);
@@ -103,7 +105,7 @@ export async function resolveDisplayBookById(
     let query = supabase
       .from("books")
       .select(
-        "id, slug, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, created_at",
+        "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, created_at",
       )
       .or(`slug.eq.${bookId},id.eq.${bookId}`)
       .limit(1);

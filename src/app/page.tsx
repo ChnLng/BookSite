@@ -142,15 +142,30 @@ export default function HomePage() {
     const trySelectFirstDonationOption = () => {
       const select = container.querySelector("select") as HTMLSelectElement | null;
 
-      if (select && select.options.length > 0 && !select.value) {
-        const firstRealOption = Array.from(select.options).findIndex((option) => {
+      if (select && select.options.length > 0) {
+        const options = Array.from(select.options);
+
+        options.forEach((option, index) => {
           const value = option.value.trim();
           const text = option.textContent?.trim() || "";
-          return Boolean(value || text);
+          const isPlaceholder = index === 0 && !value;
+
+          if (isPlaceholder) {
+            option.hidden = true;
+            option.disabled = true;
+          }
+
+          if (!value && !text) {
+            option.hidden = true;
+            option.disabled = true;
+          }
         });
 
-        select.selectedIndex = firstRealOption >= 0 ? firstRealOption : 0;
-        select.dispatchEvent(new Event("change", { bubbles: true }));
+        if (!select.value) {
+          const firstRealOption = options.findIndex((option) => !option.disabled);
+          select.selectedIndex = firstRealOption >= 0 ? firstRealOption : 0;
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+        }
       }
 
       const radios = Array.from(container.querySelectorAll('input[type="radio"]')) as HTMLInputElement[];
@@ -398,6 +413,8 @@ export default function HomePage() {
         subtitle="Bibliotheque visuelle bilingue"
         title={siteConfig.brand}
         onLoginClick={() => setAuthOpen(true)}
+        showAdmin
+        showLogout
         isHomePage={true}
       />
 
@@ -464,11 +481,7 @@ export default function HomePage() {
         </div>
 
         <section className="panel glass carousel-stage" id="scene">
-          <div className="badge">Albums illustrés bilingue chinois-français</div>
-          <p className="hero-copy stage-copy">
-            Au centre, la selection produit reste reine : images plus grandes,
-            lumiere douce, mouvement continu, titre discret et prix visibles.
-          </p>
+          <div className="badge">Albums illustrés bilingues 🇨🇳 chinois-français 🇫🇷</div>
 
           <div className="marquee-shell">
             <div className="marquee-track">

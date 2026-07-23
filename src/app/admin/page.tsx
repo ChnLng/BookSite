@@ -13,6 +13,7 @@ import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib
 type BookRow = {
   id: string;
   slug: string | null;
+  sort_order: number | null;
   title_fr: string;
   title_zh: string;
   visible: boolean;
@@ -192,6 +193,10 @@ function categoryEditFromRow(category: CategoryRow): CategoryEditState {
   };
 }
 
+function bookSortValue(book: BookRow, index: number) {
+  return book.sort_order ?? index + 1;
+}
+
 function promoEditFromCode(promo: PromoCode): PromoEditState {
   return {
     code: promo.code,
@@ -243,9 +248,10 @@ function AdminPageContent() {
         supabase
           .from("books")
           .select(
-            "id, slug, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, created_at",
+            "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, created_at",
           )
-          .order("created_at", { ascending: false }),
+          .order("sort_order", { ascending: true })
+          .order("created_at", { ascending: true }),
         supabase.from("categories").select("id, name, description, created_at").order("created_at", { ascending: false }),
         supabase
           .from("promo_codes")
@@ -345,6 +351,17 @@ function AdminPageContent() {
   }, [books, session?.access_token]);
 
   const title = useMemo(() => profile?.displayName || profile?.email || "Admin", [profile]);
+
+  const sectionCounts = useMemo(
+    () => ({
+      books: books.length,
+      categories: categories.length,
+      promo: promoCodes.length,
+      downloads: downloads.length,
+      donations: donations.length,
+    }),
+    [books.length, categories.length, promoCodes.length, downloads.length, donations.length],
+  );
 
   const downloadCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -448,8 +465,12 @@ function AdminPageContent() {
 
     await withBusyState("create-book", async () => {
       const ext = bookAssetExtensions[nextForm.slug] || "jpg";
+      const nextSortOrder =
+        books.reduce((max, book, index) => Math.max(max, bookSortValue(book, index)), 0) + 1;
+
       const { error } = await supabase.from("books").insert({
         slug: nextForm.slug,
+        sort_order: nextSortOrder,
         title_fr: nextForm.titleFr,
         title_zh: nextForm.titleZh,
         asin: nextForm.asin.trim() || null,
@@ -578,6 +599,41 @@ function AdminPageContent() {
       }
 
       setStatusMessage("书籍记录已删除。");
+      await reload();
+    });
+  };
+
+  const moveBook = async (bookId: string, direction: "up" | "down") => {
+    const supabase = getSupabaseBrowserClient();
+
+    if (!supabase) {
+      return;
+    }
+
+    const currentIndex = books.findIndex((book) => book.id === bookId);
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= books.length) {
+      return;
+    }
+
+    const currentBook = books[currentIndex];
+    const targetBook = books[targetIndex];
+    const currentSortOrder = bookSortValue(currentBook, currentIndex);
+    const targetSortOrder = bookSortValue(targetBook, targetIndex);
+
+    await withBusyState(`move-book-${bookId}-${direction}`, async () => {
+      const [{ error: currentError }, { error: targetError }] = await Promise.all([
+        supabase.from("books").update({ sort_order: targetSortOrder }).eq("id", currentBook.id),
+        supabase.from("books").update({ sort_order: currentSortOrder }).eq("id", targetBook.id),
+      ]);
+
+      if (currentError || targetError) {
+        setStatusMessage(currentError?.message || targetError?.message || "排序更新失败。");
+        return;
+      }
+
+      setStatusMessage(direction === "up" ? "图书已上移。" : "图书已下移。");
       await reload();
     });
   };
@@ -899,7 +955,7 @@ function AdminPageContent() {
 
   return (
     <main className="page-shell">
-      <TopNav subtitle="后台概览 Admin" title="Visd AR 管理台" showLogout />
+      <TopNav subtitle="后台概览 Admin" title="Visd AR 管理台" showAdmin showLogout />
 
       <section className="dashboard-grid">
         <aside className="admin-sidebar">
@@ -917,7 +973,9 @@ function AdminPageContent() {
                 type="button"
                 onClick={() => setActiveSection(section.key)}
               >
-                {section.label}
+                <span className="admin-sidebar-item-line" />
+                <span>{section.label}</span>
+                <span className="admin-sidebar-count">{sectionCounts[section.key]}</span>
               </button>
             ))}
           </div>
@@ -1118,6 +1176,7 @@ function AdminPageContent() {
                             <strong>{book.title_zh}</strong>
                             <div className="tiny">{book.title_fr}</div>
                             <div className="tiny">{book.price_eur?.toFixed(2) || "0.00"} EUR</div>
+                            <div className="tiny">排序 Sort: {bookSortValue(book, books.findIndex((entry) => entry.id === book.id))}</div>
                             <div className="tiny">Slug: {book.slug || book.id}</div>
                             <div className="tiny">Downloads 下载次数: {downloadCount}</div>
                             <div className="tiny">{book.visible ? "已上架 Visible" : "已隐藏 Hidden"}</div>
@@ -1325,6 +1384,22 @@ function AdminPageContent() {
                           )}
                           <button className="pill-button" type="button" onClick={() => void toggleVisibility(book.id, Boolean(book.visible))}>
                             {book.visible ? "Masquer" : "Publier"}
+                          </button>
+                          <button
+                            className="pill-button"
+                            type="button"
+                            disabled={busyKey === `move-book-${book.id}-up`}
+                            onClick={() => void moveBook(book.id, "up")}
+                          >
+                            Monter
+                          </button>
+                          <button
+                            className="pill-button"
+                            type="button"
+                            disabled={busyKey === `move-book-${book.id}-down`}
+                            onClick={() => void moveBook(book.id, "down")}
+                          >
+                            Descendre
                           </button>
                           <button className="pill-button" type="button" onClick={() => void deleteBook(book.id)}>
                             Supprimer

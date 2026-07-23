@@ -24,7 +24,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!user || !isAdmin) {
-    return null;
+    return <div className="page-shell"><div className="panel glass">Redirection…</div></div>;
   }
 
   return <>{children}</>;

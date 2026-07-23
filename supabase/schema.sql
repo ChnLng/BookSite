@@ -150,6 +150,7 @@ end $$;
 create table if not exists public.books (
   id uuid primary key default gen_random_uuid(),
   slug text unique,
+  sort_order integer,
   title_fr text not null,
   title_zh text not null,
   visible boolean default true,
@@ -169,6 +170,7 @@ alter table public.books add column if not exists pdf_file text;
 alter table public.books add column if not exists synopsis_fr text;
 alter table public.books add column if not exists synopsis_zh text;
 alter table public.books add column if not exists asin text;
+alter table public.books add column if not exists sort_order integer;
 
 alter table public.books enable row level security;
 

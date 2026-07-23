@@ -71,10 +71,13 @@ export default function CataloguePage() {
         className="topbar-luxury"
         subtitle="Bibliotheque visuelle bilingue"
         title="Visd AR"
+        showAdmin
+        showLogout
       />
 
       <section className="catalog-grid" id="catalogue-scene">
-        <aside className="panel glass">
+        <aside className="catalogue-sidebar">
+          <div className="panel glass">
           <div className="section-block">
             <label className="tiny" htmlFor="catalog-search">
               Rechercher par titre
@@ -90,6 +93,7 @@ export default function CataloguePage() {
               onChange={(event) => setSearchTerm(event.target.value)}
             />
           </div>
+          </div>
           <GoogleAdsSlot
             className="panel glass ad-slot-panel"
             label="Ads"
@@ -101,10 +105,6 @@ export default function CataloguePage() {
           <h1 className="section-title" style={{ fontFamily: "var(--font-heading), serif" }}>
             Catalogue
           </h1>
-          <p className="section-caption">
-            Cette page est volontairement claire et compacte pour eviter de faire
-            trop defiler.
-          </p>
           <div className="book-grid catalogue-book-grid">
             {filteredBooks.map((book) => (
               <article className="book-card" key={book.id}>

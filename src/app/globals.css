@@ -637,6 +637,12 @@ select {
   margin-top: 24px;
 }
 
+.catalogue-sidebar {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+}
+
 .book-cover {
   min-height: 210px;
   border-radius: 24px;

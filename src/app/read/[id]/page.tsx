@@ -173,7 +173,7 @@ export default function ReadBookPage() {
   if (!book) {
     return (
       <main className="page-shell">
-        <TopNav subtitle="Lecture en ligne" title="Lecture" />
+        <TopNav subtitle="Lecture en ligne" title="Lecture" showAdmin showLogout />
         <section className="panel glass reader-panel">
           <h1 className="section-title">Livre introuvable</h1>
           <p className="section-caption">Ce titre n&apos;existe pas dans le catalogue.</p>
@@ -187,7 +187,7 @@ export default function ReadBookPage() {
 
   return (
     <main className="page-shell">
-      <TopNav subtitle="Lecture en ligne" title={book.titleFr} />
+      <TopNav subtitle="Lecture en ligne" title={book.titleFr} showAdmin showLogout />
 
       <section className="panel glass reader-panel">
         <div className="reader-header">
