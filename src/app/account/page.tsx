@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { useAuth } from "@/components/auth-provider";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
@@ -15,6 +16,7 @@ type CommentRecord = {
 type DownloadRecord = {
   id: string;
   book_title: string | null;
+  download_url: string | null;
   created_at: string | null;
 };
 
@@ -46,14 +48,22 @@ export default function AccountPage() {
 
     const load = async () => {
       setFetching(true);
-      const [{ data: commentData }, { data: downloadData }, { data: donationData }] = await Promise.all([
+      const email = user.email || "";
+      const [{ data: commentData }, { data: downloadByUser }, { data: downloadByEmail }, { data: donationData }] = await Promise.all([
         supabase.from("comments").select("id, content, author_name, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("downloads").select("id, book_title, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("downloads").select("id, book_title, download_url, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+        email
+          ? supabase.from("downloads").select("id, book_title, download_url, created_at").eq("user_email", email).order("created_at", { ascending: false })
+          : Promise.resolve({ data: [] }),
         supabase.from("donations").select("id, amount, note, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
       ]);
 
+      const mergedDownloads = [...(downloadByUser || []), ...(downloadByEmail || [])].filter(
+        (item, index, array) => array.findIndex((entry) => entry.id === item.id) === index,
+      ) as DownloadRecord[];
+
       setComments((commentData || []) as CommentRecord[]);
-      setDownloads((downloadData || []) as DownloadRecord[]);
+      setDownloads(mergedDownloads);
       setDonations((donationData || []) as DonationRecord[]);
       setFetching(false);
     };
@@ -132,7 +142,7 @@ export default function AccountPage() {
     <main className="page-shell">
       <header className="topbar glass">
         <div className="brand-mark">
-          <div className="brand-avatar" />
+          <BrandLogo />
           <div>
             <div className="tiny">Ma page</div>
             <strong>Mon espace</strong>
@@ -243,7 +253,16 @@ export default function AccountPage() {
                   ) : (
                     downloads.map((download) => (
                       <div key={download.id} className="split-line" style={{ marginTop: 8 }}>
-                        <span>{download.book_title || "Livre"}</span>
+                        <div>
+                          <span>{download.book_title || "Livre"}</span>
+                          {download.download_url ? (
+                            <div style={{ marginTop: 6 }}>
+                              <a className="cta-button compact-submit" href={download.download_url} target="_blank" rel="noreferrer">
+                                Télécharger le PDF
+                              </a>
+                            </div>
+                          ) : null}
+                        </div>
                         <span className="tiny">{download.created_at ? new Date(download.created_at).toLocaleDateString("fr-FR") : "—"}</span>
                       </div>
                     ))

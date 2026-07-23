@@ -149,14 +149,26 @@ end $$;
 
 create table if not exists public.books (
   id uuid primary key default gen_random_uuid(),
+  slug text unique,
   title_fr text not null,
   title_zh text not null,
   visible boolean default true,
   price_eur numeric(10,2) default 0,
+  cover_image text,
+  pdf_file text,
+  synopsis_fr text,
+  synopsis_zh text,
+  asin text,
   amazon_ebook_url text,
   amazon_paperback_url text,
   created_at timestamptz default now()
 );
+
+alter table public.books add column if not exists cover_image text;
+alter table public.books add column if not exists pdf_file text;
+alter table public.books add column if not exists synopsis_fr text;
+alter table public.books add column if not exists synopsis_zh text;
+alter table public.books add column if not exists asin text;
 
 alter table public.books enable row level security;
 
@@ -209,6 +221,60 @@ begin
           select 1 from public.profiles p
           where p.id = auth.uid() and p.role = 'admin'
         )
+      );
+  end if;
+end $$;
+
+create table if not exists public.promo_codes (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  discount_percent numeric(5,2) not null default 0 check (discount_percent >= 0 and discount_percent <= 100),
+  valid_from timestamptz not null,
+  valid_until timestamptz not null,
+  active boolean default true,
+  show_banner boolean default false,
+  banner_text_fr text,
+  banner_text_zh text,
+  created_at timestamptz default now()
+);
+
+alter table public.promo_codes enable row level security;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'promo_codes' and policyname = 'Anyone can read active promo codes'
+  ) then
+    create policy "Anyone can read active promo codes" on public.promo_codes
+      for select using (active = true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'promo_codes' and policyname = 'Admins can manage promo codes'
+  ) then
+    create policy "Admins can manage promo codes" on public.promo_codes
+      for all using (
+        exists (
+          select 1 from public.profiles p
+          where p.id = auth.uid() and p.role = 'admin'
+        )
+      );
+  end if;
+end $$;
+
+alter table public.downloads add column if not exists book_id text;
+alter table public.downloads add column if not exists download_url text;
+alter table public.downloads add column if not exists stripe_session_id text;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'downloads' and policyname = 'Users can view downloads by email'
+  ) then
+    create policy "Users can view downloads by email" on public.downloads
+      for select using (
+        user_email is not null
+        and user_email = (select email from public.profiles where id = auth.uid())
       );
   end if;
 end $$;

@@ -1,8 +1,90 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { books, donationOptions } from "@/data/books";
+import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-assets";
+import { applyDiscount } from "@/lib/promo";
+import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+type CheckoutBook = {
+  id: string;
+  titleFr: string;
+  synopsisFr: string;
+  priceEur: number;
+  pdfFile: string;
+};
+
+async function resolveBook(bookId: string): Promise<CheckoutBook | null> {
+  const supabase = getSupabaseServiceClient();
+
+  if (supabase) {
+    const { data } = await supabase
+      .from("books")
+      .select("slug, title_fr, synopsis_fr, price_eur, pdf_file")
+      .or(`slug.eq.${bookId},id.eq.${bookId}`)
+      .maybeSingle();
+
+    if (data) {
+      const slug = data.slug || bookId;
+      const ext = bookAssetExtensions[slug] || "jpg";
+      return {
+        id: slug,
+        titleFr: data.title_fr,
+        synopsisFr: data.synopsis_fr || "",
+        priceEur: Number(data.price_eur ?? 0),
+        pdfFile: data.pdf_file || bookPdfPath(slug),
+      };
+    }
+  }
+
+  const fallback = books.find((item) => item.id === bookId);
+
+  if (!fallback) {
+    return null;
+  }
+
+  const ext = bookAssetExtensions[fallback.id] || "jpg";
+  return {
+    id: fallback.id,
+    titleFr: fallback.titleFr,
+    synopsisFr: fallback.synopsisFr,
+    priceEur: fallback.priceEur,
+    pdfFile: bookPdfPath(fallback.id),
+  };
+}
+
+async function resolvePromoDiscount(promoCode?: string) {
+  if (!promoCode?.trim()) {
+    return 0;
+  }
+
+  const supabase = getSupabaseServiceClient();
+
+  if (!supabase) {
+    return 0;
+  }
+
+  const { data } = await supabase
+    .from("promo_codes")
+    .select("discount_percent, valid_from, valid_until, active")
+    .eq("code", promoCode.trim().toUpperCase())
+    .maybeSingle();
+
+  if (!data || !data.active) {
+    return 0;
+  }
+
+  const now = new Date();
+  const start = new Date(data.valid_from);
+  const end = new Date(data.valid_until);
+
+  if (now < start || now > end) {
+    return 0;
+  }
+
+  return Number(data.discount_percent);
+}
 
 export async function POST(request: Request) {
   if (!stripeSecretKey) {
@@ -41,16 +123,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, url: session.url });
   }
 
-  const book = books.find((item) => item.id === payload.id);
+  const book = await resolveBook(String(payload.id || ""));
 
   if (!book) {
     return NextResponse.json({ ok: false, message: "Livre introuvable." }, { status: 404 });
   }
 
+  const discountPercent = await resolvePromoDiscount(payload.promoCode);
+  const finalPrice = applyDiscount(book.priceEur, discountPercent);
+
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     success_url: `${origin}/account?success=1`,
     cancel_url: `${origin}/catalogue?cancel=1`,
+    customer_email: payload.email || undefined,
     line_items: [
       {
         price_data: {
@@ -58,15 +144,19 @@ export async function POST(request: Request) {
           product_data: {
             name: book.titleFr,
             description: book.synopsisFr,
+            images: [new URL(bookCoverPath(book.id, bookAssetExtensions[book.id] || "jpg"), origin).toString()],
           },
-          unit_amount: Math.round(book.priceEur * 100),
+          unit_amount: Math.round(finalPrice * 100),
         },
         quantity: 1,
       },
     ],
     metadata: {
       bookId: book.id,
-      asin: book.asin,
+      bookTitle: book.titleFr,
+      pdfFile: book.pdfFile,
+      promoCode: payload.promoCode ? String(payload.promoCode).trim().toUpperCase() : "",
+      discountPercent: String(discountPercent),
     },
   });
 

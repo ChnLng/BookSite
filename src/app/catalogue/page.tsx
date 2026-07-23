@@ -1,15 +1,25 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Ticket, X } from "lucide-react";
-import { books } from "@/data/books";
+import { BrandLogo } from "@/components/brand-logo";
+import { useAuth } from "@/components/auth-provider";
+import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
 import { infoLinks } from "@/lib/legal-info";
 
 export default function CataloguePage() {
+  const { user } = useAuth();
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [payingBookId, setPayingBookId] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [books, setBooks] = useState<DisplayBook[]>([]);
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
+
+  useEffect(() => {
+    void loadDisplayBooks().then(setBooks);
+  }, []);
 
   const handleBookCheckout = async (bookId: string) => {
     setPayingBookId(bookId);
@@ -23,6 +33,8 @@ export default function CataloguePage() {
         body: JSON.stringify({
           kind: "book",
           id: bookId,
+          promoCode: promoCode.trim() || undefined,
+          email: user?.email || undefined,
         }),
       });
 
@@ -42,7 +54,7 @@ export default function CataloguePage() {
     <main className="page-shell">
       <header className="topbar glass topbar-luxury">
         <div className="brand-mark">
-          <div className="brand-avatar" />
+          <BrandLogo />
           <div>
             <div className="tiny">Bibliotheque visuelle bilingue</div>
             <strong>Visd AR</strong>
@@ -65,12 +77,24 @@ export default function CataloguePage() {
             </div>
             <div className="split-line">
               <span>Prix unique</span>
-              <strong>5.99 EUR</strong>
+              <strong>{books[0]?.priceEur.toFixed(2) || "5.99"} EUR</strong>
             </div>
             <div className="split-line">
               <span>Format prevu</span>
               <strong>PDF EPUB MOBI</strong>
             </div>
+          </div>
+          <div className="section-block">
+            <label className="tiny" htmlFor="promo-code">
+              Code promo
+            </label>
+            <input
+              id="promo-code"
+              className="input"
+              placeholder="VISD10"
+              value={promoCode}
+              onChange={(event) => setPromoCode(event.target.value)}
+            />
           </div>
         </aside>
 
@@ -85,12 +109,24 @@ export default function CataloguePage() {
           <div className="book-grid">
             {books.map((book) => (
               <article className="book-card" key={book.id}>
-                <div className="book-cover" style={{ background: book.accent }}>
-                  <strong>{book.titleFr}</strong>
+                <div className="book-cover-wrap">
+                  <Image
+                    src={book.coverImage}
+                    alt={book.titleFr}
+                    width={320}
+                    height={420}
+                    className="book-cover-image"
+                  />
                 </div>
                 <div className="book-meta" style={{ marginTop: 16 }}>
+                  <strong>{book.titleFr}</strong>
+                  <div className="tiny">{book.titleZh}</div>
                   <div className="tiny">{book.teachingPointFr}</div>
                   <p className="muted">{book.synopsisFr}</p>
+                  <div className="split-line">
+                    <span>Prix</span>
+                    <strong>{book.priceEur.toFixed(2)} EUR</strong>
+                  </div>
                   <div className="actions-row">
                     <button className="cta-button" type="button" onClick={() => void handleBookCheckout(book.id)}>
                       {payingBookId === book.id ? "Paiement..." : "Acheter"}

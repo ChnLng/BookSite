@@ -8,6 +8,7 @@ export type Book = {
   priceEur: number;
   publishDate: string;
   synopsisFr: string;
+  synopsisZh?: string;
   teachingPointFr: string;
   amazonEbookUrl: string;
   amazonPaperbackUrl: string;

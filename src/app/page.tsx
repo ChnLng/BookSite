@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import {
@@ -15,11 +16,14 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { books } from "@/data/books";
+import { BrandLogo } from "@/components/brand-logo";
+import { PromoBanner } from "@/components/promo-banner";
 import { useAuth } from "@/components/auth-provider";
+import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
 import { hasSupabaseConfig, siteConfig } from "@/lib/site-config";
 import { infoLinks } from "@/lib/legal-info";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib/promo";
 
 const socialLinks = [
   { label: "Instagram", href: "https://instagram.com", icon: Instagram },
@@ -70,9 +74,39 @@ export default function HomePage() {
   const [commentContent, setCommentContent] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentMessage, setCommentMessage] = useState("");
+  const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>([]);
+  const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
+  const [promoDismissed, setPromoDismissed] = useState(false);
   const { user, profile, isAdmin, signInWithPassword, signUpWithPassword } = useAuth();
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
+
+  useEffect(() => {
+    void loadDisplayBooks().then(setDisplayBooks);
+  }, []);
+
+  useEffect(() => {
+    const loadPromo = async () => {
+      const supabase = getSupabaseBrowserClient();
+
+      if (!supabase) {
+        return;
+      }
+
+      const { data } = await supabase
+        .from("promo_codes")
+        .select("id, code, discount_percent, valid_from, valid_until, active, show_banner, banner_text_fr, banner_text_zh")
+        .eq("active", true)
+        .eq("show_banner", true)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      const promo = ((data || []) as PromoRow[]).map(mapPromoRow).find((item) => isPromoActive(item)) || null;
+      setActivePromo(promo);
+    };
+
+    void loadPromo();
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -343,7 +377,7 @@ export default function HomePage() {
     <main className="page-shell luxury-shell">
       <header className="topbar glass topbar-luxury">
         <div className="brand-mark">
-          <div className="brand-avatar" />
+          <BrandLogo />
           <div>
             <div className="tiny">Bibliotheque visuelle bilingue</div>
             <strong>{siteConfig.brand}</strong>
@@ -427,11 +461,16 @@ export default function HomePage() {
 
           <div className="marquee-shell">
             <div className="marquee-track">
-              {[...books, ...books].map((book, index) => (
+              {[...displayBooks, ...displayBooks].map((book, index) => (
                 <article className="carousel-card" key={`${book.id}-${index}`}>
-                  <div className="carousel-image" style={{ background: book.accent }}>
-                    <div className="carousel-orb" />
-                    <div className="carousel-animal">{book.animal}</div>
+                  <div className="carousel-image">
+                    <Image
+                      src={book.coverImage}
+                      alt={book.titleFr}
+                      fill
+                      sizes="270px"
+                      className="carousel-cover-image"
+                    />
                   </div>
                   <div className="carousel-caption">
                     <strong>{book.titleFr}</strong>
@@ -446,9 +485,11 @@ export default function HomePage() {
             <Link className="cta-button" href="/catalogue">
               Explorer les livres
             </Link>
-            <a className="cta-button secondary" href={books[0].amazonPaperbackUrl} target="_blank">
-              Version papier Amazon
-            </a>
+            {displayBooks[0]?.amazonPaperbackUrl ? (
+              <a className="cta-button secondary" href={displayBooks[0].amazonPaperbackUrl} target="_blank">
+                Version papier Amazon
+              </a>
+            ) : null}
           </div>
 
           <div className="social-row">
@@ -482,6 +523,10 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {activePromo && !promoDismissed ? (
+        <PromoBanner promo={activePromo} onDismiss={() => setPromoDismissed(true)} />
+      ) : null}
 
       {authOpen ? (
         <div className="overlay-backdrop" role="presentation" onClick={() => setAuthOpen(false)}>
