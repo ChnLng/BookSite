@@ -263,6 +263,17 @@ select {
   gap: 10px;
 }
 
+.ad-slot-panel {
+  padding: 18px;
+}
+
+.ad-slot-ins {
+  min-height: 180px;
+  width: 100%;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
 .ad-slot-placeholder {
   border-radius: 22px;
   border: 1px solid rgba(25, 52, 68, 0.08);

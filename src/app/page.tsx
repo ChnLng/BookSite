@@ -16,6 +16,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { TopNav } from "@/components/top-nav";
 import { PromoBanner } from "@/components/promo-banner";
 import { useAuth } from "@/components/auth-provider";
@@ -138,8 +139,32 @@ export default function HomePage() {
       return true;
     };
 
+    const trySelectFirstDonationOption = () => {
+      const select = container.querySelector("select") as HTMLSelectElement | null;
+
+      if (select && select.options.length > 0 && !select.value) {
+        select.selectedIndex = 0;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+
+      const radios = Array.from(container.querySelectorAll('input[type="radio"]')) as HTMLInputElement[];
+
+      if (radios.length > 0 && !radios.some((radio) => radio.checked)) {
+        radios[0].click();
+      }
+    };
+
+    const observer = new MutationObserver(() => {
+      trySelectFirstDonationOption();
+    });
+
+    observer.observe(container, { childList: true, subtree: true });
+    trySelectFirstDonationOption();
+
     if (renderHostedButton()) {
-      return;
+      return () => {
+        observer.disconnect();
+      };
     }
 
     let attempts = 0;
@@ -153,6 +178,7 @@ export default function HomePage() {
 
     return () => {
       window.clearInterval(intervalId);
+      observer.disconnect();
     };
   }, []);
 
@@ -382,12 +408,21 @@ export default function HomePage() {
               <Sparkles size={16} />
               Donation
             </span>
+            <p className="tiny" style={{ marginTop: 8, marginBottom: 0 }}>
+              Montant par defaut: premier choix automatiquement si PayPal l&apos;autorise.
+            </p>
             <div className="paypal-donation-shell">
               <div className="paypal-donation-card">
                 <div id="paypal-container-D3LVZA49QZ4VE" />
               </div>
             </div>
           </aside>
+
+          <GoogleAdsSlot
+            className="panel glass ad-slot-panel"
+            label="Ads"
+            slot="8355506858"
+          />
 
           <aside className="panel glass comment-column">
             <span className="badge">

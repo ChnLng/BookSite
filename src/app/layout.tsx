@@ -39,6 +39,11 @@ export default function RootLayout({
           src="https://www.paypal.com/sdk/js?client-id=BAAQOWw6DVBBenlHrUo5xWPqO1hOT3ukzJi5t1TWfXKaqjuAfo6E4VOzai2aXku4al_2GmAFDcowjxqLNw&components=hosted-buttons&disable-funding=venmo&currency=EUR"
           strategy="afterInteractive"
         />
+        <Script
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6796254088003500"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+        />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

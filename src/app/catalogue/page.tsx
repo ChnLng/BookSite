@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Ticket, X } from "lucide-react";
+import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
@@ -14,12 +14,29 @@ export default function CataloguePage() {
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [payingBookId, setPayingBookId] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [books, setBooks] = useState<DisplayBook[]>([]);
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
 
   useEffect(() => {
     void loadDisplayBooks().then(setBooks);
   }, []);
+
+  const filteredBooks = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+
+    if (!keyword) {
+      return books;
+    }
+
+    return books.filter((book) => {
+      const haystack = [book.titleFr, book.titleZh]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(keyword);
+    });
+  }, [books, searchTerm]);
 
   const handleBookCheckout = async (bookId: string) => {
     setPayingBookId(bookId);
@@ -63,8 +80,8 @@ export default function CataloguePage() {
           <div className="badge">Filtres simples</div>
           <div className="section-block">
             <div className="split-line">
-              <span>Albums bilingues</span>
-              <strong>{books.length}</strong>
+              <span>Albums trouves</span>
+              <strong>{filteredBooks.length}</strong>
             </div>
             <div className="split-line">
               <span>Prix unique</span>
@@ -74,6 +91,18 @@ export default function CataloguePage() {
               <span>Format prevu</span>
               <strong>PDF EPUB MOBI</strong>
             </div>
+          </div>
+          <div className="section-block">
+            <label className="tiny" htmlFor="catalog-search">
+              Rechercher par titre
+            </label>
+            <input
+              id="catalog-search"
+              className="input"
+              placeholder="Tapez un titre FR ou ZH"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
           </div>
           <div className="section-block">
             <label className="tiny" htmlFor="promo-code">
@@ -87,6 +116,11 @@ export default function CataloguePage() {
               onChange={(event) => setPromoCode(event.target.value)}
             />
           </div>
+          <GoogleAdsSlot
+            className="panel glass ad-slot-panel"
+            label="Ads"
+            slot="8355506858"
+          />
         </aside>
 
         <section className="panel glass">
@@ -98,7 +132,7 @@ export default function CataloguePage() {
             trop defiler.
           </p>
           <div className="book-grid">
-            {books.map((book) => (
+            {filteredBooks.map((book) => (
               <article className="book-card" key={book.id}>
                 <div className="book-cover-wrap">
                   <Image
@@ -130,6 +164,11 @@ export default function CataloguePage() {
               </article>
             ))}
           </div>
+          {filteredBooks.length === 0 ? (
+            <p className="muted" style={{ marginTop: 18 }}>
+              Aucun produit ne correspond au titre saisi.
+            </p>
+          ) : null}
         </section>
       </section>
 

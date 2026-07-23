@@ -155,6 +155,76 @@ async function deleteImageFromGitHub(assetPath: string) {
   }
 }
 
+async function checkPdfExistsInSupabase(assetPath: string) {
+  const { error, supabase } = await ensureBooksBucket();
+
+  if (error || !supabase) {
+    throw new Error(error || "Supabase indisponible.");
+  }
+
+  const storagePath = normalizeBookPdfAsset(assetPath);
+
+  if (!storagePath || storagePath.startsWith("/") || /^https?:\/\//i.test(storagePath)) {
+    return false;
+  }
+
+  const pathParts = storagePath.split("/").filter(Boolean);
+  const fileName = pathParts[pathParts.length - 1];
+  const folderPath = pathParts.slice(0, -1).join("/");
+
+  const { data, error: listError } = await supabase.storage.from(booksBucketName).list(folderPath, {
+    search: fileName,
+  });
+
+  if (listError) {
+    throw new Error(listError.message);
+  }
+
+  return Boolean(data?.some((entry) => entry.name === fileName));
+}
+
+export async function GET(request: Request) {
+  const auth = await requireAdmin(request);
+
+  if (auth.error) {
+    return auth.error;
+  }
+
+  const { searchParams } = new URL(request.url);
+  const kind = searchParams.get("kind") || "";
+
+  try {
+    if (kind === "pdf-status") {
+      const assets = searchParams
+        .getAll("assetPath")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+
+      const statusEntries = await Promise.all(
+        assets.map(async (assetPath) => {
+          try {
+            const exists = await checkPdfExistsInSupabase(assetPath);
+            return [assetPath, { exists, message: exists ? "已上传到 Supabase" : "未上传到 Supabase" }] as const;
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "状态检查失败";
+            return [assetPath, { exists: false, message }] as const;
+          }
+        }),
+      );
+
+      return NextResponse.json({
+        ok: true,
+        statuses: Object.fromEntries(statusEntries),
+      });
+    }
+
+    return NextResponse.json({ ok: false, message: "Type de lecture inconnu." }, { status: 400 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Lecture impossible.";
+    return NextResponse.json({ ok: false, message }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   const auth = await requireAdmin(request);
 

@@ -86,6 +86,10 @@ type PromoFormState = {
 
 type PromoEditState = PromoFormState;
 type AssetKind = "image" | "pdf";
+type PdfStorageStatus = {
+  exists: boolean;
+  message: string;
+};
 
 const adminSections = [
   { key: "books", label: "图书 Livres" },
@@ -220,6 +224,7 @@ function AdminPageContent() {
   const [bookEdits, setBookEdits] = useState<Record<string, BookEditState>>({});
   const [categoryEdits, setCategoryEdits] = useState<Record<string, CategoryEditState>>({});
   const [promoEdits, setPromoEdits] = useState<Record<string, PromoEditState>>({});
+  const [pdfStatuses, setPdfStatuses] = useState<Record<string, PdfStorageStatus>>({});
   const [statusMessage, setStatusMessage] = useState("");
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
@@ -271,6 +276,73 @@ function AdminPageContent() {
   useEffect(() => {
     void reload();
   }, []);
+
+  useEffect(() => {
+    if (!session?.access_token || books.length === 0) {
+      setPdfStatuses({});
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const loadPdfStatuses = async () => {
+      const assetPaths = books
+        .map((book) => book.pdf_file || bookPdfPath(book.slug || book.id))
+        .filter(Boolean);
+
+      if (assetPaths.length === 0) {
+        setPdfStatuses({});
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams();
+        params.set("kind", "pdf-status");
+        assetPaths.forEach((assetPath) => params.append("assetPath", assetPath));
+
+        const response = await authorizedAdminFetch(`/api/admin/assets?${params.toString()}`, {
+          method: "GET",
+          signal: controller.signal,
+        });
+
+        const result = (await response.json()) as {
+          ok?: boolean;
+          statuses?: Record<string, PdfStorageStatus>;
+          message?: string;
+        };
+
+        if (!response.ok || !result.statuses) {
+          throw new Error(result.message || "无法读取 PDF 状态。");
+        }
+
+        const mappedStatuses = Object.fromEntries(
+          books.map((book) => {
+            const assetPath = book.pdf_file || bookPdfPath(book.slug || book.id);
+            return [book.id, result.statuses?.[assetPath] || { exists: false, message: "未上传到 Supabase" }];
+          }),
+        );
+
+        setPdfStatuses(mappedStatuses);
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        const fallbackMessage = error instanceof Error ? error.message : "状态检查失败";
+        setPdfStatuses(
+          Object.fromEntries(
+            books.map((book) => [book.id, { exists: false, message: fallbackMessage }]),
+          ),
+        );
+      }
+    };
+
+    void loadPdfStatuses();
+
+    return () => {
+      controller.abort();
+    };
+  }, [books, session?.access_token]);
 
   const title = useMemo(() => profile?.displayName || profile?.email || "Admin", [profile]);
 
@@ -1030,6 +1102,7 @@ function AdminPageContent() {
                     const edit = bookEdits[book.id];
                     const isEditing = editingBookId === book.id;
                     const downloadCount = downloadCounts[book.slug || book.id] || 0;
+                    const pdfStatus = pdfStatuses[book.id];
 
                     return (
                       <div className="admin-book-card" key={book.id}>
@@ -1048,6 +1121,9 @@ function AdminPageContent() {
                             <div className="tiny">Slug: {book.slug || book.id}</div>
                             <div className="tiny">Downloads 下载次数: {downloadCount}</div>
                             <div className="tiny">{book.visible ? "已上架 Visible" : "已隐藏 Hidden"}</div>
+                            <div className="tiny">
+                              PDF 状态: {pdfStatus ? pdfStatus.message : "检查中..."}
+                            </div>
                           </div>
                         </div>
 
@@ -1195,6 +1271,9 @@ function AdminPageContent() {
                                 <strong>PDF Supabase</strong>
                                 {edit.pdfFile ? <span className="tiny">{edit.pdfFile}</span> : <span className="tiny">暂无 PDF</span>}
                               </div>
+                              <p className="tiny" style={{ marginTop: 8 }}>
+                                当前状态: {pdfStatus ? pdfStatus.message : "检查中..."}
+                              </p>
                               <div className="actions-row">
                                 <input
                                   className="input"
