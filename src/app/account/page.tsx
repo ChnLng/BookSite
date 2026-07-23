@@ -8,6 +8,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 type CommentRecord = {
   id: string;
   content: string | null;
+  author_name: string | null;
   created_at: string | null;
 };
 
@@ -31,6 +32,9 @@ export default function AccountPage() {
   const [donations, setDonations] = useState<DonationRecord[]>([]);
   const [fetching, setFetching] = useState(true);
   const [activeTab, setActiveTab] = useState<"comments" | "downloads" | "donations">("comments");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [commentActionMessage, setCommentActionMessage] = useState("");
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
@@ -43,7 +47,7 @@ export default function AccountPage() {
     const load = async () => {
       setFetching(true);
       const [{ data: commentData }, { data: downloadData }, { data: donationData }] = await Promise.all([
-        supabase.from("comments").select("id, content, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("comments").select("id, content, author_name, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("downloads").select("id, book_title, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("donations").select("id, amount, note, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
       ]);
@@ -58,6 +62,66 @@ export default function AccountPage() {
   }, [user]);
 
   const greeting = useMemo(() => profile?.displayName || user?.email || "Lecteur", [profile, user]);
+
+  const startEditingComment = (comment: CommentRecord) => {
+    setEditingCommentId(comment.id);
+    setEditingContent(comment.content || "");
+    setCommentActionMessage("");
+  };
+
+  const cancelEditingComment = () => {
+    setEditingCommentId(null);
+    setEditingContent("");
+  };
+
+  const saveComment = async (commentId: string) => {
+    const supabase = getSupabaseBrowserClient();
+
+    if (!supabase || !user || !editingContent.trim()) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from("comments")
+      .update({ content: editingContent.trim() })
+      .eq("id", commentId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      setCommentActionMessage(error.message);
+      return;
+    }
+
+    setComments((current) =>
+      current.map((comment) =>
+        comment.id === commentId ? { ...comment, content: editingContent.trim() } : comment,
+      ),
+    );
+    cancelEditingComment();
+    setCommentActionMessage("Commentaire mis à jour.");
+  };
+
+  const deleteComment = async (commentId: string) => {
+    const supabase = getSupabaseBrowserClient();
+
+    if (!supabase || !user) {
+      return;
+    }
+
+    const { error } = await supabase.from("comments").delete().eq("id", commentId).eq("user_id", user.id);
+
+    if (error) {
+      setCommentActionMessage(error.message);
+      return;
+    }
+
+    setComments((current) => current.filter((comment) => comment.id !== commentId));
+    if (editingCommentId === commentId) {
+      cancelEditingComment();
+    }
+    setCommentActionMessage("Commentaire supprimé.");
+  };
+
   const tabs = [
     { key: "comments", label: "Commentaires", count: comments.length },
     { key: "downloads", label: "Telechargements", count: downloads.length },
@@ -70,8 +134,8 @@ export default function AccountPage() {
         <div className="brand-mark">
           <div className="brand-avatar" />
           <div>
-            <div className="tiny">Espace lecteur</div>
-            <strong>Mon compte</strong>
+            <div className="tiny">Ma page</div>
+            <strong>Mon espace</strong>
           </div>
         </div>
         <nav className="nav-links">
@@ -89,7 +153,7 @@ export default function AccountPage() {
           Bonjour {greeting}
         </h1>
         <p className="section-caption">
-          Votre espace lecteur affiche vos commentaires, vos telechargements et vos donations dans un seul panneau.
+          Votre espace lecteur affiche vos commentaires, vos telechargements et vos donations. Les commentaires de l&apos;accueil apparaissent ici.
         </p>
 
         {loading || fetching ? (
@@ -118,15 +182,53 @@ export default function AccountPage() {
                     <span>{comments.length}</span>
                   </div>
                   {comments.length === 0 ? (
-                    <p className="muted">Aucun commentaire pour le moment.</p>
+                    <p className="muted">Aucun commentaire pour le moment. Laissez-en un depuis l&apos;accueil.</p>
                   ) : (
                     comments.map((comment) => (
-                      <div key={comment.id} className="split-line" style={{ marginTop: 8 }}>
-                        <span>{comment.content || "Commentaire"}</span>
-                        <span className="tiny">{comment.created_at ? new Date(comment.created_at).toLocaleDateString("fr-FR") : "—"}</span>
+                      <div key={comment.id} className="split-line" style={{ marginTop: 8, alignItems: "flex-start" }}>
+                        <div style={{ flex: 1 }}>
+                          {comment.author_name ? (
+                            <div className="tiny" style={{ marginBottom: 4 }}>{comment.author_name}</div>
+                          ) : null}
+                          {editingCommentId === comment.id ? (
+                            <textarea
+                              className="textarea"
+                              value={editingContent}
+                              onChange={(event) => setEditingContent(event.target.value)}
+                              style={{ minHeight: 80 }}
+                            />
+                          ) : (
+                            <span>{comment.content || "Commentaire"}</span>
+                          )}
+                          <div className="tiny" style={{ marginTop: 6 }}>
+                            {comment.created_at ? new Date(comment.created_at).toLocaleDateString("fr-FR") : "—"}
+                          </div>
+                        </div>
+                        <div className="actions-row" style={{ marginTop: 0, flexShrink: 0 }}>
+                          {editingCommentId === comment.id ? (
+                            <>
+                              <button className="pill-button" type="button" onClick={() => void saveComment(comment.id)}>
+                                Enregistrer
+                              </button>
+                              <button className="pill-button" type="button" onClick={cancelEditingComment}>
+                                Annuler
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button className="pill-button" type="button" onClick={() => startEditingComment(comment)}>
+                                Modifier
+                              </button>
+                              <button className="pill-button" type="button" onClick={() => void deleteComment(comment.id)}>
+                                Supprimer
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     ))
                   )}
+                  {commentActionMessage ? <p className="tiny">{commentActionMessage}</p> : null}
                 </div>
               ) : null}
 

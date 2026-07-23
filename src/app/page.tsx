@@ -124,6 +124,31 @@ export default function HomePage() {
 
   useEffect(() => {
     const loadComments = async () => {
+      const supabase = getSupabaseBrowserClient();
+
+      if (supabase) {
+        const { data } = await supabase
+          .from("comments")
+          .select("id, content, author_name, created_at")
+          .order("created_at", { ascending: false })
+          .limit(2);
+
+        if (data && data.length > 0) {
+          setComments(
+            data.map((comment, index) => ({
+              id: comment.id,
+              name: comment.author_name || "Lecteur",
+              content: comment.content,
+              icon: commentIcons[index % commentIcons.length],
+              createdAt: comment.created_at
+                ? new Date(comment.created_at).toLocaleDateString("fr-FR")
+                : "—",
+            })),
+          );
+          return;
+        }
+      }
+
       try {
         const response = await fetch("/api/messages");
         const text = await response.text();
@@ -149,6 +174,12 @@ export default function HomePage() {
 
     void loadComments();
   }, []);
+
+  useEffect(() => {
+    if (user && !commentName) {
+      setCommentName(profile?.displayName || user.user_metadata?.full_name || user.email?.split("@")[0] || "");
+    }
+  }, [user, profile, commentName]);
 
   const viewer = {
     name: profile?.displayName || user?.user_metadata?.full_name || user?.email || "Invite",
@@ -261,45 +292,51 @@ export default function HomePage() {
       return;
     }
 
+    if (!user) {
+      setCommentMessage("Connectez-vous pour enregistrer votre commentaire sur Ma page.");
+      setAuthOpen(true);
+      return;
+    }
+
+    const supabase = getSupabaseBrowserClient();
+
+    if (!supabase) {
+      setCommentMessage("Configuration Supabase manquante.");
+      return;
+    }
+
     setIsSubmittingComment(true);
     setCommentMessage("");
 
-    const formData = new FormData();
-    formData.append("name", commentName.trim());
-    formData.append("content", commentContent.trim());
+    const { data, error } = await supabase
+      .from("comments")
+      .insert({
+        user_id: user.id,
+        author_name: commentName.trim(),
+        content: commentContent.trim(),
+      })
+      .select("id, content, author_name, created_at")
+      .single();
 
-    try {
-      const response = await fetch("/api/messages", {
-        method: "POST",
-        body: formData,
-      });
+    setIsSubmittingComment(false);
 
-      const text = await response.text();
-      let result: { ok?: boolean; comment?: CommentItem; message?: string } = {};
-
-      try {
-        result = JSON.parse(text);
-      } catch {
-        result = {};
-      }
-
-      if (!response.ok || !result.ok) {
-        setCommentMessage(result.message || "Impossible d'ajouter le commentaire.");
-        return;
-      }
-
-      if (result.comment) {
-        const randomIcon = commentIcons[Math.floor(Math.random() * commentIcons.length)];
-        setComments((current) => [...current, { ...(result.comment as CommentItem), icon: randomIcon }].slice(-2));
-      }
-      setCommentName("");
-      setCommentContent("");
-      setCommentMessage("Merci pour votre message. Il a été ajouté en haut de la liste.");
-    } catch {
-      setCommentMessage("Le commentaire n'a pas pu être enregistré pour le moment.");
-    } finally {
-      setIsSubmittingComment(false);
+    if (error || !data) {
+      setCommentMessage(error?.message || "Impossible d'ajouter le commentaire.");
+      return;
     }
+
+    const randomIcon = commentIcons[Math.floor(Math.random() * commentIcons.length)];
+    const newComment: CommentItem = {
+      id: data.id,
+      name: data.author_name || commentName.trim(),
+      content: data.content,
+      icon: randomIcon,
+      createdAt: data.created_at ? new Date(data.created_at).toLocaleDateString("fr-FR") : "Aujourd'hui",
+    };
+
+    setComments((current) => [newComment, ...current.filter((item) => item.id !== data.id)].slice(0, 2));
+    setCommentContent("");
+    setCommentMessage("Merci pour votre message. Retrouvez-le dans Ma page > Commentaires.");
   };
 
   return (
@@ -316,7 +353,7 @@ export default function HomePage() {
           <Link href="/catalogue">Catalogue</Link>
           <a href="#scene">Selection</a>
           {viewer.isLoggedIn ? (
-            <Link href="/account">Mes achats</Link>
+            <Link href="/account">Ma page</Link>
           ) : (
             <button className="nav-button" type="button" onClick={() => setAuthOpen(true)}>
               Connexion

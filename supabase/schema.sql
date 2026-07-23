@@ -42,9 +42,12 @@ end $$;
 create table if not exists public.comments (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
+  author_name text,
   content text not null,
   created_at timestamptz default now()
 );
+
+alter table public.comments add column if not exists author_name text;
 
 alter table public.comments enable row level security;
 
@@ -62,6 +65,20 @@ begin
   ) then
     create policy "Users can insert their own comments" on public.comments
       for insert with check (auth.uid() = user_id);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'comments' and policyname = 'Users can update their own comments'
+  ) then
+    create policy "Users can update their own comments" on public.comments
+      for update using (auth.uid() = user_id);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'comments' and policyname = 'Users can delete their own comments'
+  ) then
+    create policy "Users can delete their own comments" on public.comments
+      for delete using (auth.uid() = user_id);
   end if;
 end $$;
 

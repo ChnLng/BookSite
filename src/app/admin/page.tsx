@@ -39,7 +39,14 @@ type DonationRow = {
   created_at: string | null;
 };
 
-const adminSections = ["图书 Livres", "类目 Categories", "下载 Downloads", "赞助 Donations"];
+const adminSections = [
+  { key: "books", label: "图书 Livres" },
+  { key: "categories", label: "类目 Categories" },
+  { key: "downloads", label: "下载 Downloads" },
+  { key: "donations", label: "赞助 Donations" },
+] as const;
+
+type AdminSectionKey = (typeof adminSections)[number]["key"];
 
 function AdminPageContent() {
   const { profile, signOut } = useAuth();
@@ -48,6 +55,7 @@ function AdminPageContent() {
   const [downloads, setDownloads] = useState<DownloadRow[]>([]);
   const [donations, setDonations] = useState<DonationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState<AdminSectionKey>("books");
   const [form, setForm] = useState({ titleFr: "", titleZh: "", priceEur: "", visible: true });
   const [categoryName, setCategoryName] = useState("");
   const [categoryDescription, setCategoryDescription] = useState("");
@@ -163,12 +171,16 @@ function AdminPageContent() {
 
       <section className="dashboard-grid">
         <aside className="panel glass">
-          <div className="badge">双语导航 Navigation</div>
           <div className="admin-list section-block">
             {adminSections.map((section) => (
-              <div className="split-line" key={section}>
-                <strong>{section}</strong>
-              </div>
+              <button
+                className={activeSection === section.key ? "account-tab active" : "account-tab"}
+                key={section.key}
+                type="button"
+                onClick={() => setActiveSection(section.key)}
+              >
+                <strong>{section.label}</strong>
+              </button>
             ))}
           </div>
         </aside>
@@ -179,77 +191,97 @@ function AdminPageContent() {
           </h1>
           <p className="section-caption">Bienvenue {title} — gestion complète des livres, catégories et statistiques.</p>
 
-          <div className="section-block">
-            <h3>Ajouter un livre / 新增图书</h3>
-            <div className="input-group" style={{ marginTop: 10 }}>
-              <input className="input" placeholder="Titre FR" value={form.titleFr} onChange={(event) => setForm({ ...form, titleFr: event.target.value })} />
-              <input className="input" placeholder="Titre ZH" value={form.titleZh} onChange={(event) => setForm({ ...form, titleZh: event.target.value })} />
-              <input className="input" placeholder="Prix EUR" value={form.priceEur} onChange={(event) => setForm({ ...form, priceEur: event.target.value })} />
-              <label className="tiny"><input type="checkbox" checked={form.visible} onChange={() => setForm({ ...form, visible: !form.visible })} /> Visible</label>
-              <button className="cta-button" type="button" onClick={() => void createBook()}>Créer</button>
-            </div>
-          </div>
-
-          <div className="section-block">
-            <h3>Créer une catégorie / 新增类目</h3>
-            <div className="input-group" style={{ marginTop: 10 }}>
-              <input className="input" placeholder="Nom du catégorie" value={categoryName} onChange={(event) => setCategoryName(event.target.value)} />
-              <input className="input" placeholder="Description" value={categoryDescription} onChange={(event) => setCategoryDescription(event.target.value)} />
-              <button className="cta-button" type="button" onClick={() => void createCategory()}>Créer la catégorie</button>
-            </div>
-          </div>
-
-          <div className="section-block">
-            <h3>Catégories dynamiques / 动态类目</h3>
-            <div className="admin-list">
-              {categories.map((category) => (
-                <div className="split-line" key={category.id}>
-                  <strong>{category.name}</strong>
-                  <span className="tiny">{category.description || "Sans description"}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="section-block">
-            <h3>Livres / 图书</h3>
-            {loading ? <p className="muted">Chargement…</p> : books.map((book) => (
-              <div className="split-line" key={book.id}>
-                <div>
-                  <strong>{book.title_zh}</strong>
-                  <div className="tiny">{book.title_fr}</div>
-                </div>
-                <div className="actions-row">
-                  <button className="pill-button" type="button" onClick={() => void toggleVisibility(book.id, Boolean(book.visible))}>
-                    {book.visible ? "Masquer" : "Publier"}
-                  </button>
-                  <button className="pill-button" type="button" onClick={() => void deleteBook(book.id)}>
-                    Supprimer
-                  </button>
+          {activeSection === "books" ? (
+            <>
+              <div className="section-block">
+                <h3>Ajouter un livre / 新增图书</h3>
+                <div className="input-group" style={{ marginTop: 10 }}>
+                  <input className="input" placeholder="Titre FR" value={form.titleFr} onChange={(event) => setForm({ ...form, titleFr: event.target.value })} />
+                  <input className="input" placeholder="Titre ZH" value={form.titleZh} onChange={(event) => setForm({ ...form, titleZh: event.target.value })} />
+                  <input className="input" placeholder="Prix EUR" value={form.priceEur} onChange={(event) => setForm({ ...form, priceEur: event.target.value })} />
+                  <label className="tiny"><input type="checkbox" checked={form.visible} onChange={() => setForm({ ...form, visible: !form.visible })} /> Visible</label>
+                  <button className="cta-button" type="button" onClick={() => void createBook()}>Créer</button>
                 </div>
               </div>
-            ))}
-          </div>
 
-          <div className="section-block">
-            <h3>Historique de téléchargements / 下载记录</h3>
-            {downloads.map((download) => (
-              <div className="split-line" key={download.id}>
-                <span>{download.book_title || "Livre"}</span>
-                <span className="tiny">{download.user_email || "—"}</span>
+              <div className="section-block">
+                <h3>Livres / 图书</h3>
+                {loading ? <p className="muted">Chargement…</p> : books.map((book) => (
+                  <div className="split-line" key={book.id}>
+                    <div>
+                      <strong>{book.title_zh}</strong>
+                      <div className="tiny">{book.title_fr}</div>
+                    </div>
+                    <div className="actions-row">
+                      <button className="pill-button" type="button" onClick={() => void toggleVisibility(book.id, Boolean(book.visible))}>
+                        {book.visible ? "Masquer" : "Publier"}
+                      </button>
+                      <button className="pill-button" type="button" onClick={() => void deleteBook(book.id)}>
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          ) : null}
 
-          <div className="section-block">
-            <h3>Dons / Donations</h3>
-            {donations.map((donation) => (
-              <div className="split-line" key={donation.id}>
-                <span>{donation.note || "Donation"}</span>
-                <span className="tiny">{donation.amount ? `${donation.amount.toFixed(2)} EUR` : "—"}</span>
+          {activeSection === "categories" ? (
+            <>
+              <div className="section-block">
+                <h3>Créer une catégorie / 新增类目</h3>
+                <div className="input-group" style={{ marginTop: 10 }}>
+                  <input className="input" placeholder="Nom du catégorie" value={categoryName} onChange={(event) => setCategoryName(event.target.value)} />
+                  <input className="input" placeholder="Description" value={categoryDescription} onChange={(event) => setCategoryDescription(event.target.value)} />
+                  <button className="cta-button" type="button" onClick={() => void createCategory()}>Créer la catégorie</button>
+                </div>
               </div>
-            ))}
-          </div>
+
+              <div className="section-block">
+                <h3>Catégories dynamiques / 动态类目</h3>
+                <div className="admin-list">
+                  {categories.map((category) => (
+                    <div className="split-line" key={category.id}>
+                      <strong>{category.name}</strong>
+                      <span className="tiny">{category.description || "Sans description"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : null}
+
+          {activeSection === "downloads" ? (
+            <div className="section-block">
+              <h3>Historique de téléchargements / 下载记录</h3>
+              {downloads.length === 0 ? (
+                <p className="muted">Aucun téléchargement enregistré.</p>
+              ) : (
+                downloads.map((download) => (
+                  <div className="split-line" key={download.id}>
+                    <span>{download.book_title || "Livre"}</span>
+                    <span className="tiny">{download.user_email || "—"}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : null}
+
+          {activeSection === "donations" ? (
+            <div className="section-block">
+              <h3>Dons / Donations</h3>
+              {donations.length === 0 ? (
+                <p className="muted">Aucune donation enregistrée.</p>
+              ) : (
+                donations.map((donation) => (
+                  <div className="split-line" key={donation.id}>
+                    <span>{donation.note || "Donation"}</span>
+                    <span className="tiny">{donation.amount ? `${donation.amount.toFixed(2)} EUR` : "—"}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : null}
         </section>
       </section>
     </main>
