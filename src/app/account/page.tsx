@@ -147,7 +147,7 @@ export default function AccountPage() {
           <BrandLogo />
           <div>
             <div className="tiny">Ma page</div>
-            <strong>Mon espace</strong>
+            <strong>Ma page</strong>
           </div>
         </div>
         <nav className="nav-links">
@@ -165,7 +165,7 @@ export default function AccountPage() {
           Bonjour {greeting}
         </h1>
         <p className="section-caption">
-          Votre espace lecteur affiche vos commentaires, vos telechargements et vos donations. Les commentaires de l&apos;accueil apparaissent ici.
+          Votre espace lecteur affiche vos commentaires, vos telechargements et vos donations dans un seul panneau.
         </p>
 
         {loading || fetching ? (

@@ -8,27 +8,31 @@ const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
   .filter(Boolean);
 
 export async function getUserFromRequest(request: Request): Promise<User | null> {
-  const authHeader = request.headers.get("authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const supabase = getSupabaseServiceClient();
 
-  if (!token || !siteConfig.supabaseUrl || !siteConfig.supabaseAnonKey) {
+  if (!supabase) {
     return null;
   }
 
-  const supabase = createClient(siteConfig.supabaseUrl, siteConfig.supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
+  const authHeader = request.headers.get("Authorization");
 
-  const { data, error } = await supabase.auth.getUser(token);
-
-  if (error || !data.user) {
+  if (!authHeader) {
     return null;
   }
 
-  return data.user;
+  const token = authHeader.replace("Bearer ", "");
+
+  try {
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data.user) {
+      return null;
+    }
+
+    return data.user;
+  } catch {
+    return null;
+  }
 }
 
 export async function isAdminUser(user: User): Promise<boolean> {

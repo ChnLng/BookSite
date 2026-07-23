@@ -340,20 +340,26 @@ function AdminPageContent() {
       </header>
 
       <section className="dashboard-grid">
-        <aside className="panel glass">
-          <div className="admin-list section-block">
-            {adminSections.map((section) => (
-              <button
-                className={activeSection === section.key ? "account-tab active" : "account-tab"}
-                key={section.key}
-                type="button"
-                onClick={() => setActiveSection(section.key)}
-              >
-                <strong>{section.label}</strong>
-              </button>
-            ))}
+        <aside className="admin-sidebar">
+        <div className="admin-sidebar-header">
+          <div className="admin-sidebar-title">
+            <strong>Admin</strong>
+            <span className="tiny">后台管理</span>
           </div>
-        </aside>
+        </div>
+        <div className="admin-sidebar-sections">
+          {adminSections.map((section) => (
+            <button
+              key={section.key}
+              className={activeSection === section.key ? "admin-sidebar-item active" : "admin-sidebar-item"}
+              type="button"
+              onClick={() => setActiveSection(section.key)}
+            >
+              {section.label}
+            </button>
+          ))}
+        </div>
+      </aside>
 
         <section className="panel glass">
           <h1 className="section-title" style={{ fontFamily: "var(--font-heading), serif" }}>

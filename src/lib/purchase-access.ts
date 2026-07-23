@@ -51,7 +51,20 @@ export async function hasPurchasedBook(
   supabase: SupabaseClient,
   params: PurchaseCheckParams,
 ): Promise<boolean> {
-  return matchDownload(supabase, params);
+  const { userId, email, bookId } = params;
+
+  const { data, error } = await supabase
+    .from("downloads")
+    .select("id")
+    .or(`user_id.eq.${userId},user_email.eq.${email}`)
+    .eq("book_id", bookId)
+    .limit(1);
+
+  if (error) {
+    return false;
+  }
+
+  return data.length > 0;
 }
 
 export function bookIdFromDownload(record: {

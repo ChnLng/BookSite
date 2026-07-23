@@ -322,55 +322,47 @@ export default function HomePage() {
     event.preventDefault();
 
     if (!commentName.trim() || !commentContent.trim()) {
-      setCommentMessage("Merci de renseigner votre nom et votre commentaire.");
-      return;
-    }
-
-    if (!user) {
-      setCommentMessage("Connectez-vous pour enregistrer votre commentaire sur Ma page.");
-      setAuthOpen(true);
-      return;
-    }
-
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      setCommentMessage("Configuration Supabase manquante.");
+      setCommentMessage("Nom et commentaire sont requis.");
       return;
     }
 
     setIsSubmittingComment(true);
     setCommentMessage("");
 
-    const { data, error } = await supabase
-      .from("comments")
-      .insert({
-        user_id: user.id,
-        author_name: commentName.trim(),
-        content: commentContent.trim(),
-      })
-      .select("id, content, author_name, created_at")
-      .single();
+    try {
+      const formData = new FormData();
+      formData.append("name", commentName);
+      formData.append("content", commentContent);
 
-    setIsSubmittingComment(false);
+      const response = await fetch("/api/messages", {
+        method: "POST",
+        body: formData,
+      });
 
-    if (error || !data) {
-      setCommentMessage(error?.message || "Impossible d'ajouter le commentaire.");
-      return;
+      const result = await response.json();
+
+      if (!response.ok) {
+        setCommentMessage(result.message || "Erreur lors de l'envoi.");
+        return;
+      }
+
+      const newComment: CommentItem = {
+        id: result.comment.id,
+        name: commentName,
+        content: commentContent,
+        icon: commentIcons[Math.floor(Math.random() * commentIcons.length)],
+        createdAt: result.comment.createdAt,
+      };
+
+      setComments((prev) => [newComment, ...prev.slice(0, 1)]);
+      setCommentName("");
+      setCommentContent("");
+      setCommentMessage("Commentaire ajouté avec succès!");
+    } catch (error) {
+      setCommentMessage("Erreur réseau. Veuillez réessayer.");
+    } finally {
+      setIsSubmittingComment(false);
     }
-
-    const randomIcon = commentIcons[Math.floor(Math.random() * commentIcons.length)];
-    const newComment: CommentItem = {
-      id: data.id,
-      name: data.author_name || commentName.trim(),
-      content: data.content,
-      icon: randomIcon,
-      createdAt: data.created_at ? new Date(data.created_at).toLocaleDateString("fr-FR") : "Aujourd'hui",
-    };
-
-    setComments((current) => [newComment, ...current.filter((item) => item.id !== data.id)].slice(0, 2));
-    setCommentContent("");
-    setCommentMessage("Merci pour votre message. Retrouvez-le dans Ma page > Commentaires.");
   };
 
   return (
@@ -385,7 +377,6 @@ export default function HomePage() {
         </div>
         <nav className="nav-links">
           <Link href="/catalogue">Catalogue</Link>
-          <a href="#scene">Selection</a>
           {viewer.isLoggedIn ? (
             <Link href="/account">Ma page</Link>
           ) : (

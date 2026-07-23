@@ -62,8 +62,7 @@ export default function CataloguePage() {
         </div>
         <nav className="nav-links">
           <Link href="/">Accueil</Link>
-          <Link href="/account">Mon compte</Link>
-          <a href="#catalogue-scene">Selection</a>
+          <Link href="/account">Ma page</Link>
         </nav>
       </header>
 
