@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 declare global {
   interface Window {
@@ -19,6 +20,7 @@ export function GoogleAdsSlot({
   label = "Ads",
   slot,
 }: GoogleAdsSlotProps) {
+  const pathname = usePathname();
   const adRef = useRef<HTMLModElement | null>(null);
 
   useEffect(() => {
@@ -26,17 +28,46 @@ export function GoogleAdsSlot({
       return;
     }
 
-    if (adRef.current.dataset.loaded === "true") {
+    adRef.current.removeAttribute("data-loaded");
+
+    let cancelled = false;
+    let attempts = 0;
+
+    const tryRenderAd = () => {
+      if (!adRef.current || cancelled || adRef.current.dataset.loaded === "true") {
+        return true;
+      }
+
+      if (!window.adsbygoogle) {
+        return false;
+      }
+
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        adRef.current.dataset.loaded = "true";
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    if (tryRenderAd()) {
       return;
     }
 
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-      adRef.current.dataset.loaded = "true";
-    } catch {
-      // Google Ads may fail quietly in local/dev environments.
-    }
-  }, []);
+    const intervalId = window.setInterval(() => {
+      attempts += 1;
+
+      if (tryRenderAd() || attempts >= 20) {
+        window.clearInterval(intervalId);
+      }
+    }, 500);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [pathname, slot]);
 
   return (
     <aside className={className || "panel glass ad-slot-panel"}>

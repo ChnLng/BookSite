@@ -124,12 +124,17 @@ select {
 .pill-button {
   padding: 11px 16px;
   border-radius: 999px;
-  border: 1px solid rgba(25, 52, 68, 0.08);
-  background: rgba(255, 255, 255, 0.62);
-  transition: transform 180ms ease, background 180ms ease;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.4));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    0 12px 24px rgba(25, 52, 68, 0.08);
+  backdrop-filter: blur(18px);
+  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
   color: inherit;
   cursor: pointer;
   font: inherit;
+  text-decoration: none;
 }
 
 .nav-links a:hover,
@@ -137,7 +142,10 @@ select {
 .pill-button:hover,
 .cta-button:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.55));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 16px 32px rgba(25, 52, 68, 0.12);
 }
 
 .hero-grid,
@@ -269,13 +277,15 @@ select {
 
 .ad-slot-panel {
   padding: 18px;
+  min-height: 280px;
 }
 
 .ad-slot-ins {
-  min-height: 180px;
+  min-height: 240px;
   width: 100%;
   border-radius: 22px;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .ad-slot-placeholder {
@@ -366,7 +376,9 @@ select {
   display: flex;
   gap: 18px;
   width: max-content;
-  animation: marquee 28s linear infinite;
+  will-change: transform;
+  animation: marquee 18s linear infinite;
+  animation-play-state: running;
 }
 
 .carousel-card {
@@ -442,8 +454,12 @@ select {
   gap: 8px;
   border-radius: 999px;
   padding: 10px 14px;
-  border: 1px solid rgba(25, 52, 68, 0.08);
-  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.44));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 12px 24px rgba(25, 52, 68, 0.08);
+  backdrop-filter: blur(18px);
 }
 
 .config-pills {
@@ -534,13 +550,17 @@ select {
 }
 
 .footer-link-button {
-  border: 1px solid rgba(25, 52, 68, 0.08);
-  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.44));
   border-radius: 999px;
   padding: 10px 14px;
   cursor: pointer;
   font: inherit;
   color: inherit;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 12px 24px rgba(25, 52, 68, 0.08);
+  backdrop-filter: blur(18px);
 }
 
 .overlay-backdrop {
@@ -698,21 +718,28 @@ select {
 }
 
 .cta-button {
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.34);
   cursor: pointer;
   padding: 13px 18px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #133445 0%, #27536a 100%);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.02)),
+    linear-gradient(135deg, rgba(19, 52, 69, 0.9) 0%, rgba(39, 83, 106, 0.88) 100%);
   color: white;
-  transition: transform 180ms ease, box-shadow 180ms ease;
-  box-shadow: 0 16px 28px rgba(19, 52, 69, 0.2);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 18px 30px rgba(19, 52, 69, 0.22);
+  backdrop-filter: blur(18px);
 }
 
 .cta-button.secondary {
-  background: rgba(255, 255, 255, 0.84);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.48));
   color: var(--ink);
-  border: 1px solid rgba(25, 52, 68, 0.08);
-  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 14px 26px rgba(25, 52, 68, 0.08);
 }
 
 .section-block {
