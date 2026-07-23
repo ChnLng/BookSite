@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { useAuth } from "@/components/auth-provider";
+import { bookIdFromDownload } from "@/lib/purchase-access";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type CommentRecord = {
@@ -15,6 +16,7 @@ type CommentRecord = {
 
 type DownloadRecord = {
   id: string;
+  book_id: string | null;
   book_title: string | null;
   download_url: string | null;
   created_at: string | null;
@@ -51,9 +53,9 @@ export default function AccountPage() {
       const email = user.email || "";
       const [{ data: commentData }, { data: downloadByUser }, { data: downloadByEmail }, { data: donationData }] = await Promise.all([
         supabase.from("comments").select("id, content, author_name, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("downloads").select("id, book_title, download_url, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("downloads").select("id, book_id, book_title, download_url, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
         email
-          ? supabase.from("downloads").select("id, book_title, download_url, created_at").eq("user_email", email).order("created_at", { ascending: false })
+          ? supabase.from("downloads").select("id, book_id, book_title, download_url, created_at").eq("user_email", email).order("created_at", { ascending: false })
           : Promise.resolve({ data: [] }),
         supabase.from("donations").select("id, amount, note, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
       ]);
@@ -251,21 +253,30 @@ export default function AccountPage() {
                   {downloads.length === 0 ? (
                     <p className="muted">Aucun telechargement enregistre.</p>
                   ) : (
-                    downloads.map((download) => (
+                    downloads.map((download) => {
+                      const readBookId = bookIdFromDownload(download);
+
+                      return (
                       <div key={download.id} className="split-line" style={{ marginTop: 8 }}>
                         <div>
                           <span>{download.book_title || "Livre"}</span>
-                          {download.download_url ? (
-                            <div style={{ marginTop: 6 }}>
-                              <a className="cta-button compact-submit" href={download.download_url} target="_blank" rel="noreferrer">
-                                Télécharger le PDF
+                          <div className="actions-row" style={{ marginTop: 6, marginBottom: 0 }}>
+                            {readBookId ? (
+                              <Link className="cta-button compact-submit" href={`/read/${readBookId}`}>
+                                Lire en ligne
+                              </Link>
+                            ) : null}
+                            {download.download_url ? (
+                              <a className="cta-button secondary compact-submit" href={download.download_url} target="_blank" rel="noreferrer">
+                                Telecharger le PDF
                               </a>
-                            </div>
-                          ) : null}
+                            ) : null}
+                          </div>
                         </div>
                         <span className="tiny">{download.created_at ? new Date(download.created_at).toLocaleDateString("fr-FR") : "—"}</span>
                       </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               ) : null}

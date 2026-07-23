@@ -949,3 +949,65 @@ select {
     border-radius: 24px;
   }
 }
+
+.reader-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.reader-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.reader-book-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.reader-cover-wrap {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(25, 52, 68, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.reader-cover-image {
+  display: block;
+  object-fit: cover;
+}
+
+.reader-gate {
+  border-radius: 24px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(25, 52, 68, 0.08);
+}
+
+.reader-stage {
+  display: grid;
+  gap: 12px;
+}
+
+.reader-frame {
+  width: 100%;
+  min-height: 72vh;
+  border: 1px solid rgba(25, 52, 68, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+@media (max-width: 760px) {
+  .reader-header,
+  .reader-book-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .reader-frame {
+    min-height: 60vh;
+  }
+}
