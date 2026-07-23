@@ -21,7 +21,7 @@ import { TopNav } from "@/components/top-nav";
 import { PromoBanner } from "@/components/promo-banner";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
-import { hasSupabaseConfig, siteConfig } from "@/lib/site-config";
+import { siteConfig } from "@/lib/site-config";
 import { infoLinks } from "@/lib/legal-info";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib/promo";
@@ -78,7 +78,7 @@ export default function HomePage() {
   const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>([]);
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
-  const { user, profile, isAdmin, signInWithPassword, signUpWithPassword } = useAuth();
+  const { user, profile, signInWithPassword, signUpWithPassword } = useAuth();
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
 
@@ -143,7 +143,13 @@ export default function HomePage() {
       const select = container.querySelector("select") as HTMLSelectElement | null;
 
       if (select && select.options.length > 0 && !select.value) {
-        select.selectedIndex = 0;
+        const firstRealOption = Array.from(select.options).findIndex((option) => {
+          const value = option.value.trim();
+          const text = option.textContent?.trim() || "";
+          return Boolean(value || text);
+        });
+
+        select.selectedIndex = firstRealOption >= 0 ? firstRealOption : 0;
         select.dispatchEvent(new Event("change", { bubbles: true }));
       }
 
@@ -240,12 +246,6 @@ export default function HomePage() {
       setCommentName(profile?.displayName || user.user_metadata?.full_name || user.email?.split("@")[0] || "");
     }
   }, [user, profile, commentName]);
-
-  const viewer = {
-    name: profile?.displayName || user?.user_metadata?.full_name || user?.email || "Invite",
-    isLoggedIn: Boolean(user),
-    isAdmin,
-  };
 
   const handleOAuth = async (provider: "google" | "github") => {
     const supabase = getSupabaseBrowserClient();
@@ -408,9 +408,6 @@ export default function HomePage() {
               <Sparkles size={16} />
               Donation
             </span>
-            <p className="tiny" style={{ marginTop: 8, marginBottom: 0 }}>
-              Montant par defaut: premier choix automatiquement si PayPal l&apos;autorise.
-            </p>
             <div className="paypal-donation-shell">
               <div className="paypal-donation-card">
                 <div id="paypal-container-D3LVZA49QZ4VE" />
@@ -467,7 +464,7 @@ export default function HomePage() {
         </div>
 
         <section className="panel glass carousel-stage" id="scene">
-          <div className="badge">Edition poetique haut de gamme</div>
+          <div className="badge">Albums illustrés bilingue chinois-français</div>
           <p className="hero-copy stage-copy">
             Au centre, la selection produit reste reine : images plus grandes,
             lumiere douce, mouvement continu, titre discret et prix visibles.
@@ -649,11 +646,6 @@ export default function HomePage() {
               </button>
             </form>
             {authMessage ? <p className="tiny">{authMessage}</p> : null}
-            <div className="config-pills">
-              <span className="config-pill">Supabase {hasSupabaseConfig ? "pret" : "a relier"}</span>
-              <span className="config-pill">Paiement PayPal</span>
-              <span className="config-pill">{viewer.isAdmin ? "Role admin detecte" : "Role lecteur detecte"}</span>
-            </div>
           </div>
         </div>
       ) : null}

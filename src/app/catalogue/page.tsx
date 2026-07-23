@@ -13,7 +13,6 @@ export default function CataloguePage() {
   const { user } = useAuth();
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [payingBookId, setPayingBookId] = useState<string | null>(null);
-  const [promoCode, setPromoCode] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [books, setBooks] = useState<DisplayBook[]>([]);
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
@@ -50,7 +49,6 @@ export default function CataloguePage() {
         body: JSON.stringify({
           kind: "book",
           id: bookId,
-          promoCode: promoCode.trim() || undefined,
           email: user?.email || undefined,
         }),
       });
@@ -77,43 +75,19 @@ export default function CataloguePage() {
 
       <section className="catalog-grid" id="catalogue-scene">
         <aside className="panel glass">
-          <div className="badge">Filtres simples</div>
-          <div className="section-block">
-            <div className="split-line">
-              <span>Albums trouves</span>
-              <strong>{filteredBooks.length}</strong>
-            </div>
-            <div className="split-line">
-              <span>Prix unique</span>
-              <strong>{books[0]?.priceEur.toFixed(2) || "5.99"} EUR</strong>
-            </div>
-            <div className="split-line">
-              <span>Format prevu</span>
-              <strong>PDF EPUB MOBI</strong>
-            </div>
-          </div>
           <div className="section-block">
             <label className="tiny" htmlFor="catalog-search">
               Rechercher par titre
             </label>
+            <p className="tiny" style={{ marginTop: 8, marginBottom: 10 }}>
+              Entrez un titre en francais ou en chinois pour afficher le produit correspondant.
+            </p>
             <input
               id="catalog-search"
               className="input"
               placeholder="Tapez un titre FR ou ZH"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-            />
-          </div>
-          <div className="section-block">
-            <label className="tiny" htmlFor="promo-code">
-              Code promo
-            </label>
-            <input
-              id="promo-code"
-              className="input"
-              placeholder="VISD10"
-              value={promoCode}
-              onChange={(event) => setPromoCode(event.target.value)}
             />
           </div>
           <GoogleAdsSlot
@@ -131,7 +105,7 @@ export default function CataloguePage() {
             Cette page est volontairement claire et compacte pour eviter de faire
             trop defiler.
           </p>
-          <div className="book-grid">
+          <div className="book-grid catalogue-book-grid">
             {filteredBooks.map((book) => (
               <article className="book-card" key={book.id}>
                 <div className="book-cover-wrap">
