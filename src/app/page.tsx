@@ -27,9 +27,15 @@ import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib/promo";
 
 const socialLinks = [
-  { label: "Instagram", href: "https://instagram.com", icon: Instagram },
-  { label: "TikTok", href: "https://tiktok.com", icon: Music4 },
-  { label: "Facebook", href: "https://facebook.com", icon: Facebook },
+  { label: "Instagram", href: "https://www.instagram.com/", icon: Instagram, platform: "instagram" },
+  { label: "TikTok", href: "https://www.tiktok.com/", icon: Music4, platform: "tiktok" },
+  { label: "Facebook", href: "https://www.facebook.com/sharer/sharer.php", icon: Facebook, platform: "facebook" },
+] as const;
+
+const shareTexts = [
+  "J'ai trouve un superbe site de livres illustres bilingues chinois-francais, je vous le partage.",
+  "Je viens de decouvrir un joli site de albums bilingues chinois-francais, partageons-le avec tout le monde.",
+  "Belle decouverte du jour : un site de livres bilingues chinois-francais a partager autour de soi.",
 ];
 
 type CommentItem = {
@@ -78,6 +84,7 @@ export default function HomePage() {
   const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>([]);
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
+  const [shareMessage, setShareMessage] = useState("");
   const { user, profile, signInWithPassword, signUpWithPassword } = useAuth();
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
@@ -85,6 +92,38 @@ export default function HomePage() {
   useEffect(() => {
     void loadDisplayBooks().then(setDisplayBooks);
   }, []);
+
+  const handleShare = async (platform: "instagram" | "tiktok" | "facebook", href: string) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const randomText = shareTexts[Math.floor(Math.random() * shareTexts.length)];
+    const shareUrl = window.location.origin;
+    const fullText = `${randomText} ${shareUrl}`;
+
+    if (platform === "facebook") {
+      const facebookUrl = `${href}?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(randomText)}`;
+      window.open(facebookUrl, "_blank", "noopener,noreferrer");
+      setShareMessage("Partage Facebook ouvert.");
+      return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(fullText);
+        setShareMessage(
+          platform === "instagram"
+            ? "Texte copie. Collez-le dans Instagram."
+            : "Texte copie. Collez-le dans TikTok.",
+        );
+      }
+    } catch {
+      setShareMessage("Le texte de partage n'a pas pu etre copie automatiquement.");
+    }
+
+    window.open(href, "_blank", "noopener,noreferrer");
+  };
 
   useEffect(() => {
     const loadPromo = async () => {
@@ -416,6 +455,26 @@ export default function HomePage() {
         showAdmin
         showLogout
         isHomePage={true}
+        sharePanel={(
+          <div className="share-strip">
+            <span className="share-strip-label">Partagez cette decouverte</span>
+            <div className="share-strip-actions">
+              {socialLinks.map(({ label, href, icon: Icon, platform }) => (
+                <button
+                  key={label}
+                  className="share-icon-button"
+                  type="button"
+                  aria-label={`Partager sur ${label}`}
+                  title={`Partager sur ${label}`}
+                  onClick={() => void handleShare(platform, href)}
+                >
+                  <Icon size={16} />
+                </button>
+              ))}
+            </div>
+            {shareMessage ? <span className="share-strip-status">{shareMessage}</span> : null}
+          </div>
+        )}
       />
 
       <section className="hero-scene">
@@ -433,6 +492,7 @@ export default function HomePage() {
           </aside>
 
           <GoogleAdsSlot
+            client="ca-pub-6796254088003500"
             className="panel glass ad-slot-panel"
             label="Ads"
             slot="8355506858"
@@ -485,8 +545,27 @@ export default function HomePage() {
 
           <div className="marquee-shell">
             <div className="marquee-track">
-              {[...displayBooks, ...displayBooks].map((book, index) => (
+              {displayBooks.map((book, index) => (
                 <article className="carousel-card" key={`${book.id}-${index}`}>
+                  <div className="carousel-image">
+                    <Image
+                      src={book.coverImage}
+                      alt={book.titleFr}
+                      fill
+                      sizes="270px"
+                      className="carousel-cover-image"
+                    />
+                  </div>
+                  <div className="carousel-caption">
+                    <strong>{book.titleFr}</strong>
+                    <span>{book.priceEur.toFixed(2)} EUR</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="marquee-track marquee-track-clone" aria-hidden="true">
+              {displayBooks.map((book, index) => (
+                <article className="carousel-card" key={`${book.id}-clone-${index}`}>
                   <div className="carousel-image">
                     <Image
                       src={book.coverImage}
@@ -514,15 +593,6 @@ export default function HomePage() {
                 Version papier Amazon
               </a>
             ) : null}
-          </div>
-
-          <div className="social-row">
-            {socialLinks.map(({ label, href, icon: Icon }) => (
-              <a className="social-chip" href={href} key={label} target="_blank">
-                <Icon size={16} />
-                <span>{label}</span>
-              </a>
-            ))}
           </div>
         </section>
       </section>

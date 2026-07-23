@@ -10,12 +10,14 @@ declare global {
 }
 
 type GoogleAdsSlotProps = {
+  client: string;
   className?: string;
   label?: string;
   slot: string;
 };
 
 export function GoogleAdsSlot({
+  client,
   className,
   label = "Ads",
   slot,
@@ -77,7 +79,7 @@ export function GoogleAdsSlot({
           ref={adRef}
           className="adsbygoogle ad-slot-ins"
           style={{ display: "block" }}
-          data-ad-client="ca-pub-6796254088003500"
+          data-ad-client={client}
           data-ad-slot={slot}
           data-ad-format="auto"
           data-full-width-responsive="true"

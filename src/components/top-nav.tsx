@@ -12,6 +12,7 @@ type TopNavProps = {
   showAdmin?: boolean;
   showLogout?: boolean;
   isHomePage?: boolean;
+  sharePanel?: React.ReactNode;
 };
 
 export function TopNav({
@@ -22,6 +23,7 @@ export function TopNav({
   showAdmin,
   showLogout,
   isHomePage = false,
+  sharePanel,
 }: TopNavProps) {
   const { user, isAdmin, signOut } = useAuth();
 
@@ -38,6 +40,7 @@ export function TopNav({
           </div>
         ) : null}
       </div>
+      {sharePanel ? <div className="topbar-share-wrap">{sharePanel}</div> : null}
       <nav className="nav-links">
         {!isHomePage ? <Link href="/">Accueil</Link> : null}
         <Link href="/catalogue">Catalogue</Link>

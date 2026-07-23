@@ -95,6 +95,7 @@ export default function CataloguePage() {
           </div>
           </div>
           <GoogleAdsSlot
+            client="ca-pub-6796254088003500"
             className="panel glass ad-slot-panel"
             label="Ads"
             slot="8355506858"
