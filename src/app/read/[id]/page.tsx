@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { BrandLogo } from "@/components/brand-logo";
+import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { getStaticBookById } from "@/lib/books-service";
 import { hasPurchasedBook } from "@/lib/purchase-access";
@@ -160,20 +160,7 @@ export default function ReadBookPage() {
 
   return (
     <main className="page-shell">
-      <header className="topbar glass">
-        <div className="brand-mark">
-          <BrandLogo />
-          <div>
-            <div className="tiny">Lecture en ligne</div>
-            <strong>{book.titleFr}</strong>
-          </div>
-        </div>
-        <nav className="nav-links">
-          <Link href="/">Accueil</Link>
-          <Link href="/catalogue">Catalogue</Link>
-          <Link href="/account">Mon compte</Link>
-        </nav>
-      </header>
+      <TopNav subtitle="Lecture en ligne" title={book.titleFr} />
 
       <section className="panel glass reader-panel">
         <div className="reader-header">

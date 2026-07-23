@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { BrandLogo } from "@/components/brand-logo";
+import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { bookIdFromDownload } from "@/lib/purchase-access";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
@@ -30,7 +30,7 @@ type DonationRecord = {
 };
 
 export default function AccountPage() {
-  const { user, profile, loading, isAdmin, signOut } = useAuth();
+  const { user, profile, session, loading, isAdmin } = useAuth();
   const [comments, setComments] = useState<CommentRecord[]>([]);
   const [downloads, setDownloads] = useState<DownloadRecord[]>([]);
   const [donations, setDonations] = useState<DonationRecord[]>([]);
@@ -134,6 +134,30 @@ export default function AccountPage() {
     setCommentActionMessage("Commentaire supprimé.");
   };
 
+  const handlePdfDownload = async (bookId: string) => {
+    if (!session?.access_token) {
+      return;
+    }
+
+    const response = await fetch(`/api/books/${bookId}/pdf`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      return;
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = `${bookId}_book.pdf`;
+    anchor.click();
+    URL.revokeObjectURL(objectUrl);
+  };
+
   const tabs = [
     { key: "comments", label: "Commentaires", count: comments.length },
     { key: "downloads", label: "Telechargements", count: downloads.length },
@@ -142,23 +166,7 @@ export default function AccountPage() {
 
   return (
     <main className="page-shell">
-      <header className="topbar glass">
-        <div className="brand-mark">
-          <BrandLogo />
-          <div>
-            <div className="tiny">Ma page</div>
-            <strong>Ma page</strong>
-          </div>
-        </div>
-        <nav className="nav-links">
-          <Link href="/">Accueil</Link>
-          <Link href="/catalogue">Catalogue</Link>
-          {isAdmin ? <Link href="/admin">Admin</Link> : null}
-          <button className="nav-button" type="button" onClick={() => void signOut()}>
-            Déconnexion
-          </button>
-        </nav>
-      </header>
+      <TopNav subtitle="Ma page" title="Ma page" showAdmin showLogout />
 
       <section className="panel glass">
         <h1 className="section-title" style={{ fontFamily: "var(--font-heading), serif" }}>
@@ -266,10 +274,14 @@ export default function AccountPage() {
                                 Lire en ligne
                               </Link>
                             ) : null}
-                            {download.download_url ? (
-                              <a className="cta-button secondary compact-submit" href={download.download_url} target="_blank" rel="noreferrer">
+                            {readBookId ? (
+                              <button
+                                className="cta-button secondary compact-submit"
+                                type="button"
+                                onClick={() => void handlePdfDownload(readBookId)}
+                              >
                                 Telecharger le PDF
-                              </a>
+                              </button>
                             ) : null}
                           </div>
                         </div>

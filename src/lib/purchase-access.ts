@@ -11,6 +11,38 @@ function expectedPdfPath(bookId: string) {
   return bookPdfPath(bookId);
 }
 
+function normalizePdfPath(url: string | null | undefined) {
+  if (!url) {
+    return null;
+  }
+
+  const trimmed = url.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+}
+
+function downloadMatchesBook(
+  row: { book_id?: string | null; download_url?: string | null },
+  bookId: string,
+  pdfPath: string,
+) {
+  if (row.book_id === bookId) {
+    return true;
+  }
+
+  const normalizedUrl = normalizePdfPath(row.download_url);
+
+  if (normalizedUrl === pdfPath) {
+    return true;
+  }
+
+  return bookIdFromDownload(row) === bookId;
+}
+
 async function matchDownload(
   supabase: SupabaseClient,
   params: PurchaseCheckParams,
@@ -23,11 +55,7 @@ async function matchDownload(
     .select("id, book_id, download_url")
     .eq("user_id", userId);
 
-  if (
-    byUserId?.some(
-      (row) => row.book_id === bookId || row.download_url === pdfPath,
-    )
-  ) {
+  if (byUserId?.some((row) => downloadMatchesBook(row, bookId, pdfPath))) {
     return true;
   }
 
@@ -40,31 +68,14 @@ async function matchDownload(
     .select("id, book_id, download_url")
     .eq("user_email", email);
 
-  return Boolean(
-    byEmail?.some(
-      (row) => row.book_id === bookId || row.download_url === pdfPath,
-    ),
-  );
+  return Boolean(byEmail?.some((row) => downloadMatchesBook(row, bookId, pdfPath)));
 }
 
 export async function hasPurchasedBook(
   supabase: SupabaseClient,
   params: PurchaseCheckParams,
 ): Promise<boolean> {
-  const { userId, email, bookId } = params;
-
-  const { data, error } = await supabase
-    .from("downloads")
-    .select("id")
-    .or(`user_id.eq.${userId},user_email.eq.${email}`)
-    .eq("book_id", bookId)
-    .limit(1);
-
-  if (error) {
-    return false;
-  }
-
-  return data.length > 0;
+  return matchDownload(supabase, params);
 }
 
 export function bookIdFromDownload(record: {

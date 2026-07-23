@@ -16,7 +16,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
+import { TopNav } from "@/components/top-nav";
 import { PromoBanner } from "@/components/promo-banner";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
@@ -367,25 +367,12 @@ export default function HomePage() {
 
   return (
     <main className="page-shell luxury-shell">
-      <header className="topbar glass topbar-luxury">
-        <div className="brand-mark">
-          <BrandLogo />
-          <div>
-            <div className="tiny">Bibliotheque visuelle bilingue</div>
-            <strong>{siteConfig.brand}</strong>
-          </div>
-        </div>
-        <nav className="nav-links">
-          <Link href="/catalogue">Catalogue</Link>
-          {viewer.isLoggedIn ? (
-            <Link href="/account">Ma page</Link>
-          ) : (
-            <button className="nav-button" type="button" onClick={() => setAuthOpen(true)}>
-              Connexion
-            </button>
-          )}
-        </nav>
-      </header>
+      <TopNav
+        className="topbar-luxury"
+        subtitle="Bibliotheque visuelle bilingue"
+        title={siteConfig.brand}
+        onLoginClick={() => setAuthOpen(true)}
+      />
 
       <section className="hero-scene">
         <div className="left-column-stack">

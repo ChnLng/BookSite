@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AdminGuard } from "@/components/admin-guard";
-import { BrandLogo } from "@/components/brand-logo";
+import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-assets";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
@@ -110,7 +110,7 @@ function bookEditFromRow(book: BookRow): BookEditState {
 }
 
 function AdminPageContent() {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
   const [books, setBooks] = useState<BookRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
@@ -321,23 +321,7 @@ function AdminPageContent() {
 
   return (
     <main className="page-shell">
-      <header className="topbar glass">
-        <div className="brand-mark">
-          <BrandLogo />
-          <div>
-            <div className="tiny">后台概览 Admin</div>
-            <strong>Visd AR 管理台</strong>
-          </div>
-        </div>
-        <nav className="nav-links">
-          <Link href="/">Accueil</Link>
-          <Link href="/catalogue">Catalogue</Link>
-          <Link href="/account">Mon compte</Link>
-          <button className="nav-button" type="button" onClick={() => void signOut()}>
-            Déconnexion
-          </button>
-        </nav>
-      </header>
+      <TopNav subtitle="后台概览 Admin" title="Visd AR 管理台" showLogout />
 
       <section className="dashboard-grid">
         <aside className="admin-sidebar">

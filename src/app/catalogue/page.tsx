@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Ticket, X } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
+import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
 import { infoLinks } from "@/lib/legal-info";
@@ -52,19 +52,11 @@ export default function CataloguePage() {
 
   return (
     <main className="page-shell">
-      <header className="topbar glass topbar-luxury">
-        <div className="brand-mark">
-          <BrandLogo />
-          <div>
-            <div className="tiny">Bibliotheque visuelle bilingue</div>
-            <strong>Visd AR</strong>
-          </div>
-        </div>
-        <nav className="nav-links">
-          <Link href="/">Accueil</Link>
-          <Link href="/account">Ma page</Link>
-        </nav>
-      </header>
+      <TopNav
+        className="topbar-luxury"
+        subtitle="Bibliotheque visuelle bilingue"
+        title="Visd AR"
+      />
 
       <section className="catalog-grid" id="catalogue-scene">
         <aside className="panel glass">
