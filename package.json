@@ -16,7 +16,10 @@
     "next": "^15.4.5",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "stripe": "^18.5.0"
+    "stripe": "^18.5.0",
+    "tailwindcss": "^4.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
