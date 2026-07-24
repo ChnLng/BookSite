@@ -4,12 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import {
-  Facebook,
-  Linkedin,
   LoaderCircle,
   Mail,
   MessageCircleHeart,
-  Send,
   ShieldCheck,
   Sparkles,
   Ticket,
@@ -26,18 +23,6 @@ import { siteConfig } from "@/lib/site-config";
 import { infoLinks } from "@/lib/legal-info";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib/promo";
-
-const socialLinks = [
-  { label: "Telegram", href: "https://t.me/share/url", icon: Send, platform: "telegram" },
-  { label: "LinkedIn", href: "https://www.linkedin.com/sharing/share-offsite/", icon: Linkedin, platform: "linkedin" },
-  { label: "Facebook", href: "https://www.facebook.com/sharer/sharer.php", icon: Facebook, platform: "facebook" },
-] as const;
-
-const shareTexts = [
-  "J'ai trouve un superbe site de livres illustres bilingues chinois-francais, je vous le partage.",
-  "Je viens de decouvrir un joli site de albums bilingues chinois-francais, partageons-le avec tout le monde.",
-  "Belle decouverte du jour : un site de livres bilingues chinois-francais a partager autour de soi.",
-];
 
 type CommentItem = {
   id: string;
@@ -94,10 +79,11 @@ export default function HomePage() {
   const [commentContent, setCommentContent] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentMessage, setCommentMessage] = useState("");
+  const [commentDeliveryMode, setCommentDeliveryMode] = useState<"site" | "email">("site");
   const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>(defaultCarouselBooks);
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
-  const { user, profile, signInWithPassword, signUpWithPassword } = useAuth();
+  const { user, profile, session, signInWithPassword, signUpWithPassword } = useAuth();
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
 
@@ -106,23 +92,6 @@ export default function HomePage() {
       setDisplayBooks(books.length > 0 ? books : defaultCarouselBooks);
     });
   }, []);
-
-  const handleShare = (platform: "telegram" | "linkedin" | "facebook", href: string) => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const randomText = shareTexts[Math.floor(Math.random() * shareTexts.length)];
-    const shareUrl = window.location.origin;
-    const sharePayload =
-      platform === "facebook"
-        ? `${href}?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(randomText)}`
-        : platform === "linkedin"
-          ? `${href}?url=${encodeURIComponent(shareUrl)}`
-          : `${href}?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(randomText)}`;
-
-    window.open(sharePayload, "_blank", "noopener,noreferrer");
-  };
 
   useEffect(() => {
     const loadPromo = async () => {
@@ -405,6 +374,11 @@ export default function HomePage() {
       return;
     }
 
+    if (commentDeliveryMode === "email" && (!user || !session?.access_token)) {
+      setCommentMessage("Connectez-vous pour envoyer un message par email a l'administrateur.");
+      return;
+    }
+
     setIsSubmittingComment(true);
     setCommentMessage("");
 
@@ -412,9 +386,15 @@ export default function HomePage() {
       const formData = new FormData();
       formData.append("name", commentName);
       formData.append("content", commentContent);
+      formData.append("mode", commentDeliveryMode);
 
       const response = await fetch("/api/messages", {
         method: "POST",
+        headers: session?.access_token
+          ? {
+              Authorization: `Bearer ${session.access_token}`,
+            }
+          : undefined,
         body: formData,
       });
 
@@ -425,18 +405,23 @@ export default function HomePage() {
         return;
       }
 
-      const newComment: CommentItem = {
-        id: result.comment.id,
-        name: commentName,
-        content: commentContent,
-        icon: commentIcons[Math.floor(Math.random() * commentIcons.length)],
-        createdAt: result.comment.createdAt,
-      };
+      if (commentDeliveryMode === "site") {
+        const newComment: CommentItem = {
+          id: result.comment.id,
+          name: commentName,
+          content: commentContent,
+          icon: commentIcons[Math.floor(Math.random() * commentIcons.length)],
+          createdAt: result.comment.createdAt,
+        };
 
-      setComments((prev) => [newComment, ...prev.slice(0, 1)]);
-      setCommentName("");
-      setCommentContent("");
-      setCommentMessage("Commentaire ajouté avec succès!");
+        setComments((prev) => [newComment, ...prev.slice(0, 1)]);
+        setCommentName("");
+        setCommentContent("");
+        setCommentMessage("Commentaire publie avec succes.");
+      } else {
+        setCommentContent("");
+        setCommentMessage(result.message || "Message envoye a l'administrateur.");
+      }
     } catch (error) {
       setCommentMessage("Erreur réseau. Veuillez réessayer.");
     } finally {
@@ -454,25 +439,6 @@ export default function HomePage() {
         showAdmin
         showLogout
         isHomePage={true}
-        sharePanel={(
-          <div className="share-strip">
-            <span className="share-strip-label">Partagez cette decouverte</span>
-            <div className="share-strip-actions">
-              {socialLinks.map(({ label, href, icon: Icon, platform }) => (
-                <button
-                  key={label}
-                  className="share-icon-button"
-                  type="button"
-                  aria-label={`Partager sur ${label}`}
-                  title={`Partager sur ${label}`}
-                  onClick={() => void handleShare(platform, href)}
-                >
-                  <Icon size={16} />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       />
 
       <section className="hero-scene">
@@ -516,6 +482,30 @@ export default function HomePage() {
               ))}
             </div>
             <form className="input-group compact-form" onSubmit={handleCommentSubmit}>
+              <div className="comment-delivery-switch">
+                <button
+                  className={commentDeliveryMode === "site" ? "pill-button active-mode" : "pill-button"}
+                  type="button"
+                  onClick={() => {
+                    setCommentDeliveryMode("site");
+                    setCommentMessage("");
+                  }}
+                >
+                  Publier sur le site
+                </button>
+                <button
+                  className={commentDeliveryMode === "email" ? "pill-button active-mode" : "pill-button"}
+                  type="button"
+                  disabled={!user}
+                  onClick={() => {
+                    setCommentDeliveryMode("email");
+                    setCommentMessage("");
+                  }}
+                  title={user ? "Envoyer par email a l'administrateur" : "Connexion requise"}
+                >
+                  Envoyer par email
+                </button>
+              </div>
               <input
                 className="input compact-input"
                 name="name"
@@ -533,6 +523,9 @@ export default function HomePage() {
               <button className="cta-button compact-submit" type="submit" disabled={isSubmittingComment}>
                 {isSubmittingComment ? "Envoi..." : "Envoyer"}
               </button>
+              {commentDeliveryMode === "email" && !user ? (
+                <p className="tiny comment-message">Connectez-vous pour envoyer votre message par email a l&apos;administrateur.</p>
+              ) : null}
               {commentMessage ? <p className="tiny comment-message">{commentMessage}</p> : null}
             </form>
           </aside>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { useAuth } from "@/components/auth-provider";
+import { SiteShareStrip } from "@/components/site-share-strip";
 
 type TopNavProps = {
   subtitle?: string;
@@ -28,6 +29,7 @@ export function TopNav({
   const { user, isAdmin, signOut } = useAuth();
 
   const headerClassName = ["topbar", "glass", className].filter(Boolean).join(" ");
+  const resolvedSharePanel = sharePanel ?? <SiteShareStrip />;
 
   return (
     <header className={headerClassName}>
@@ -40,7 +42,7 @@ export function TopNav({
           </div>
         ) : null}
       </Link>
-      {sharePanel ? <div className="topbar-share-wrap">{sharePanel}</div> : null}
+      {resolvedSharePanel ? <div className="topbar-share-wrap">{resolvedSharePanel}</div> : null}
       <nav className="nav-links">
         {!isHomePage ? <Link href="/">Accueil</Link> : null}
         <Link href="/catalogue">Catalogue</Link>
