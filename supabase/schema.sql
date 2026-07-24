@@ -226,9 +226,13 @@ alter table public.books add column if not exists synopsis_zh text;
 alter table public.books add column if not exists asin text;
 alter table public.books add column if not exists sort_order integer;
 alter table public.books add column if not exists related_book_ids text[];
+alter table public.books add column if not exists category_id uuid references public.categories(id) on delete set null;
 
 create index if not exists books_catalogue_visible_sort_idx
   on public.books (visible, sort_order, created_at);
+
+create index if not exists books_category_idx
+  on public.books (category_id);
 
 create index if not exists books_title_fr_trgm_idx
   on public.books using gin (lower(title_fr) gin_trgm_ops);
@@ -266,6 +270,33 @@ create table if not exists public.categories (
   description text,
   created_at timestamptz default now()
 );
+
+alter table public.categories add column if not exists slug text;
+alter table public.categories add column if not exists title_fr text;
+alter table public.categories add column if not exists title_zh text;
+alter table public.categories add column if not exists base_price_eur numeric(10,2);
+alter table public.categories add column if not exists attribute_label_fr text;
+alter table public.categories add column if not exists attribute_label_zh text;
+alter table public.categories add column if not exists description_fr text;
+alter table public.categories add column if not exists description_zh text;
+
+update public.categories
+set
+  slug = coalesce(slug, lower(regexp_replace(coalesce(name, ''), '[^a-zA-Z0-9]+', '-', 'g'))),
+  title_fr = coalesce(title_fr, name),
+  title_zh = coalesce(title_zh, name),
+  description_fr = coalesce(description_fr, description),
+  description_zh = coalesce(description_zh, description)
+where
+  slug is null
+  or title_fr is null
+  or title_zh is null
+  or description_fr is null
+  or description_zh is null;
+
+create unique index if not exists categories_slug_unique_idx
+  on public.categories (slug)
+  where slug is not null;
 
 alter table public.categories enable row level security;
 

@@ -14,6 +14,7 @@ import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib
 type BookRow = {
   id: string;
   slug: string | null;
+  category_id?: string | null;
   sort_order: number | null;
   title_fr: string;
   title_zh: string;
@@ -32,8 +33,14 @@ type BookRow = {
 
 type CategoryRow = {
   id: string;
-  name: string;
-  description: string | null;
+  slug: string | null;
+  title_fr: string | null;
+  title_zh: string | null;
+  base_price_eur: number | null;
+  attribute_label_fr: string | null;
+  attribute_label_zh: string | null;
+  description_fr: string | null;
+  description_zh: string | null;
   created_at?: string | null;
 };
 
@@ -56,6 +63,7 @@ type DonationRow = {
 
 type BookFormState = {
   slug: string;
+  categoryId: string;
   titleFr: string;
   titleZh: string;
   asin: string;
@@ -72,10 +80,18 @@ type BookFormState = {
 
 type BookEditState = BookFormState;
 
-type CategoryEditState = {
-  name: string;
-  description: string;
+type CategoryFormState = {
+  slug: string;
+  titleFr: string;
+  titleZh: string;
+  basePriceEur: string;
+  attributeLabelFr: string;
+  attributeLabelZh: string;
+  descriptionFr: string;
+  descriptionZh: string;
 };
+
+type CategoryEditState = CategoryFormState;
 
 type PromoFormState = {
   code: string;
@@ -96,8 +112,8 @@ type PdfStorageStatus = {
 };
 
 const adminSections = [
-  { key: "books", label: "图书 Livres" },
   { key: "categories", label: "类目 Categories" },
+  { key: "books", label: "图书 Livres" },
   { key: "promo", label: "优惠码 Codes promo" },
   { key: "downloads", label: "下载 Downloads" },
   { key: "donations", label: "赞助 Donations" },
@@ -107,6 +123,7 @@ type AdminSectionKey = (typeof adminSections)[number]["key"];
 
 const defaultBookForm: BookFormState = {
   slug: "",
+  categoryId: "",
   titleFr: "",
   titleZh: "",
   asin: "",
@@ -119,6 +136,17 @@ const defaultBookForm: BookFormState = {
   amazonPaperbackUrl: "",
   visible: true,
   relatedBookIds: [],
+};
+
+const defaultCategoryForm: CategoryFormState = {
+  slug: "",
+  titleFr: "",
+  titleZh: "",
+  basePriceEur: "",
+  attributeLabelFr: "",
+  attributeLabelZh: "",
+  descriptionFr: "",
+  descriptionZh: "",
 };
 
 const defaultPromoForm: PromoFormState = {
@@ -187,6 +215,7 @@ function bookEditFromRow(book: BookRow): BookEditState {
 
   return {
     slug,
+    categoryId: book.category_id || "",
     titleFr: book.title_fr,
     titleZh: book.title_zh,
     asin: book.asin || "",
@@ -204,8 +233,14 @@ function bookEditFromRow(book: BookRow): BookEditState {
 
 function categoryEditFromRow(category: CategoryRow): CategoryEditState {
   return {
-    name: category.name,
-    description: category.description || "",
+    slug: category.slug || "",
+    titleFr: category.title_fr || "",
+    titleZh: category.title_zh || "",
+    basePriceEur: category.base_price_eur != null ? String(category.base_price_eur) : "",
+    attributeLabelFr: category.attribute_label_fr || "",
+    attributeLabelZh: category.attribute_label_zh || "",
+    descriptionFr: category.description_fr || "",
+    descriptionZh: category.description_zh || "",
   };
 }
 
@@ -270,6 +305,10 @@ function promoEditFromCode(promo: PromoCode): PromoEditState {
   };
 }
 
+function displayCategoryName(category: CategoryRow) {
+  return category.title_zh || category.title_fr || category.slug || "Categorie";
+}
+
 function AdminPageContent() {
   const { profile, session } = useAuth();
   const [books, setBooks] = useState<BookRow[]>([]);
@@ -277,11 +316,11 @@ function AdminPageContent() {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [downloads, setDownloads] = useState<DownloadRow[]>([]);
   const [donations, setDonations] = useState<DonationRow[]>([]);
+  const [loadWarnings, setLoadWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState<AdminSectionKey>("books");
+  const [activeSection, setActiveSection] = useState<AdminSectionKey>("categories");
   const [form, setForm] = useState<BookFormState>(defaultBookForm);
-  const [categoryName, setCategoryName] = useState("");
-  const [categoryDescription, setCategoryDescription] = useState("");
+  const [categoryForm, setCategoryForm] = useState<CategoryFormState>(defaultCategoryForm);
   const [promoForm, setPromoForm] = useState<PromoFormState>(defaultPromoForm);
   const [editingBookId, setEditingBookId] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
@@ -292,6 +331,10 @@ function AdminPageContent() {
   const [pdfStatuses, setPdfStatuses] = useState<Record<string, PdfStorageStatus>>({});
   const [statusMessage, setStatusMessage] = useState("");
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [createSelectedFiles, setCreateSelectedFiles] = useState<Partial<Record<AssetKind, File | null>>>({});
+  const [createUploadStatus, setCreateUploadStatus] = useState<Partial<Record<AssetKind, string>>>({});
+  const [editSelectedFiles, setEditSelectedFiles] = useState<Record<string, Partial<Record<AssetKind, File | null>>>>({});
+  const [editUploadStatus, setEditUploadStatus] = useState<Record<string, Partial<Record<AssetKind, string>>>>({});
 
   const reload = async () => {
     const supabase = getSupabaseBrowserClient();
@@ -299,71 +342,126 @@ function AdminPageContent() {
     if (!supabase) {
       const fallbackBooks = mergeBooksWithFallback([]);
       setBooks(fallbackBooks);
+      setCategories([]);
+      setPromoCodes([]);
+      setDownloads([]);
+      setDonations([]);
+      setLoadWarnings(["Supabase 未配置，后台仅显示本地兜底内容。"]);
       setBookEdits(Object.fromEntries(fallbackBooks.map((book) => [book.id, bookEditFromRow(book)])));
       setLoading(false);
       return;
     }
 
     setLoading(true);
+    const warnings: string[] = [];
 
-    const [
-      { data: booksData },
-      { data: categoryData },
-      { data: promoData },
-      { data: downloadData },
-      { data: donationData },
-      { data: relationData, error: relationError },
-    ] =
-      await Promise.all([
-        supabase
-          .from("books")
-          .select(
-            "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, created_at",
-          )
-          .order("sort_order", { ascending: true })
-          .order("created_at", { ascending: true }),
-        supabase.from("categories").select("id, name, description, created_at").order("created_at", { ascending: false }),
-        supabase
-          .from("promo_codes")
-          .select("id, code, discount_percent, valid_from, valid_until, active, show_banner, banner_text_fr, banner_text_zh")
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("downloads")
-          .select("id, book_id, user_email, book_title, download_url, created_at")
-          .order("created_at", { ascending: false }),
-        supabase.from("donations").select("id, user_email, amount, note, created_at").order("created_at", { ascending: false }),
-        supabase.from("books").select("id, slug, related_book_ids"),
-      ]);
+    let booksData: BookRow[] = [];
+    const booksQuery = await supabase
+      .from("books")
+      .select(
+        "id, slug, category_id, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, related_book_ids, created_at",
+      )
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
 
-    const relatedMap = new Map<string, string[]>();
+    if (booksQuery.error) {
+      const fallbackBooksQuery = await supabase
+        .from("books")
+        .select(
+          "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, related_book_ids, created_at",
+        )
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
 
-    if (!relationError && relationData) {
-      ((relationData || []) as BookRow[]).forEach((row) => {
-        const relatedIds = normalizeRelatedBookIds(row.related_book_ids);
-        [row.id, row.slug || ""].filter(Boolean).forEach((key) => {
-          relatedMap.set(key, relatedIds);
-        });
-      });
+      if (fallbackBooksQuery.error) {
+        warnings.push(`图书 Livres 读取失败: ${fallbackBooksQuery.error.message}`);
+      } else {
+        booksData = ((fallbackBooksQuery.data || []) as BookRow[]).map((row) => ({ ...row, category_id: null }));
+        warnings.push("图书表还未完成类目字段迁移，已使用兼容模式读取。");
+      }
+    } else {
+      booksData = (booksQuery.data || []) as BookRow[];
     }
 
-    const nextBooks = mergeBooksWithFallback(
-      ((booksData || []) as BookRow[]).map((row) => {
-        const slug = row.slug || row.id;
+    let nextCategories: CategoryRow[] = [];
+    const categoriesQuery = await supabase
+      .from("categories")
+      .select(
+        "id, slug, title_fr, title_zh, base_price_eur, attribute_label_fr, attribute_label_zh, description_fr, description_zh, created_at",
+      )
+      .order("created_at", { ascending: false });
 
-        return {
-          ...row,
-          related_book_ids: relatedMap.get(slug) || relatedMap.get(row.id) || row.related_book_ids || null,
-        };
-      }),
-    );
-    const nextCategories = (categoryData || []) as CategoryRow[];
-    const nextPromos = ((promoData || []) as PromoRow[]).map(mapPromoRow);
+    if (categoriesQuery.error) {
+      const fallbackCategoriesQuery = await supabase
+        .from("categories")
+        .select("id, name, description, created_at")
+        .order("created_at", { ascending: false });
+
+      if (fallbackCategoriesQuery.error) {
+        warnings.push(`类目 Categories 读取失败: ${fallbackCategoriesQuery.error.message}`);
+      } else {
+        nextCategories = ((fallbackCategoriesQuery.data || []) as Array<{ id: string; name: string | null; description: string | null; created_at?: string | null }>).map((row) => ({
+          id: row.id,
+          slug: slugify(row.name || ""),
+          title_fr: row.name,
+          title_zh: row.name,
+          base_price_eur: null,
+          attribute_label_fr: null,
+          attribute_label_zh: null,
+          description_fr: row.description,
+          description_zh: row.description,
+          created_at: row.created_at || null,
+        }));
+        warnings.push("类目表仍是旧结构，建议执行新的 categories migration。");
+      }
+    } else {
+      nextCategories = (categoriesQuery.data || []) as CategoryRow[];
+    }
+
+    let nextPromos: PromoCode[] = [];
+    const promoQuery = await supabase
+      .from("promo_codes")
+      .select("id, code, discount_percent, valid_from, valid_until, active, show_banner, banner_text_fr, banner_text_zh")
+      .order("created_at", { ascending: false });
+
+    if (promoQuery.error) {
+      warnings.push(`优惠码 Codes promo 读取失败: ${promoQuery.error.message}`);
+    } else {
+      nextPromos = ((promoQuery.data || []) as PromoRow[]).map(mapPromoRow);
+    }
+
+    let nextDownloads: DownloadRow[] = [];
+    const downloadsQuery = await supabase
+      .from("downloads")
+      .select("id, book_id, user_email, book_title, download_url, created_at")
+      .order("created_at", { ascending: false });
+
+    if (downloadsQuery.error) {
+      warnings.push(`下载 Downloads 读取失败: ${downloadsQuery.error.message}`);
+    } else {
+      nextDownloads = (downloadsQuery.data || []) as DownloadRow[];
+    }
+
+    let nextDonations: DonationRow[] = [];
+    const donationsQuery = await supabase
+      .from("donations")
+      .select("id, user_email, amount, note, created_at")
+      .order("created_at", { ascending: false });
+
+    if (donationsQuery.error) {
+      warnings.push(`赞助 Donations 读取失败: ${donationsQuery.error.message}`);
+    } else {
+      nextDonations = (donationsQuery.data || []) as DonationRow[];
+    }
+
+    const nextBooks = mergeBooksWithFallback(booksData);
 
     setBooks(nextBooks);
     setCategories(nextCategories);
     setPromoCodes(nextPromos);
-    setDownloads((downloadData || []) as DownloadRow[]);
-    setDonations((donationData || []) as DonationRow[]);
+    setDownloads(nextDownloads);
+    setDonations(nextDonations);
+    setLoadWarnings(warnings);
     setBookEdits(Object.fromEntries(nextBooks.map((book) => [book.id, bookEditFromRow(book)])));
     setCategoryEdits(Object.fromEntries(nextCategories.map((category) => [category.id, categoryEditFromRow(category)])));
     setPromoEdits(Object.fromEntries(nextPromos.map((promo) => [promo.id, promoEditFromCode(promo)])));
@@ -538,6 +636,38 @@ function AdminPageContent() {
     }
   };
 
+  const validateCategoryForm = (state: CategoryFormState) => {
+    if (!state.titleFr.trim() && !state.titleZh.trim()) {
+      throw new Error("请先填写类目法语标题或中文标题。");
+    }
+  };
+
+  const buildBookPayload = (state: BookFormState, sortOrder: number) => {
+    const normalizedSlug = slugify(state.slug || state.titleFr || state.titleZh);
+    const ext = bookAssetExtensions[normalizedSlug] || "jpg";
+    const relatedBookIds = state.relatedBookIds
+      .map((entry) => entry.trim())
+      .filter((entry) => entry && entry !== normalizedSlug);
+
+    return {
+      slug: normalizedSlug,
+      category_id: state.categoryId || null,
+      sort_order: sortOrder,
+      title_fr: state.titleFr.trim(),
+      title_zh: state.titleZh.trim(),
+      asin: state.asin.trim() || null,
+      visible: state.visible,
+      price_eur: Number(state.priceEur || 0),
+      cover_image: state.coverImage || bookCoverPath(normalizedSlug, ext),
+      pdf_file: state.pdfFile || bookPdfPath(normalizedSlug),
+      synopsis_fr: state.synopsisFr.trim() || null,
+      synopsis_zh: state.synopsisZh.trim() || null,
+      amazon_ebook_url: state.amazonEbookUrl.trim() || null,
+      amazon_paperback_url: state.amazonPaperbackUrl.trim() || null,
+      related_book_ids: relatedBookIds.length > 0 ? relatedBookIds : null,
+    };
+  };
+
   const createBook = async () => {
     const supabase = getSupabaseBrowserClient();
 
@@ -555,36 +685,30 @@ function AdminPageContent() {
     }
 
     await withBusyState("create-book", async () => {
-      const ext = bookAssetExtensions[nextForm.slug] || "jpg";
       const nextSortOrder =
         books.reduce((max, book, index) => Math.max(max, bookSortValue(book, index)), 0) + 1;
-      const relatedBookIds = nextForm.relatedBookIds
-        .map((entry) => entry.trim())
-        .filter((entry) => entry && entry !== nextForm.slug);
+      const payload = buildBookPayload(nextForm, nextSortOrder);
 
-      const { error } = await supabase.from("books").insert({
-        slug: nextForm.slug,
-        sort_order: nextSortOrder,
-        title_fr: nextForm.titleFr,
-        title_zh: nextForm.titleZh,
-        asin: nextForm.asin.trim() || null,
-        visible: nextForm.visible,
-        price_eur: Number(nextForm.priceEur || 0),
-        cover_image: nextForm.coverImage || bookCoverPath(nextForm.slug, ext),
-        pdf_file: nextForm.pdfFile || bookPdfPath(nextForm.slug),
-        synopsis_fr: nextForm.synopsisFr || null,
-        synopsis_zh: nextForm.synopsisZh || null,
-        amazon_ebook_url: nextForm.amazonEbookUrl || null,
-        amazon_paperback_url: nextForm.amazonPaperbackUrl || null,
-        related_book_ids: relatedBookIds.length > 0 ? relatedBookIds : null,
-      });
+      const { error } = await supabase.from("books").insert(payload);
 
       if (error) {
-        setStatusMessage(error.message);
+        const fallbackPayload = { ...payload };
+        delete (fallbackPayload as { category_id?: string | null }).category_id;
+
+        const fallbackResult = await supabase.from("books").insert(fallbackPayload);
+
+        if (fallbackResult.error) {
+          setStatusMessage(fallbackResult.error.message);
+          return;
+        }
+
+        setStatusMessage("新书已创建，但当前 books 表还未升级到类目字段。");
         return;
       }
 
       setForm(defaultBookForm);
+      setCreateSelectedFiles({});
+      setCreateUploadStatus({});
       setStatusMessage("新书已创建，后台数据已刷新。");
       await reload();
     });
@@ -606,28 +730,31 @@ function AdminPageContent() {
     }
 
     await withBusyState(`save-book-${bookId}`, async () => {
-      const relatedBookIds = edit.relatedBookIds
-        .map((entry) => entry.trim())
-        .filter((entry) => entry && entry !== edit.slug && entry !== bookId);
+      const currentBook = books.find((book) => book.id === bookId);
+      const payload = buildBookPayload(edit, currentBook ? bookSortValue(currentBook, books.findIndex((entry) => entry.id === bookId)) : 1);
 
-      const { error } = await supabase
-        .from("books")
-        .update({
-          slug: edit.slug,
-          title_fr: edit.titleFr,
-          title_zh: edit.titleZh,
-          asin: edit.asin || null,
-          price_eur: Number(edit.priceEur || 0),
-          cover_image: edit.coverImage || null,
-          pdf_file: edit.pdfFile || null,
-          synopsis_fr: edit.synopsisFr || null,
-          synopsis_zh: edit.synopsisZh || null,
-          amazon_ebook_url: edit.amazonEbookUrl || null,
-          amazon_paperback_url: edit.amazonPaperbackUrl || null,
-          visible: edit.visible,
-          related_book_ids: relatedBookIds.length > 0 ? relatedBookIds : null,
-        })
-        .eq("id", bookId);
+      let error: { message: string } | null = null;
+
+      if (currentBook?.created_at) {
+        const updateResult = await supabase.from("books").update(payload).eq("id", bookId);
+        error = updateResult.error;
+      } else {
+        const upsertResult = await supabase.from("books").upsert(payload, { onConflict: "slug" });
+        error = upsertResult.error;
+      }
+
+      if (error) {
+        const fallbackPayload = { ...payload };
+        delete (fallbackPayload as { category_id?: string | null }).category_id;
+
+        if (currentBook?.created_at) {
+          const fallbackResult = await supabase.from("books").update(fallbackPayload).eq("id", bookId);
+          error = fallbackResult.error;
+        } else {
+          const fallbackResult = await supabase.from("books").upsert(fallbackPayload, { onConflict: "slug" });
+          error = fallbackResult.error;
+        }
+      }
 
       if (error) {
         setStatusMessage(error.message);
@@ -635,32 +762,11 @@ function AdminPageContent() {
       }
 
       setEditingBookId(null);
+      setEditSelectedFiles((current) => ({ ...current, [bookId]: {} }));
+      setEditUploadStatus((current) => ({ ...current, [bookId]: {} }));
       setStatusMessage("书籍信息已更新。");
       await reload();
     });
-  };
-
-  const updateBookAssetField = async (
-    bookId: string,
-    field: "cover_image" | "pdf_file",
-    value: string | null,
-    successMessage: string,
-  ) => {
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      return;
-    }
-
-    const { error } = await supabase.from("books").update({ [field]: value }).eq("id", bookId);
-
-    if (error) {
-      setStatusMessage(error.message);
-      return;
-    }
-
-    setStatusMessage(successMessage);
-    await reload();
   };
 
   const toggleVisibility = async (id: string, visible: boolean) => {
@@ -671,6 +777,12 @@ function AdminPageContent() {
     }
 
     await withBusyState(`toggle-book-${id}`, async () => {
+      const currentBook = books.find((book) => book.id === id);
+      if (!currentBook?.created_at) {
+        setStatusMessage("这本书还是本地兜底数据，请先点 Modifier 再 Enregistrer，把它保存成真实数据库图书。");
+        return;
+      }
+
       const { error } = await supabase.from("books").update({ visible: !visible }).eq("id", id);
 
       if (error) {
@@ -691,6 +803,13 @@ function AdminPageContent() {
     }
 
     await withBusyState(`delete-book-${id}`, async () => {
+      const currentBook = books.find((book) => book.id === id);
+
+      if (!currentBook?.created_at) {
+        setStatusMessage("这本书还是本地兜底数据，目前数据库里没有可删除的真实记录。");
+        return;
+      }
+
       const { error } = await supabase.from("books").delete().eq("id", id);
 
       if (error) {
@@ -723,6 +842,11 @@ function AdminPageContent() {
     const targetSortOrder = bookSortValue(targetBook, targetIndex);
 
     await withBusyState(`move-book-${bookId}-${direction}`, async () => {
+      if (!currentBook.created_at || !targetBook.created_at) {
+        setStatusMessage("排序只对真实数据库图书生效。请先把本地兜底书保存到数据库。");
+        return;
+      }
+
       const [{ error: currentError }, { error: targetError }] = await Promise.all([
         supabase.from("books").update({ sort_order: targetSortOrder }).eq("id", currentBook.id),
         supabase.from("books").update({ sort_order: currentSortOrder }).eq("id", targetBook.id),
@@ -753,6 +877,7 @@ function AdminPageContent() {
 
     await withBusyState(`create-${kind}`, async () => {
       try {
+        setCreateUploadStatus((current) => ({ ...current, [kind]: "上传中..." }));
         const assetPath = await uploadAsset(kind, file, filename);
         setForm((current) => ({
           ...current,
@@ -760,8 +885,14 @@ function AdminPageContent() {
           coverImage: kind === "image" ? assetPath : current.coverImage,
           pdfFile: kind === "pdf" ? assetPath : current.pdfFile,
         }));
+        setCreateSelectedFiles((current) => ({ ...current, [kind]: null }));
+        setCreateUploadStatus((current) => ({
+          ...current,
+          [kind]: kind === "image" ? "封面上传成功，等待保存图书。" : "PDF 上传成功，等待保存图书。",
+        }));
         setStatusMessage(kind === "image" ? "封面已上传到 GitHub images。" : "PDF 已上传到 Supabase books bucket。");
       } catch (error) {
+        setCreateUploadStatus((current) => ({ ...current, [kind]: error instanceof Error ? error.message : "资源上传失败。" }));
         setStatusMessage(error instanceof Error ? error.message : "资源上传失败。");
       }
     });
@@ -782,6 +913,7 @@ function AdminPageContent() {
           coverImage: kind === "image" ? "" : current.coverImage,
           pdfFile: kind === "pdf" ? "" : current.pdfFile,
         }));
+        setCreateUploadStatus((current) => ({ ...current, [kind]: "资源已删除，请记得保存图书。" }));
         setStatusMessage(kind === "image" ? "草稿封面已删除。" : "草稿 PDF 已删除。");
       } catch (error) {
         setStatusMessage(error instanceof Error ? error.message : "资源删除失败。");
@@ -799,6 +931,10 @@ function AdminPageContent() {
 
     await withBusyState(`upload-${kind}-${book.id}`, async () => {
       try {
+        setEditUploadStatus((current) => ({
+          ...current,
+          [book.id]: { ...(current[book.id] || {}), [kind]: "上传中..." },
+        }));
         const assetPath = await uploadAsset(kind, file, filename);
         setBookEdits((current) => ({
           ...current,
@@ -808,14 +944,23 @@ function AdminPageContent() {
             pdfFile: kind === "pdf" ? assetPath : current[book.id].pdfFile,
           },
         }));
-
-        await updateBookAssetField(
-          book.id,
-          kind === "image" ? "cover_image" : "pdf_file",
-          assetPath,
-          kind === "image" ? "封面已更新到 GitHub。" : "PDF 已更新到 Supabase。",
-        );
+        setEditSelectedFiles((current) => ({
+          ...current,
+          [book.id]: { ...(current[book.id] || {}), [kind]: null },
+        }));
+        setEditUploadStatus((current) => ({
+          ...current,
+          [book.id]: {
+            ...(current[book.id] || {}),
+            [kind]: kind === "image" ? "封面已上传，点击 Enregistrer 生效。" : "PDF 已上传，点击 Enregistrer 生效。",
+          },
+        }));
+        setStatusMessage(kind === "image" ? "封面已上传到 GitHub，等待保存。" : "PDF 已上传到 Supabase，等待保存。");
       } catch (error) {
+        setEditUploadStatus((current) => ({
+          ...current,
+          [book.id]: { ...(current[book.id] || {}), [kind]: error instanceof Error ? error.message : "资源上传失败。" },
+        }));
         setStatusMessage(error instanceof Error ? error.message : "资源上传失败。");
       }
     });
@@ -840,13 +985,14 @@ function AdminPageContent() {
             pdfFile: kind === "pdf" ? "" : current[book.id].pdfFile,
           },
         }));
-
-        await updateBookAssetField(
-          book.id,
-          kind === "image" ? "cover_image" : "pdf_file",
-          null,
-          kind === "image" ? "封面已删除。" : "PDF 已删除。",
-        );
+        setEditUploadStatus((current) => ({
+          ...current,
+          [book.id]: {
+            ...(current[book.id] || {}),
+            [kind]: kind === "image" ? "封面已删除，点击 Enregistrer 生效。" : "PDF 已删除，点击 Enregistrer 生效。",
+          },
+        }));
+        setStatusMessage(kind === "image" ? "封面已删除，等待保存。" : "PDF 已删除，等待保存。");
       } catch (error) {
         setStatusMessage(error instanceof Error ? error.message : "资源删除失败。");
       }
@@ -856,24 +1002,48 @@ function AdminPageContent() {
   const createCategory = async () => {
     const supabase = getSupabaseBrowserClient();
 
-    if (!supabase || !categoryName.trim()) {
-      setStatusMessage("请先填写类目名称。");
+    if (!supabase) {
+      return;
+    }
+
+    try {
+      validateCategoryForm(categoryForm);
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "类目信息不完整。");
       return;
     }
 
     await withBusyState("create-category", async () => {
-      const { error } = await supabase.from("categories").insert({
-        name: categoryName.trim(),
-        description: categoryDescription.trim() || null,
-      });
+      const normalizedSlug = slugify(categoryForm.slug || categoryForm.titleFr || categoryForm.titleZh);
+      const payload = {
+        slug: normalizedSlug || null,
+        title_fr: categoryForm.titleFr.trim() || null,
+        title_zh: categoryForm.titleZh.trim() || null,
+        base_price_eur: categoryForm.basePriceEur ? Number(categoryForm.basePriceEur) : null,
+        attribute_label_fr: categoryForm.attributeLabelFr.trim() || null,
+        attribute_label_zh: categoryForm.attributeLabelZh.trim() || null,
+        description_fr: categoryForm.descriptionFr.trim() || null,
+        description_zh: categoryForm.descriptionZh.trim() || null,
+      };
+
+      const { error } = await supabase.from("categories").insert(payload);
 
       if (error) {
-        setStatusMessage(error.message);
+        const fallbackResult = await supabase.from("categories").insert({
+          name: categoryForm.titleFr.trim() || categoryForm.titleZh.trim(),
+          description: categoryForm.descriptionFr.trim() || categoryForm.descriptionZh.trim() || null,
+        });
+
+        if (fallbackResult.error) {
+          setStatusMessage(fallbackResult.error.message);
+          return;
+        }
+
+        setStatusMessage("类目已新增，但当前 categories 表还是旧结构。");
         return;
       }
 
-      setCategoryName("");
-      setCategoryDescription("");
+      setCategoryForm(defaultCategoryForm);
       setStatusMessage("类目已新增。");
       await reload();
     });
@@ -888,17 +1058,34 @@ function AdminPageContent() {
     }
 
     await withBusyState(`save-category-${categoryId}`, async () => {
+      const normalizedSlug = slugify(edit.slug || edit.titleFr || edit.titleZh);
       const { error } = await supabase
         .from("categories")
         .update({
-          name: edit.name.trim(),
-          description: edit.description.trim() || null,
+          slug: normalizedSlug || null,
+          title_fr: edit.titleFr.trim() || null,
+          title_zh: edit.titleZh.trim() || null,
+          base_price_eur: edit.basePriceEur ? Number(edit.basePriceEur) : null,
+          attribute_label_fr: edit.attributeLabelFr.trim() || null,
+          attribute_label_zh: edit.attributeLabelZh.trim() || null,
+          description_fr: edit.descriptionFr.trim() || null,
+          description_zh: edit.descriptionZh.trim() || null,
         })
         .eq("id", categoryId);
 
       if (error) {
-        setStatusMessage(error.message);
-        return;
+        const fallbackResult = await supabase
+          .from("categories")
+          .update({
+            name: edit.titleFr.trim() || edit.titleZh.trim(),
+            description: edit.descriptionFr.trim() || edit.descriptionZh.trim() || null,
+          })
+          .eq("id", categoryId);
+
+        if (fallbackResult.error) {
+          setStatusMessage(fallbackResult.error.message);
+          return;
+        }
       }
 
       setEditingCategoryId(null);
@@ -1099,6 +1286,13 @@ function AdminPageContent() {
           <p className="section-caption">
             Bienvenue {title} - 后台现在可管理书籍、PDF、封面、类目、优惠码、下载记录与主页飘屏。
           </p>
+          {loadWarnings.length > 0 ? (
+            <div className="section-block" style={{ marginTop: 12 }}>
+              {loadWarnings.map((warning) => (
+                <p className="tiny" key={warning}>{warning}</p>
+              ))}
+            </div>
+          ) : null}
           {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
 
           {activeSection === "books" ? (
@@ -1112,6 +1306,18 @@ function AdminPageContent() {
                     value={form.slug}
                     onChange={(event) => setForm({ ...form, slug: slugify(event.target.value) })}
                   />
+                  <select
+                    className="input"
+                    value={form.categoryId}
+                    onChange={(event) => setForm({ ...form, categoryId: event.target.value })}
+                  >
+                    <option value="">Choisir une categorie 选择类目</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {displayCategoryName(category)}
+                      </option>
+                    ))}
+                  </select>
                   <input
                     className="input"
                     placeholder="Titre FR"
@@ -1227,19 +1433,29 @@ function AdminPageContent() {
                       <span className="tiny">未上传封面</span>
                     )}
                   </div>
+                  {createUploadStatus.image ? <p className="tiny">{createUploadStatus.image}</p> : null}
                   <div className="actions-row">
                     <input
                       className="input"
                       type="file"
                       accept="image/*"
                       onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        if (file) {
-                          void handleCreateAssetUpload("image", file);
-                        }
-                        event.currentTarget.value = "";
+                        const file = event.target.files?.[0] || null;
+                        setCreateSelectedFiles((current) => ({ ...current, image: file }));
+                        setCreateUploadStatus((current) => ({
+                          ...current,
+                          image: file ? `已选中文件: ${file.name}` : "",
+                        }));
                       }}
                     />
+                    <button
+                      className="pill-button"
+                      type="button"
+                      disabled={!createSelectedFiles.image || busyKey === "create-image"}
+                      onClick={() => createSelectedFiles.image ? void handleCreateAssetUpload("image", createSelectedFiles.image) : undefined}
+                    >
+                      {busyKey === "create-image" ? "Upload..." : "上传封面 Upload"}
+                    </button>
                     {form.coverImage ? (
                       <button
                         className="pill-button"
@@ -1257,19 +1473,29 @@ function AdminPageContent() {
                     <strong>PDF 上传到 Supabase books</strong>
                     {form.pdfFile ? <span className="tiny">{form.pdfFile}</span> : <span className="tiny">未上传 PDF</span>}
                   </div>
+                  {createUploadStatus.pdf ? <p className="tiny">{createUploadStatus.pdf}</p> : null}
                   <div className="actions-row">
                     <input
                       className="input"
                       type="file"
                       accept="application/pdf"
                       onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        if (file) {
-                          void handleCreateAssetUpload("pdf", file);
-                        }
-                        event.currentTarget.value = "";
+                        const file = event.target.files?.[0] || null;
+                        setCreateSelectedFiles((current) => ({ ...current, pdf: file }));
+                        setCreateUploadStatus((current) => ({
+                          ...current,
+                          pdf: file ? `已选中文件: ${file.name}` : "",
+                        }));
                       }}
                     />
+                    <button
+                      className="pill-button"
+                      type="button"
+                      disabled={!createSelectedFiles.pdf || busyKey === "create-pdf"}
+                      onClick={() => createSelectedFiles.pdf ? void handleCreateAssetUpload("pdf", createSelectedFiles.pdf) : undefined}
+                    >
+                      {busyKey === "create-pdf" ? "Upload..." : "上传 PDF Upload"}
+                    </button>
                     {form.pdfFile ? (
                       <button
                         className="pill-button"
@@ -1323,6 +1549,9 @@ function AdminPageContent() {
                             <div className="tiny">{book.price_eur?.toFixed(2) || "0.00"} EUR</div>
                             <div className="tiny">排序 Sort: {bookSortValue(book, books.findIndex((entry) => entry.id === book.id))}</div>
                             <div className="tiny">Slug: {book.slug || book.id}</div>
+                            <div className="tiny">
+                              类目 Categorie: {categories.find((category) => category.id === (edit?.categoryId || book.category_id || "")) ? displayCategoryName(categories.find((category) => category.id === (edit?.categoryId || book.category_id || ""))!) : "未设置"}
+                            </div>
                             <div className="tiny">Downloads 下载次数: {downloadCount}</div>
                             <div className="tiny">{book.visible ? "已上架 Visible" : "已隐藏 Hidden"}</div>
                             <div className="tiny">
@@ -1342,6 +1571,20 @@ function AdminPageContent() {
                                   setBookEdits({ ...bookEdits, [book.id]: { ...edit, slug: slugify(event.target.value) } })
                                 }
                               />
+                              <select
+                                className="input"
+                                value={edit.categoryId}
+                                onChange={(event) =>
+                                  setBookEdits({ ...bookEdits, [book.id]: { ...edit, categoryId: event.target.value } })
+                                }
+                              >
+                                <option value="">Choisir une categorie 选择类目</option>
+                                {categories.map((category) => (
+                                  <option key={category.id} value={category.id}>
+                                    {displayCategoryName(category)}
+                                  </option>
+                                ))}
+                              </select>
                               <input
                                 className="input"
                                 placeholder="Titre FR"
@@ -1478,19 +1721,35 @@ function AdminPageContent() {
                                   <span className="tiny">暂无封面</span>
                                 )}
                               </div>
+                              {editUploadStatus[book.id]?.image ? <p className="tiny">{editUploadStatus[book.id]?.image}</p> : null}
                               <div className="actions-row">
                                 <input
                                   className="input"
                                   type="file"
                                   accept="image/*"
                                   onChange={(event) => {
-                                    const file = event.target.files?.[0];
-                                    if (file) {
-                                      void handleExistingAssetUpload(book, "image", file);
-                                    }
-                                    event.currentTarget.value = "";
+                                    const file = event.target.files?.[0] || null;
+                                    setEditSelectedFiles((current) => ({
+                                      ...current,
+                                      [book.id]: { ...(current[book.id] || {}), image: file },
+                                    }));
+                                    setEditUploadStatus((current) => ({
+                                      ...current,
+                                      [book.id]: {
+                                        ...(current[book.id] || {}),
+                                        image: file ? `已选中文件: ${file.name}` : "",
+                                      },
+                                    }));
                                   }}
                                 />
+                                <button
+                                  className="pill-button"
+                                  type="button"
+                                  disabled={!editSelectedFiles[book.id]?.image || busyKey === `upload-image-${book.id}`}
+                                  onClick={() => editSelectedFiles[book.id]?.image ? void handleExistingAssetUpload(book, "image", editSelectedFiles[book.id]!.image as File) : undefined}
+                                >
+                                  {busyKey === `upload-image-${book.id}` ? "Upload..." : "上传封面 Upload"}
+                                </button>
                                 {edit.coverImage ? (
                                   <button
                                     className="pill-button"
@@ -1511,19 +1770,35 @@ function AdminPageContent() {
                               <p className="tiny" style={{ marginTop: 8 }}>
                                 当前状态: {pdfStatus ? pdfStatus.message : "检查中..."}
                               </p>
+                              {editUploadStatus[book.id]?.pdf ? <p className="tiny">{editUploadStatus[book.id]?.pdf}</p> : null}
                               <div className="actions-row">
                                 <input
                                   className="input"
                                   type="file"
                                   accept="application/pdf"
                                   onChange={(event) => {
-                                    const file = event.target.files?.[0];
-                                    if (file) {
-                                      void handleExistingAssetUpload(book, "pdf", file);
-                                    }
-                                    event.currentTarget.value = "";
+                                    const file = event.target.files?.[0] || null;
+                                    setEditSelectedFiles((current) => ({
+                                      ...current,
+                                      [book.id]: { ...(current[book.id] || {}), pdf: file },
+                                    }));
+                                    setEditUploadStatus((current) => ({
+                                      ...current,
+                                      [book.id]: {
+                                        ...(current[book.id] || {}),
+                                        pdf: file ? `已选中文件: ${file.name}` : "",
+                                      },
+                                    }));
                                   }}
                                 />
+                                <button
+                                  className="pill-button"
+                                  type="button"
+                                  disabled={!editSelectedFiles[book.id]?.pdf || busyKey === `upload-pdf-${book.id}`}
+                                  onClick={() => editSelectedFiles[book.id]?.pdf ? void handleExistingAssetUpload(book, "pdf", editSelectedFiles[book.id]!.pdf as File) : undefined}
+                                >
+                                  {busyKey === `upload-pdf-${book.id}` ? "Upload..." : "上传 PDF Upload"}
+                                </button>
                                 {edit.pdfFile ? (
                                   <button
                                     className="pill-button"
@@ -1595,18 +1870,54 @@ function AdminPageContent() {
             <>
               <div className="section-block">
                 <h3>Créer une catégorie 新增类目</h3>
-                <div className="input-group" style={{ marginTop: 10 }}>
+                <div className="input-group admin-form-grid" style={{ marginTop: 10 }}>
                   <input
                     className="input"
-                    placeholder="Nom de la categorie"
-                    value={categoryName}
-                    onChange={(event) => setCategoryName(event.target.value)}
+                    placeholder="Slug categorie"
+                    value={categoryForm.slug}
+                    onChange={(event) => setCategoryForm({ ...categoryForm, slug: slugify(event.target.value) })}
                   />
                   <input
                     className="input"
-                    placeholder="Description"
-                    value={categoryDescription}
-                    onChange={(event) => setCategoryDescription(event.target.value)}
+                    placeholder="Titre FR"
+                    value={categoryForm.titleFr}
+                    onChange={(event) => setCategoryForm({ ...categoryForm, titleFr: event.target.value })}
+                  />
+                  <input
+                    className="input"
+                    placeholder="标题 ZH"
+                    value={categoryForm.titleZh}
+                    onChange={(event) => setCategoryForm({ ...categoryForm, titleZh: event.target.value })}
+                  />
+                  <input
+                    className="input"
+                    placeholder="Prix de base EUR"
+                    value={categoryForm.basePriceEur}
+                    onChange={(event) => setCategoryForm({ ...categoryForm, basePriceEur: event.target.value })}
+                  />
+                  <input
+                    className="input"
+                    placeholder="Attribut FR"
+                    value={categoryForm.attributeLabelFr}
+                    onChange={(event) => setCategoryForm({ ...categoryForm, attributeLabelFr: event.target.value })}
+                  />
+                  <input
+                    className="input"
+                    placeholder="关联属性 ZH"
+                    value={categoryForm.attributeLabelZh}
+                    onChange={(event) => setCategoryForm({ ...categoryForm, attributeLabelZh: event.target.value })}
+                  />
+                  <textarea
+                    className="textarea"
+                    placeholder="Description FR"
+                    value={categoryForm.descriptionFr}
+                    onChange={(event) => setCategoryForm({ ...categoryForm, descriptionFr: event.target.value })}
+                  />
+                  <textarea
+                    className="textarea"
+                    placeholder="说明 ZH"
+                    value={categoryForm.descriptionZh}
+                    onChange={(event) => setCategoryForm({ ...categoryForm, descriptionZh: event.target.value })}
                   />
                   <button className="cta-button" type="button" onClick={() => void createCategory()}>
                     Créer la catégorie
@@ -1624,31 +1935,102 @@ function AdminPageContent() {
                     return (
                       <div className="admin-book-card" key={category.id}>
                         {isEditing && edit ? (
-                          <div className="input-group">
+                          <div className="input-group admin-form-grid">
                             <input
                               className="input"
-                              placeholder="Nom"
-                              value={edit.name}
+                              placeholder="Slug"
+                              value={edit.slug}
                               onChange={(event) =>
-                                setCategoryEdits({ ...categoryEdits, [category.id]: { ...edit, name: event.target.value } })
+                                setCategoryEdits({ ...categoryEdits, [category.id]: { ...edit, slug: slugify(event.target.value) } })
                               }
                             />
                             <input
                               className="input"
-                              placeholder="Description"
-                              value={edit.description}
+                              placeholder="Titre FR"
+                              value={edit.titleFr}
                               onChange={(event) =>
                                 setCategoryEdits({
                                   ...categoryEdits,
-                                  [category.id]: { ...edit, description: event.target.value },
+                                  [category.id]: { ...edit, titleFr: event.target.value },
+                                })
+                              }
+                            />
+                            <input
+                              className="input"
+                              placeholder="标题 ZH"
+                              value={edit.titleZh}
+                              onChange={(event) =>
+                                setCategoryEdits({
+                                  ...categoryEdits,
+                                  [category.id]: { ...edit, titleZh: event.target.value },
+                                })
+                              }
+                            />
+                            <input
+                              className="input"
+                              placeholder="Prix de base EUR"
+                              value={edit.basePriceEur}
+                              onChange={(event) =>
+                                setCategoryEdits({
+                                  ...categoryEdits,
+                                  [category.id]: { ...edit, basePriceEur: event.target.value },
+                                })
+                              }
+                            />
+                            <input
+                              className="input"
+                              placeholder="Attribut FR"
+                              value={edit.attributeLabelFr}
+                              onChange={(event) =>
+                                setCategoryEdits({
+                                  ...categoryEdits,
+                                  [category.id]: { ...edit, attributeLabelFr: event.target.value },
+                                })
+                              }
+                            />
+                            <input
+                              className="input"
+                              placeholder="关联属性 ZH"
+                              value={edit.attributeLabelZh}
+                              onChange={(event) =>
+                                setCategoryEdits({
+                                  ...categoryEdits,
+                                  [category.id]: { ...edit, attributeLabelZh: event.target.value },
+                                })
+                              }
+                            />
+                            <textarea
+                              className="textarea"
+                              placeholder="Description FR"
+                              value={edit.descriptionFr}
+                              onChange={(event) =>
+                                setCategoryEdits({
+                                  ...categoryEdits,
+                                  [category.id]: { ...edit, descriptionFr: event.target.value },
+                                })
+                              }
+                            />
+                            <textarea
+                              className="textarea"
+                              placeholder="说明 ZH"
+                              value={edit.descriptionZh}
+                              onChange={(event) =>
+                                setCategoryEdits({
+                                  ...categoryEdits,
+                                  [category.id]: { ...edit, descriptionZh: event.target.value },
                                 })
                               }
                             />
                           </div>
                         ) : (
                           <div className="split-line">
-                            <strong>{category.name}</strong>
-                            <span className="tiny">{category.description || "Sans description"}</span>
+                            <div>
+                              <strong>{displayCategoryName(category)}</strong>
+                              <div className="tiny">Slug: {category.slug || "—"}</div>
+                              <div className="tiny">Prix de base: {category.base_price_eur != null ? `${category.base_price_eur.toFixed(2)} EUR` : "—"}</div>
+                              <div className="tiny">Attribut: {category.attribute_label_fr || category.attribute_label_zh || "—"}</div>
+                            </div>
+                            <span className="tiny">{category.description_fr || category.description_zh || "Sans description"}</span>
                           </div>
                         )}
 
