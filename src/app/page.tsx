@@ -32,8 +32,6 @@ type CommentItem = {
   createdAt: string;
 };
 
-const commentIcons = ["✨", "🛸", "📖", "🍵", "🌙", "💫", "🎐", "🫖"];
-
 const sampleComments: CommentItem[] = [
   {
     id: "sample-1",
@@ -74,7 +72,6 @@ export default function HomePage() {
   const [isSubmittingEmail, setIsSubmittingEmail] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState<"google" | "github" | null>(null);
-  const [comments, setComments] = useState<CommentItem[]>(sampleComments);
   const [commentName, setCommentName] = useState("");
   const [commentContent, setCommentContent] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -84,6 +81,7 @@ export default function HomePage() {
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
   const { user, profile, session, signInWithPassword, signUpWithPassword } = useAuth();
+  const comments = sampleComments;
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
 
@@ -211,59 +209,6 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const loadComments = async () => {
-      const supabase = getSupabaseBrowserClient();
-
-      if (supabase) {
-        const { data } = await supabase
-          .from("comments")
-          .select("id, content, author_name, created_at")
-          .order("created_at", { ascending: false })
-          .limit(2);
-
-        if (data && data.length > 0) {
-          setComments(
-            data.map((comment, index) => ({
-              id: comment.id,
-              name: comment.author_name || "Lecteur",
-              content: comment.content,
-              icon: commentIcons[index % commentIcons.length],
-              createdAt: comment.created_at
-                ? new Date(comment.created_at).toLocaleDateString("fr-FR")
-                : "—",
-            })),
-          );
-          return;
-        }
-      }
-
-      try {
-        const response = await fetch("/api/messages");
-        const text = await response.text();
-
-        if (!text) {
-          return;
-        }
-
-        const result = JSON.parse(text);
-
-        if (response.ok && Array.isArray(result.comments) && result.comments.length > 0) {
-          setComments(
-            result.comments.slice(-2).map((comment: CommentItem, index: number) => ({
-              ...comment,
-              icon: commentIcons[index % commentIcons.length],
-            })),
-          );
-        }
-      } catch {
-        // keep existing sample comments if the API is unavailable
-      }
-    };
-
-    void loadComments();
-  }, []);
-
-  useEffect(() => {
     if (user && !commentName) {
       setCommentName(profile?.displayName || user.user_metadata?.full_name || user.email?.split("@")[0] || "");
     }
@@ -375,7 +320,7 @@ export default function HomePage() {
     setCommentDeliveryMode(mode);
 
     if (mode === "email" && (!user || !session?.access_token)) {
-      setCommentMessage("Connectez-vous pour envoyer un message par email a l'administrateur.");
+      setCommentMessage("Un petit mot pour l'administrateur ? Connectez-vous pour l'envoyer !");
       return;
     }
 
@@ -406,18 +351,8 @@ export default function HomePage() {
       }
 
       if (mode === "site") {
-        const newComment: CommentItem = {
-          id: result.comment.id,
-          name: commentName,
-          content: commentContent,
-          icon: commentIcons[Math.floor(Math.random() * commentIcons.length)],
-          createdAt: result.comment.createdAt,
-        };
-
-        setComments((prev) => [newComment, ...prev.slice(0, 1)]);
-        setCommentName("");
         setCommentContent("");
-        setCommentMessage("Commentaire publie avec succes.");
+        setCommentMessage("Message enregistre. Il ne sera pas affiche publiquement sur l'accueil.");
       } else {
         setCommentContent("");
         setCommentMessage(result.message || "Message envoye a l'administrateur.");
@@ -512,12 +447,9 @@ export default function HomePage() {
                   disabled={isSubmittingComment}
                   onClick={() => void submitComment("site")}
                 >
-                  {isSubmittingComment && commentDeliveryMode === "site" ? "Envoi..." : "Publier sur le site"}
+                  {isSubmittingComment && commentDeliveryMode === "site" ? "Enregistrement..." : "Enregistrer le message"}
                 </button>
               </div>
-              {commentDeliveryMode === "email" && !user ? (
-                <p className="tiny comment-message">Connectez-vous pour envoyer votre message par email a l&apos;administrateur.</p>
-              ) : null}
               {commentMessage ? <p className="tiny comment-message">{commentMessage}</p> : null}
             </div>
           </aside>
