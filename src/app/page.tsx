@@ -5,11 +5,11 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import {
   Facebook,
+  Linkedin,
   LoaderCircle,
   Mail,
-  Instagram,
-  Music4,
   MessageCircleHeart,
+  Send,
   ShieldCheck,
   Sparkles,
   Ticket,
@@ -20,6 +20,8 @@ import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { TopNav } from "@/components/top-nav";
 import { PromoBanner } from "@/components/promo-banner";
 import { useAuth } from "@/components/auth-provider";
+import { books as staticBooks } from "@/data/books";
+import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-assets";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
 import { siteConfig } from "@/lib/site-config";
 import { infoLinks } from "@/lib/legal-info";
@@ -27,8 +29,8 @@ import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib/promo";
 
 const socialLinks = [
-  { label: "Instagram", href: "https://www.instagram.com/", icon: Instagram, platform: "instagram" },
-  { label: "TikTok", href: "https://www.tiktok.com/", icon: Music4, platform: "tiktok" },
+  { label: "Telegram", href: "https://t.me/share/url", icon: Send, platform: "telegram" },
+  { label: "LinkedIn", href: "https://www.linkedin.com/sharing/share-offsite/", icon: Linkedin, platform: "linkedin" },
   { label: "Facebook", href: "https://www.facebook.com/sharer/sharer.php", icon: Facebook, platform: "facebook" },
 ] as const;
 
@@ -65,6 +67,17 @@ const sampleComments: CommentItem[] = [
   },
 ];
 
+const defaultCarouselBooks: DisplayBook[] = staticBooks.map((book) => {
+  const ext = bookAssetExtensions[book.id] || "jpg";
+
+  return {
+    ...book,
+    visible: true,
+    coverImage: bookCoverPath(book.id, ext),
+    pdfFile: bookPdfPath(book.id),
+  };
+});
+
 export default function HomePage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
@@ -81,48 +94,34 @@ export default function HomePage() {
   const [commentContent, setCommentContent] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentMessage, setCommentMessage] = useState("");
-  const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>([]);
+  const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>(defaultCarouselBooks);
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
-  const [shareMessage, setShareMessage] = useState("");
   const { user, profile, signInWithPassword, signUpWithPassword } = useAuth();
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
 
   useEffect(() => {
-    void loadDisplayBooks().then(setDisplayBooks);
+    void loadDisplayBooks().then((books) => {
+      setDisplayBooks(books.length > 0 ? books : defaultCarouselBooks);
+    });
   }, []);
 
-  const handleShare = async (platform: "instagram" | "tiktok" | "facebook", href: string) => {
+  const handleShare = (platform: "telegram" | "linkedin" | "facebook", href: string) => {
     if (typeof window === "undefined") {
       return;
     }
 
     const randomText = shareTexts[Math.floor(Math.random() * shareTexts.length)];
     const shareUrl = window.location.origin;
-    const fullText = `${randomText} ${shareUrl}`;
+    const sharePayload =
+      platform === "facebook"
+        ? `${href}?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(randomText)}`
+        : platform === "linkedin"
+          ? `${href}?url=${encodeURIComponent(shareUrl)}`
+          : `${href}?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(randomText)}`;
 
-    if (platform === "facebook") {
-      const facebookUrl = `${href}?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(randomText)}`;
-      window.open(facebookUrl, "_blank", "noopener,noreferrer");
-      setShareMessage("Partage Facebook ouvert.");
-      return;
-    }
-
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(fullText);
-        setShareMessage(
-          platform === "instagram"
-            ? "Texte copie. Collez-le dans Instagram."
-            : "Texte copie. Collez-le dans TikTok.",
-        );
-      }
-    } catch {
-      setShareMessage("Le texte de partage n'a pas pu etre copie automatiquement.");
-    }
-
-    window.open(href, "_blank", "noopener,noreferrer");
+    window.open(sharePayload, "_blank", "noopener,noreferrer");
   };
 
   useEffect(() => {
@@ -472,7 +471,6 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
-            {shareMessage ? <span className="share-strip-status">{shareMessage}</span> : null}
           </div>
         )}
       />
@@ -544,43 +542,45 @@ export default function HomePage() {
           <div className="badge">Albums illustrés bilingues 🇨🇳 chinois-français 🇫🇷</div>
 
           <div className="marquee-shell">
-            <div className="marquee-track">
-              {displayBooks.map((book, index) => (
-                <article className="carousel-card" key={`${book.id}-${index}`}>
-                  <div className="carousel-image">
-                    <Image
-                      src={book.coverImage}
-                      alt={book.titleFr}
-                      fill
-                      sizes="270px"
-                      className="carousel-cover-image"
-                    />
-                  </div>
-                  <div className="carousel-caption">
-                    <strong>{book.titleFr}</strong>
-                    <span>{book.priceEur.toFixed(2)} EUR</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-            <div className="marquee-track marquee-track-clone" aria-hidden="true">
-              {displayBooks.map((book, index) => (
-                <article className="carousel-card" key={`${book.id}-clone-${index}`}>
-                  <div className="carousel-image">
-                    <Image
-                      src={book.coverImage}
-                      alt={book.titleFr}
-                      fill
-                      sizes="270px"
-                      className="carousel-cover-image"
-                    />
-                  </div>
-                  <div className="carousel-caption">
-                    <strong>{book.titleFr}</strong>
-                    <span>{book.priceEur.toFixed(2)} EUR</span>
-                  </div>
-                </article>
-              ))}
+            <div className="marquee-inner">
+              <div className="marquee-track">
+                {displayBooks.map((book, index) => (
+                  <article className="carousel-card" key={`${book.id}-${index}`}>
+                    <div className="carousel-image">
+                      <Image
+                        src={book.coverImage}
+                        alt={book.titleFr}
+                        fill
+                        sizes="270px"
+                        className="carousel-cover-image"
+                      />
+                    </div>
+                    <div className="carousel-caption">
+                      <strong>{book.titleFr}</strong>
+                      <span>{book.priceEur.toFixed(2)} EUR</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="marquee-track" aria-hidden="true">
+                {displayBooks.map((book, index) => (
+                  <article className="carousel-card" key={`${book.id}-clone-${index}`}>
+                    <div className="carousel-image">
+                      <Image
+                        src={book.coverImage}
+                        alt={book.titleFr}
+                        fill
+                        sizes="270px"
+                        className="carousel-cover-image"
+                      />
+                    </div>
+                    <div className="carousel-caption">
+                      <strong>{book.titleFr}</strong>
+                      <span>{book.priceEur.toFixed(2)} EUR</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
 

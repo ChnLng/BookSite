@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminGuard } from "@/components/admin-guard";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
+import { books as staticBooks } from "@/data/books";
 import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-assets";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { bookIdFromDownload } from "@/lib/purchase-access";
@@ -197,6 +198,45 @@ function bookSortValue(book: BookRow, index: number) {
   return book.sort_order ?? index + 1;
 }
 
+function fallbackBookRow(index: number, book: (typeof staticBooks)[number]): BookRow {
+  const slug = book.id;
+  const ext = bookAssetExtensions[slug] || "jpg";
+
+  return {
+    id: slug,
+    slug,
+    sort_order: index + 1,
+    title_fr: book.titleFr,
+    title_zh: book.titleZh,
+    visible: true,
+    price_eur: book.priceEur,
+    cover_image: bookCoverPath(slug, ext),
+    pdf_file: bookPdfPath(slug),
+    synopsis_fr: book.synopsisFr,
+    synopsis_zh: book.synopsisZh || null,
+    asin: book.asin,
+    amazon_ebook_url: book.amazonEbookUrl,
+    amazon_paperback_url: book.amazonPaperbackUrl,
+    created_at: null,
+  };
+}
+
+function mergeBooksWithFallback(rows: BookRow[]) {
+  const knownKeys = new Set(
+    rows.flatMap((row) => [row.id, row.slug || ""]).filter(Boolean).map((value) => value.toLowerCase()),
+  );
+
+  const missingStaticRows = staticBooks
+    .filter((book) => !knownKeys.has(book.id.toLowerCase()))
+    .map((book, index) => fallbackBookRow(index, book));
+
+  return [...rows, ...missingStaticRows].sort((left, right) => {
+    const leftSort = left.sort_order ?? Number.MAX_SAFE_INTEGER;
+    const rightSort = right.sort_order ?? Number.MAX_SAFE_INTEGER;
+    return leftSort - rightSort || left.title_fr.localeCompare(right.title_fr);
+  });
+}
+
 function promoEditFromCode(promo: PromoCode): PromoEditState {
   return {
     code: promo.code,
@@ -237,6 +277,9 @@ function AdminPageContent() {
     const supabase = getSupabaseBrowserClient();
 
     if (!supabase) {
+      const fallbackBooks = mergeBooksWithFallback([]);
+      setBooks(fallbackBooks);
+      setBookEdits(Object.fromEntries(fallbackBooks.map((book) => [book.id, bookEditFromRow(book)])));
       setLoading(false);
       return;
     }
@@ -264,7 +307,7 @@ function AdminPageContent() {
         supabase.from("donations").select("id, user_email, amount, note, created_at").order("created_at", { ascending: false }),
       ]);
 
-    const nextBooks = (booksData || []) as BookRow[];
+    const nextBooks = mergeBooksWithFallback((booksData || []) as BookRow[]);
     const nextCategories = (categoryData || []) as CategoryRow[];
     const nextPromos = ((promoData || []) as PromoRow[]).map(mapPromoRow);
 

@@ -168,7 +168,7 @@ export default function AccountPage() {
     <main className="page-shell">
       <TopNav subtitle="Ma page" title="Ma page" showAdmin showLogout />
 
-      <section className="panel glass">
+      <section className="panel glass" style={{ marginTop: 22 }}>
         <h1 className="section-title" style={{ fontFamily: "var(--font-heading), serif" }}>
           Bonjour {greeting}
         </h1>
