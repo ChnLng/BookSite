@@ -62,6 +62,7 @@ const defaultCarouselBooks: DisplayBook[] = staticBooks.map((book) => {
 });
 
 export default function HomePage() {
+  const emailLoginHintText = "Un petit mot pour l'administrateur ? Connectez-vous pour l'envoyer !";
   const [authOpen, setAuthOpen] = useState(false);
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -320,7 +321,7 @@ export default function HomePage() {
     setCommentDeliveryMode(mode);
 
     if (mode === "email" && (!user || !session?.access_token)) {
-      setCommentMessage("Un petit mot pour l'administrateur ? Connectez-vous pour l'envoyer !");
+      setCommentMessage(emailLoginHintText);
       return;
     }
 
@@ -450,7 +451,14 @@ export default function HomePage() {
                   {isSubmittingComment && commentDeliveryMode === "site" ? "Enregistrement..." : "Enregistrer le message"}
                 </button>
               </div>
-              {commentMessage ? <p className="tiny comment-message">{commentMessage}</p> : null}
+              {commentMessage === emailLoginHintText ? (
+                <p className="tiny comment-message comment-login-hint">
+                  <Mail size={16} />
+                  <span>{emailLoginHintText}</span>
+                </p>
+              ) : commentMessage ? (
+                <p className="tiny comment-message">{commentMessage}</p>
+              ) : null}
             </div>
           </aside>
         </div>

@@ -1,8 +1,7 @@
+import { createClient } from "@supabase/supabase-js";
 import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
-import { getUserFromRequest } from "@/lib/auth-request";
 import { siteConfig } from "@/lib/site-config";
-import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
 type CommentRecord = {
   id: string;
@@ -37,6 +36,10 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#39;");
 }
 
+function sanitizeHeaderText(value: string) {
+  return value.replace(/[\r\n"]/g, " ").trim();
+}
+
 function createMailTransporter() {
   const host = process.env.SMTP_HOST || "smtp.office365.com";
   const port = Number(process.env.SMTP_PORT || "587");
@@ -62,8 +65,50 @@ function createMailTransporter() {
   };
 }
 
+function createServerSupabaseClient(accessToken?: string) {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || siteConfig.supabaseAnonKey;
+
+  if (!siteConfig.supabaseUrl || !key) {
+    return null;
+  }
+
+  return createClient(siteConfig.supabaseUrl, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: accessToken
+      ? {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      : undefined,
+  });
+}
+
+async function getUserFromAccessToken(accessToken?: string) {
+  if (!accessToken) {
+    return null;
+  }
+
+  const supabase = createServerSupabaseClient(accessToken);
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase.auth.getUser(accessToken);
+
+  if (error || !data.user) {
+    return null;
+  }
+
+  return data.user;
+}
+
 export async function GET() {
-  const supabase = getSupabaseServiceClient();
+  const supabase = createServerSupabaseClient();
   
   if (!supabase) {
     return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
@@ -88,16 +133,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = getSupabaseServiceClient();
-  
-  if (!supabase) {
-    return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
-  }
-  
   const formData = await request.formData();
   const name = String(formData.get("name") || "").trim();
   const content = String(formData.get("content") || "").trim();
   const mode = String(formData.get("mode") || "site").trim();
+  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
 
   if (!name || !content) {
     return NextResponse.json(
@@ -106,7 +146,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromAccessToken(accessToken);
   const userEmail = user?.email || null;
 
   if (mode === "email") {
@@ -127,15 +167,19 @@ export async function POST(request: Request) {
     }
 
     try {
+      const safeName = sanitizeHeaderText(name);
+      const safeUserEmail = sanitizeHeaderText(userEmail);
+
       await mailer.transporter.sendMail({
-        from: mailer.from,
+        from: `"${safeName} via Visd AR" <${mailer.from}>`,
+        sender: mailer.from,
         to: siteConfig.adminInbox,
-        replyTo: userEmail,
-        subject: `Nouveau commentaire Visd AR de ${name}`,
+        replyTo: `"${safeName}" <${safeUserEmail}>`,
+        subject: `Message de ${safeName} via Visd AR`,
         text: [
           "Nouveau message depuis le site Visd AR",
           "",
-          `Nom: ${name}`,
+          `Expediteur connecte: ${name}`,
           `Email de connexion: ${userEmail}`,
           "",
           "Commentaire:",
@@ -144,7 +188,7 @@ export async function POST(request: Request) {
         html: `
           <div style="font-family: Arial, sans-serif; line-height: 1.7; color: #0f172a;">
             <h2 style="margin-bottom: 12px;">Nouveau message depuis le site Visd AR</h2>
-            <p><strong>Nom :</strong> ${escapeHtml(name)}</p>
+            <p><strong>Expediteur connecte :</strong> ${escapeHtml(name)}</p>
             <p><strong>Email de connexion :</strong> ${escapeHtml(userEmail)}</p>
             <p><strong>Commentaire :</strong></p>
             <div style="padding: 14px 16px; border-radius: 16px; background: #f8fafc; border: 1px solid #e2e8f0;">
@@ -163,20 +207,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, message: "Message envoye a l'administrateur." });
   }
 
+  const supabase = createServerSupabaseClient(accessToken);
+
+  if (!supabase) {
+    return NextResponse.json({ ok: false, message: "Configuration Supabase manquante sur le serveur." }, { status: 503 });
+  }
+
   const { data, error } = await supabase
     .from("comments")
     .insert({
       author_name: name,
       content: content,
       user_id: user?.id || null,
-      user_email: userEmail,
     })
     .select("id, author_name, content, created_at")
     .single();
 
   if (error) {
     return NextResponse.json(
-      { ok: false, message: "Erreur lors de l'enregistrement." },
+      { ok: false, message: error.message || "Erreur lors de l'enregistrement." },
       { status: 500 },
     );
   }

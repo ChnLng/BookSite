@@ -64,7 +64,7 @@ begin
     select 1 from pg_policies where schemaname = 'public' and tablename = 'comments' and policyname = 'Users can insert their own comments'
   ) then
     create policy "Users can insert their own comments" on public.comments
-      for insert with check (auth.uid() = user_id);
+      for insert with check (auth.uid() = user_id or user_id is null);
   end if;
 
   if not exists (
