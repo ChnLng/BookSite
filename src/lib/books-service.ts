@@ -30,6 +30,9 @@ export type DisplayBook = Book & {
   relatedBookIds: string[];
 };
 
+export const BOOK_PUBLIC_SELECT =
+  "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, related_book_ids, created_at";
+
 function normalizeRelatedBookIds(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value
@@ -40,7 +43,7 @@ function normalizeRelatedBookIds(value: unknown): string[] {
   return [];
 }
 
-function staticDisplayBooks(): DisplayBook[] {
+export function getStaticDisplayBooks(): DisplayBook[] {
   return staticBooks.map((book) => {
     const ext = bookAssetExtensions[book.id] || "jpg";
     return {
@@ -60,6 +63,7 @@ function fallbackBookById(bookId: string) {
 export function mapBookRow(row: BookRow, fallback?: Book): DisplayBook {
   const slug = row.slug || fallback?.id || row.id;
   const ext = bookAssetExtensions[slug] || "jpg";
+  const normalizedRelatedBookIds = normalizeRelatedBookIds(row.related_book_ids);
 
   return {
     id: slug,
@@ -78,9 +82,7 @@ export function mapBookRow(row: BookRow, fallback?: Book): DisplayBook {
     visible: row.visible,
     coverImage: row.cover_image || bookCoverPath(slug, ext),
     pdfFile: row.pdf_file || bookPdfPath(slug),
-    relatedBookIds: normalizeRelatedBookIds(row.related_book_ids).length > 0
-      ? normalizeRelatedBookIds(row.related_book_ids)
-      : defaultRelatedBookIds[slug] || [],
+    relatedBookIds: normalizedRelatedBookIds.length > 0 ? normalizedRelatedBookIds : defaultRelatedBookIds[slug] || [],
   };
 }
 
@@ -88,48 +90,24 @@ export async function loadDisplayBooks(includeHidden = false): Promise<DisplayBo
   const supabase = getSupabaseBrowserClient();
 
   if (!hasSupabaseConfig || !supabase) {
-    return staticDisplayBooks();
+    return getStaticDisplayBooks();
   }
 
   const query = supabase
     .from("books")
-    .select(
-      "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, created_at",
-    )
+    .select(BOOK_PUBLIC_SELECT)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
   const { data } = includeHidden ? await query : await query.eq("visible", true);
 
   if (!data || data.length === 0) {
-    return staticDisplayBooks();
-  }
-
-  let relatedMap = new Map<string, string[]>();
-  const { data: relatedData, error: relatedError } = await supabase
-    .from("books")
-    .select("id, slug, related_book_ids");
-
-  if (!relatedError && relatedData) {
-    relatedMap = new Map(
-      (relatedData as BookRow[]).flatMap((row) => {
-        const ids = normalizeRelatedBookIds(row.related_book_ids);
-        const keys = [row.id, row.slug || ""].filter(Boolean);
-        return keys.map((key) => [key, ids] as const);
-      }),
-    );
+    return getStaticDisplayBooks();
   }
 
   return (data as BookRow[]).map((row) => {
     const fallback = staticBooks.find((book) => book.id === (row.slug || row.id));
-    const slug = row.slug || row.id;
-    return mapBookRow(
-      {
-        ...row,
-        related_book_ids: relatedMap.get(slug) || relatedMap.get(row.id) || row.related_book_ids || null,
-      },
-      fallback,
-    );
+    return mapBookRow(row, fallback);
   });
 }
 
@@ -142,9 +120,7 @@ export async function resolveDisplayBookById(
   if (hasSupabaseConfig && supabase) {
     let query = supabase
       .from("books")
-      .select(
-        "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, created_at",
-      )
+      .select(BOOK_PUBLIC_SELECT)
       .or(`slug.eq.${bookId},id.eq.${bookId}`)
       .limit(1);
 
@@ -157,19 +133,7 @@ export async function resolveDisplayBookById(
     if (data) {
       const row = data as BookRow;
       const fallback = staticBooks.find((book) => book.id === (row.slug || row.id));
-      let relatedIds = row.related_book_ids || null;
-      const { data: relationData, error: relationError } = await supabase
-        .from("books")
-        .select("id, slug, related_book_ids")
-        .or(`slug.eq.${bookId},id.eq.${bookId}`)
-        .limit(1)
-        .maybeSingle();
-
-      if (!relationError && relationData) {
-        relatedIds = (relationData as BookRow).related_book_ids || null;
-      }
-
-      return mapBookRow({ ...row, related_book_ids: relatedIds }, fallback);
+      return mapBookRow(row, fallback);
     }
   }
 
@@ -193,5 +157,5 @@ export async function resolveDisplayBookById(
 }
 
 export function getStaticBookById(bookId: string) {
-  return staticDisplayBooks().find((book) => book.id === bookId);
+  return getStaticDisplayBooks().find((book) => book.id === bookId);
 }

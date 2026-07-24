@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import {
+  Heart,
   LoaderCircle,
   Mail,
   MessageCircleHeart,
@@ -30,6 +31,8 @@ type CommentItem = {
   content: string;
   icon: string;
   createdAt: string;
+  likeCount: number;
+  likedByViewer: boolean;
 };
 
 const sampleComments: CommentItem[] = [
@@ -39,6 +42,8 @@ const sampleComments: CommentItem[] = [
     content: "J'adore la douceur du concept et l'idee d'un espace de lecture tres visuel.",
     icon: "✨",
     createdAt: "Aujourd'hui",
+    likeCount: 3,
+    likedByViewer: false,
   },
   {
     id: "sample-2",
@@ -46,6 +51,8 @@ const sampleComments: CommentItem[] = [
     content: "Les histoires donnent envie d'explorer le chinois sans pression, avec un vrai univers.",
     icon: "📖",
     createdAt: "Hier",
+    likeCount: 5,
+    likedByViewer: false,
   },
 ];
 
@@ -63,6 +70,7 @@ const defaultCarouselBooks: DisplayBook[] = staticBooks.map((book) => {
 
 export default function HomePage() {
   const emailLoginHintText = "Un petit mot pour l'administrateur ? Connectez-vous pour l'envoyer !";
+  const siteCommentSuccessText = "Message bien enregistré ! Il est bien au chaud dans votre espace « Ma page ».";
   const [authOpen, setAuthOpen] = useState(false);
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -78,19 +86,66 @@ export default function HomePage() {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentMessage, setCommentMessage] = useState("");
   const [commentDeliveryMode, setCommentDeliveryMode] = useState<"site" | "email">("site");
+  const [comments, setComments] = useState<CommentItem[]>(sampleComments);
+  const [visitorToken, setVisitorToken] = useState("");
   const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>(defaultCarouselBooks);
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
   const { user, profile, session, signInWithPassword, signUpWithPassword } = useAuth();
-  const comments = sampleComments;
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const existingToken = window.localStorage.getItem("visdar-visitor-token");
+
+    if (existingToken) {
+      setVisitorToken(existingToken);
+      return;
+    }
+
+    const nextToken = window.crypto?.randomUUID?.() || `visitor-${Date.now()}`;
+    window.localStorage.setItem("visdar-visitor-token", nextToken);
+    setVisitorToken(nextToken);
+  }, []);
 
   useEffect(() => {
     void loadDisplayBooks().then((books) => {
       setDisplayBooks(books.length > 0 ? books : defaultCarouselBooks);
     });
   }, []);
+
+  useEffect(() => {
+    if (!visitorToken) {
+      return;
+    }
+
+    const loadComments = async () => {
+      try {
+        const response = await fetch("/api/messages", {
+          headers: {
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+            "x-visitor-token": visitorToken,
+          },
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !Array.isArray(result.comments)) {
+          return;
+        }
+
+        setComments(result.comments as CommentItem[]);
+      } catch {
+        // keep existing sample comments if the API is unavailable
+      }
+    };
+
+    void loadComments();
+  }, [session?.access_token, visitorToken]);
 
   useEffect(() => {
     const loadPromo = async () => {
@@ -336,11 +391,10 @@ export default function HomePage() {
 
       const response = await fetch("/api/messages", {
         method: "POST",
-        headers: session?.access_token
-          ? {
-              Authorization: `Bearer ${session.access_token}`,
-            }
-          : undefined,
+        headers: {
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          ...(visitorToken ? { "x-visitor-token": visitorToken } : {}),
+        },
         body: formData,
       });
 
@@ -353,7 +407,10 @@ export default function HomePage() {
 
       if (mode === "site") {
         setCommentContent("");
-        setCommentMessage("Message enregistre. Il ne sera pas affiche publiquement sur l'accueil.");
+        if (result.comment) {
+          setComments((current) => [...current, result.comment as CommentItem].slice(-2));
+        }
+        setCommentMessage(siteCommentSuccessText);
       } else {
         setCommentContent("");
         setCommentMessage(result.message || "Message envoye a l'administrateur.");
@@ -362,6 +419,42 @@ export default function HomePage() {
       setCommentMessage("Erreur réseau. Veuillez réessayer.");
     } finally {
       setIsSubmittingComment(false);
+    }
+  };
+
+  const toggleCommentLike = async (commentId: string) => {
+    if (!visitorToken) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/messages/${commentId}/like`, {
+        method: "POST",
+        headers: {
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          "x-visitor-token": visitorToken,
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return;
+      }
+
+      setComments((current) =>
+        current.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                likeCount: result.likeCount ?? comment.likeCount,
+                likedByViewer: Boolean(result.liked),
+              }
+            : comment,
+        ),
+      );
+    } catch {
+      // keep current UI if the like request fails
     }
   };
 
@@ -404,14 +497,25 @@ export default function HomePage() {
               Votre avis nous intéresse ...
             </span>
             <div className="comment-list">
-              {comments.slice(-2).map((item) => (
+              {comments.map((item) => (
                 <article className="comment-card" key={item.id}>
                   <div className="comment-card-header">
                     <strong>{item.name}</strong>
                   </div>
                   <p className="muted comment-content">{item.content}</p>
                   <div className="comment-card-footer">
-                    <span className="comment-warm-word">{item.icon}</span>
+                    <div className="comment-feedback-row">
+                      <span className="comment-warm-word">{item.icon}</span>
+                      <button
+                        className={item.likedByViewer ? "comment-like-button liked" : "comment-like-button"}
+                        type="button"
+                        disabled={item.id.startsWith("sample-")}
+                        onClick={() => void toggleCommentLike(item.id)}
+                      >
+                        <Heart size={14} />
+                        <span>{item.likeCount}</span>
+                      </button>
+                    </div>
                     <span className="comment-time">{item.createdAt}</span>
                   </div>
                 </article>
@@ -448,7 +552,7 @@ export default function HomePage() {
                   disabled={isSubmittingComment}
                   onClick={() => void submitComment("site")}
                 >
-                  {isSubmittingComment && commentDeliveryMode === "site" ? "Enregistrement..." : "Enregistrer le message"}
+                  {isSubmittingComment && commentDeliveryMode === "site" ? "Publication..." : "Publier le commentaire"}
                 </button>
               </div>
               {commentMessage === emailLoginHintText ? (
@@ -456,6 +560,8 @@ export default function HomePage() {
                   <Mail size={16} />
                   <span>{emailLoginHintText}</span>
                 </p>
+              ) : commentMessage === siteCommentSuccessText ? (
+                <p className="tiny comment-message">{siteCommentSuccessText}</p>
               ) : commentMessage ? (
                 <p className="tiny comment-message">{commentMessage}</p>
               ) : null}

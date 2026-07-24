@@ -7,25 +7,19 @@ type CommentRecord = {
   id: string;
   name: string;
   content: string;
-  badge: string;
   icon: string;
   createdAt: string;
+  likeCount: number;
+  likedByViewer: boolean;
 };
 
 const icons = ["✨", "🛸", "📖", "🍵", "🌙", "💫"];
-const badgeTemplates = ["coup de cœur", "appréciation", "suggestion", "merci", "échange"];
 
 const formatDateTime = (date: Date) =>
   date.toLocaleString("fr-FR", {
     dateStyle: "medium",
     timeStyle: "short",
   });
-
-const makeBadge = (index: number) => {
-  const category = badgeTemplates[index % badgeTemplates.length];
-  const number = index + 1;
-  return `${number}e ${category}`;
-};
 
 function escapeHtml(value: string) {
   return value
@@ -38,6 +32,11 @@ function escapeHtml(value: string) {
 
 function sanitizeHeaderText(value: string) {
   return value.replace(/[\r\n"]/g, " ").trim();
+}
+
+function pickIcon(seed: string) {
+  const total = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return icons[total % icons.length];
 }
 
 function createMailTransporter() {
@@ -107,8 +106,49 @@ async function getUserFromAccessToken(accessToken?: string) {
   return data.user;
 }
 
-export async function GET() {
-  const supabase = createServerSupabaseClient();
+async function buildLikeStats(args: {
+  supabase: ReturnType<typeof createServerSupabaseClient>;
+  commentIds: string[];
+  userId?: string | null;
+  visitorToken?: string;
+}) {
+  const { supabase, commentIds, userId, visitorToken } = args;
+
+  if (!supabase || commentIds.length === 0) {
+    return new Map<string, { likeCount: number; likedByViewer: boolean }>();
+  }
+
+  const { data } = await supabase
+    .from("comment_likes")
+    .select("comment_id, user_id, visitor_token")
+    .in("comment_id", commentIds);
+
+  const stats = new Map<string, { likeCount: number; likedByViewer: boolean }>();
+
+  for (const commentId of commentIds) {
+    stats.set(commentId, { likeCount: 0, likedByViewer: false });
+  }
+
+  for (const row of data || []) {
+    const current = stats.get(row.comment_id) || { likeCount: 0, likedByViewer: false };
+    const likedByViewer =
+      (userId && row.user_id === userId) ||
+      (!userId && visitorToken && row.visitor_token === visitorToken);
+
+    stats.set(row.comment_id, {
+      likeCount: current.likeCount + 1,
+      likedByViewer: current.likedByViewer || Boolean(likedByViewer),
+    });
+  }
+
+  return stats;
+}
+
+export async function GET(request: Request) {
+  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
+  const visitorToken = request.headers.get("x-visitor-token")?.trim() || undefined;
+  const user = await getUserFromAccessToken(accessToken);
+  const supabase = createServerSupabaseClient(accessToken);
   
   if (!supabase) {
     return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
@@ -118,15 +158,24 @@ export async function GET() {
     .from("comments")
     .select("id, content, author_name, created_at")
     .order("created_at", { ascending: false })
-    .limit(10);
-  
-  const comments: CommentRecord[] = (data || []).map((item, index) => ({
+    .limit(2);
+
+  const rows = [...(data || [])].reverse();
+  const likeStats = await buildLikeStats({
+    supabase,
+    commentIds: rows.map((item) => item.id),
+    userId: user?.id,
+    visitorToken,
+  });
+
+  const comments: CommentRecord[] = rows.map((item) => ({
     id: item.id,
     name: item.author_name || "Anonyme",
     content: item.content || "",
-    badge: makeBadge(index),
-    icon: icons[Math.floor(Math.random() * icons.length)],
+    icon: pickIcon(item.id),
     createdAt: item.created_at ? formatDateTime(new Date(item.created_at)) : "",
+    likeCount: likeStats.get(item.id)?.likeCount || 0,
+    likedByViewer: likeStats.get(item.id)?.likedByViewer || false,
   }));
   
   return NextResponse.json({ ok: true, comments });
@@ -234,9 +283,10 @@ export async function POST(request: Request) {
     id: data.id,
     name: data.author_name || "Anonyme",
     content: data.content || "",
-    badge: makeBadge(0),
-    icon: icons[Math.floor(Math.random() * icons.length)],
+    icon: pickIcon(data.id),
     createdAt: data.created_at ? formatDateTime(new Date(data.created_at)) : "",
+    likeCount: 0,
+    likedByViewer: false,
   };
 
   return NextResponse.json({ ok: true, comment, message: "Commentaire ajouté." });

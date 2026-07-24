@@ -317,6 +317,12 @@ select {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.catalogue-more-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
 .luxury-shell {
   min-height: 100vh;
 }
@@ -626,6 +632,36 @@ select {
 .comment-time {
   font-size: 0.77rem;
   color: var(--text-muted);
+}
+
+.comment-feedback-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comment-like-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-muted);
+  box-shadow: var(--shadow-glass);
+  cursor: pointer;
+  font: inherit;
+}
+
+.comment-like-button.liked {
+  color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.comment-like-button:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 .comment-message {
