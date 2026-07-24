@@ -89,6 +89,13 @@ export const books: Book[] = [
   },
 ];
 
+export const defaultRelatedBookIds: Record<string, string[]> = {
+  lumi: ["jiti", "fulbert"],
+  jiti: ["lumi", "taogao"],
+  taogao: ["jiti", "fulbert"],
+  fulbert: ["lumi", "taogao"],
+};
+
 export const donationOptions = [
   { id: "petit-nuage", label: "Petit Nuage", amount: 3 },
   { id: "coup-de-patte", label: "Coup de Patte", amount: 5 },

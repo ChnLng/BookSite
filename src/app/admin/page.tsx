@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminGuard } from "@/components/admin-guard";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
-import { books as staticBooks } from "@/data/books";
+import { books as staticBooks, defaultRelatedBookIds } from "@/data/books";
 import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-assets";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { bookIdFromDownload } from "@/lib/purchase-access";
@@ -26,6 +26,7 @@ type BookRow = {
   asin: string | null;
   amazon_ebook_url: string | null;
   amazon_paperback_url: string | null;
+  related_book_ids?: string[] | null;
   created_at?: string | null;
 };
 
@@ -66,6 +67,7 @@ type BookFormState = {
   amazonEbookUrl: string;
   amazonPaperbackUrl: string;
   visible: boolean;
+  relatedBookIds: string[];
 };
 
 type BookEditState = BookFormState;
@@ -116,6 +118,7 @@ const defaultBookForm: BookFormState = {
   amazonEbookUrl: "",
   amazonPaperbackUrl: "",
   visible: true,
+  relatedBookIds: [],
 };
 
 const defaultPromoForm: PromoFormState = {
@@ -167,9 +170,20 @@ function formatDateTimeLocal(value?: string | null) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function normalizeRelatedBookIds(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => String(entry || "").trim())
+    .filter(Boolean);
+}
+
 function bookEditFromRow(book: BookRow): BookEditState {
   const slug = book.slug || book.id;
   const ext = bookAssetExtensions[slug] || "jpg";
+  const relatedBookIds = normalizeRelatedBookIds(book.related_book_ids);
 
   return {
     slug,
@@ -184,6 +198,7 @@ function bookEditFromRow(book: BookRow): BookEditState {
     amazonEbookUrl: book.amazon_ebook_url || "",
     amazonPaperbackUrl: book.amazon_paperback_url || "",
     visible: Boolean(book.visible),
+    relatedBookIds: relatedBookIds.length > 0 ? relatedBookIds : defaultRelatedBookIds[slug] || [],
   };
 }
 
@@ -217,6 +232,7 @@ function fallbackBookRow(index: number, book: (typeof staticBooks)[number]): Boo
     asin: book.asin,
     amazon_ebook_url: book.amazonEbookUrl,
     amazon_paperback_url: book.amazonPaperbackUrl,
+    related_book_ids: defaultRelatedBookIds[slug] || [],
     created_at: null,
   };
 }
@@ -235,6 +251,10 @@ function mergeBooksWithFallback(rows: BookRow[]) {
     const rightSort = right.sort_order ?? Number.MAX_SAFE_INTEGER;
     return leftSort - rightSort || left.title_fr.localeCompare(right.title_fr);
   });
+}
+
+function relationValueFromBook(book: Pick<BookRow, "id" | "slug">) {
+  return book.slug || book.id;
 }
 
 function promoEditFromCode(promo: PromoCode): PromoEditState {
@@ -286,7 +306,14 @@ function AdminPageContent() {
 
     setLoading(true);
 
-    const [{ data: booksData }, { data: categoryData }, { data: promoData }, { data: downloadData }, { data: donationData }] =
+    const [
+      { data: booksData },
+      { data: categoryData },
+      { data: promoData },
+      { data: downloadData },
+      { data: donationData },
+      { data: relationData, error: relationError },
+    ] =
       await Promise.all([
         supabase
           .from("books")
@@ -305,9 +332,30 @@ function AdminPageContent() {
           .select("id, book_id, user_email, book_title, download_url, created_at")
           .order("created_at", { ascending: false }),
         supabase.from("donations").select("id, user_email, amount, note, created_at").order("created_at", { ascending: false }),
+        supabase.from("books").select("id, slug, related_book_ids"),
       ]);
 
-    const nextBooks = mergeBooksWithFallback((booksData || []) as BookRow[]);
+    const relatedMap = new Map<string, string[]>();
+
+    if (!relationError && relationData) {
+      ((relationData || []) as BookRow[]).forEach((row) => {
+        const relatedIds = normalizeRelatedBookIds(row.related_book_ids);
+        [row.id, row.slug || ""].filter(Boolean).forEach((key) => {
+          relatedMap.set(key, relatedIds);
+        });
+      });
+    }
+
+    const nextBooks = mergeBooksWithFallback(
+      ((booksData || []) as BookRow[]).map((row) => {
+        const slug = row.slug || row.id;
+
+        return {
+          ...row,
+          related_book_ids: relatedMap.get(slug) || relatedMap.get(row.id) || row.related_book_ids || null,
+        };
+      }),
+    );
     const nextCategories = (categoryData || []) as CategoryRow[];
     const nextPromos = ((promoData || []) as PromoRow[]).map(mapPromoRow);
 
@@ -510,6 +558,9 @@ function AdminPageContent() {
       const ext = bookAssetExtensions[nextForm.slug] || "jpg";
       const nextSortOrder =
         books.reduce((max, book, index) => Math.max(max, bookSortValue(book, index)), 0) + 1;
+      const relatedBookIds = nextForm.relatedBookIds
+        .map((entry) => entry.trim())
+        .filter((entry) => entry && entry !== nextForm.slug);
 
       const { error } = await supabase.from("books").insert({
         slug: nextForm.slug,
@@ -525,6 +576,7 @@ function AdminPageContent() {
         synopsis_zh: nextForm.synopsisZh || null,
         amazon_ebook_url: nextForm.amazonEbookUrl || null,
         amazon_paperback_url: nextForm.amazonPaperbackUrl || null,
+        related_book_ids: relatedBookIds.length > 0 ? relatedBookIds : null,
       });
 
       if (error) {
@@ -554,6 +606,10 @@ function AdminPageContent() {
     }
 
     await withBusyState(`save-book-${bookId}`, async () => {
+      const relatedBookIds = edit.relatedBookIds
+        .map((entry) => entry.trim())
+        .filter((entry) => entry && entry !== edit.slug && entry !== bookId);
+
       const { error } = await supabase
         .from("books")
         .update({
@@ -569,6 +625,7 @@ function AdminPageContent() {
           amazon_ebook_url: edit.amazonEbookUrl || null,
           amazon_paperback_url: edit.amazonPaperbackUrl || null,
           visible: edit.visible,
+          related_book_ids: relatedBookIds.length > 0 ? relatedBookIds : null,
         })
         .eq("id", bookId);
 
@@ -996,6 +1053,17 @@ function AdminPageContent() {
     });
   };
 
+  const toggleRelatedBookSelection = (
+    currentValue: string[],
+    relatedBookId: string,
+  ) => {
+    if (currentValue.includes(relatedBookId)) {
+      return currentValue.filter((entry) => entry !== relatedBookId);
+    }
+
+    return [...currentValue, relatedBookId];
+  };
+
   return (
     <main className="page-shell">
       <TopNav subtitle="后台概览 Admin" title="Visd AR 管理台" showAdmin showLogout />
@@ -1112,6 +1180,40 @@ function AdminPageContent() {
                     />{" "}
                     Visible
                   </label>
+                </div>
+
+                <div className="section-block" style={{ marginTop: 14 }}>
+                  <div className="split-line">
+                    <strong>关联商品 Produits associes</strong>
+                    <span className="tiny">勾选后会显示在商品详情页</span>
+                  </div>
+                  <div className="admin-related-grid" style={{ marginTop: 12 }}>
+                    {books.length === 0 ? (
+                      <p className="tiny">请先创建至少一本其它图书。</p>
+                    ) : (
+                      books
+                        .filter((book) => relationValueFromBook(book) !== (form.slug || slugify(form.titleFr)))
+                        .map((book) => {
+                          const relatedValue = relationValueFromBook(book);
+
+                          return (
+                            <label className="admin-related-option" key={`create-related-${book.id}`}>
+                              <input
+                                type="checkbox"
+                                checked={form.relatedBookIds.includes(relatedValue)}
+                                onChange={() =>
+                                  setForm({
+                                    ...form,
+                                    relatedBookIds: toggleRelatedBookSelection(form.relatedBookIds, relatedValue),
+                                  })
+                                }
+                              />
+                              <span>{book.title_zh} {book.title_fr}</span>
+                            </label>
+                          );
+                        })
+                    )}
+                  </div>
                 </div>
 
                 <div className="section-block" style={{ marginTop: 14 }}>
@@ -1330,6 +1432,39 @@ function AdminPageContent() {
                                 />{" "}
                                 Visible
                               </label>
+                            </div>
+
+                            <div className="section-block" style={{ marginTop: 14 }}>
+                              <div className="split-line">
+                                <strong>关联商品 Produits associes</strong>
+                                <span className="tiny">详情页左侧会显示这些商品</span>
+                              </div>
+                              <div className="admin-related-grid" style={{ marginTop: 12 }}>
+                                {books
+                                  .filter((candidate) => relationValueFromBook(candidate) !== relationValueFromBook(book))
+                                  .map((candidate) => {
+                                    const relatedValue = relationValueFromBook(candidate);
+
+                                    return (
+                                      <label className="admin-related-option" key={`${book.id}-related-${candidate.id}`}>
+                                        <input
+                                          type="checkbox"
+                                          checked={edit.relatedBookIds.includes(relatedValue)}
+                                          onChange={() =>
+                                            setBookEdits({
+                                              ...bookEdits,
+                                              [book.id]: {
+                                                ...edit,
+                                                relatedBookIds: toggleRelatedBookSelection(edit.relatedBookIds, relatedValue),
+                                              },
+                                            })
+                                          }
+                                        />
+                                        <span>{candidate.title_zh} {candidate.title_fr}</span>
+                                      </label>
+                                    );
+                                  })}
+                              </div>
                             </div>
 
                             <div className="section-block" style={{ marginTop: 14 }}>

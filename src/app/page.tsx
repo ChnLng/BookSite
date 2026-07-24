@@ -19,7 +19,7 @@ import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { TopNav } from "@/components/top-nav";
 import { PromoBanner } from "@/components/promo-banner";
 import { useAuth } from "@/components/auth-provider";
-import { books as staticBooks } from "@/data/books";
+import { books as staticBooks, defaultRelatedBookIds } from "@/data/books";
 import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-assets";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
 import { siteConfig } from "@/lib/site-config";
@@ -74,6 +74,7 @@ const defaultCarouselBooks: DisplayBook[] = staticBooks.map((book) => {
     visible: true,
     coverImage: bookCoverPath(book.id, ext),
     pdfFile: bookPdfPath(book.id),
+    relatedBookIds: defaultRelatedBookIds[book.id] || [],
   };
 });
 
@@ -544,7 +545,7 @@ export default function HomePage() {
             <div className="marquee-inner">
               <div className="marquee-track">
                 {displayBooks.map((book, index) => (
-                  <article className="carousel-card" key={`${book.id}-${index}`}>
+                  <Link className="carousel-card carousel-card-link" href={`/livres/${book.id}`} key={`${book.id}-${index}`}>
                     <div className="carousel-image">
                       <Image
                         src={book.coverImage}
@@ -558,12 +559,17 @@ export default function HomePage() {
                       <strong>{book.titleFr}</strong>
                       <span>{book.priceEur.toFixed(2)} EUR</span>
                     </div>
-                  </article>
+                  </Link>
                 ))}
               </div>
               <div className="marquee-track" aria-hidden="true">
                 {displayBooks.map((book, index) => (
-                  <article className="carousel-card" key={`${book.id}-clone-${index}`}>
+                  <Link
+                    className="carousel-card carousel-card-link"
+                    href={`/livres/${book.id}`}
+                    key={`${book.id}-clone-${index}`}
+                    tabIndex={-1}
+                  >
                     <div className="carousel-image">
                       <Image
                         src={book.coverImage}
@@ -577,7 +583,7 @@ export default function HomePage() {
                       <strong>{book.titleFr}</strong>
                       <span>{book.priceEur.toFixed(2)} EUR</span>
                     </div>
-                  </article>
+                  </Link>
                 ))}
               </div>
             </div>

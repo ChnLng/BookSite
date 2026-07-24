@@ -31,7 +31,7 @@ export function TopNav({
 
   return (
     <header className={headerClassName}>
-      <div className="brand-mark">
+      <Link href="/" className="brand-mark brand-link">
         <BrandLogo />
         {subtitle || title ? (
           <div>
@@ -39,7 +39,7 @@ export function TopNav({
             {title ? <strong>{title}</strong> : null}
           </div>
         ) : null}
-      </div>
+      </Link>
       {sharePanel ? <div className="topbar-share-wrap">{sharePanel}</div> : null}
       <nav className="nav-links">
         {!isHomePage ? <Link href="/">Accueil</Link> : null}

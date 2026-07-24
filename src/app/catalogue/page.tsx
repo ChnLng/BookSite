@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Ticket, X } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
@@ -109,7 +110,7 @@ export default function CataloguePage() {
           <div className="book-grid catalogue-book-grid">
             {filteredBooks.map((book) => (
               <article className="book-card" key={book.id}>
-                <div className="book-cover-wrap">
+                <Link href={`/livres/${book.id}`} className="book-cover-wrap">
                   <Image
                     src={book.coverImage}
                     alt={book.titleFr}
@@ -117,9 +118,11 @@ export default function CataloguePage() {
                     height={420}
                     className="book-cover-image"
                   />
-                </div>
+                </Link>
                 <div className="book-meta" style={{ marginTop: 16 }}>
-                  <strong>{book.titleFr}</strong>
+                  <Link href={`/livres/${book.id}`}>
+                    <strong>{book.titleFr}</strong>
+                  </Link>
                   <div className="tiny">{book.titleZh}</div>
                   <div className="tiny">{book.teachingPointFr}</div>
                   <p className="muted">{book.synopsisFr}</p>
@@ -128,6 +131,9 @@ export default function CataloguePage() {
                     <strong>{book.priceEur.toFixed(2)} EUR</strong>
                   </div>
                   <div className="actions-row">
+                    <Link className="pill-button" href={`/livres/${book.id}`}>
+                      Decouvrir
+                    </Link>
                     <button className="cta-button" type="button" onClick={() => void handleBookCheckout(book.id)}>
                       {payingBookId === book.id ? "Paiement..." : "Acheter"}
                     </button>

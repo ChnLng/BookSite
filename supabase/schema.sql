@@ -162,6 +162,7 @@ create table if not exists public.books (
   asin text,
   amazon_ebook_url text,
   amazon_paperback_url text,
+  related_book_ids text[],
   created_at timestamptz default now()
 );
 
@@ -171,6 +172,7 @@ alter table public.books add column if not exists synopsis_fr text;
 alter table public.books add column if not exists synopsis_zh text;
 alter table public.books add column if not exists asin text;
 alter table public.books add column if not exists sort_order integer;
+alter table public.books add column if not exists related_book_ids text[];
 
 alter table public.books enable row level security;
 
