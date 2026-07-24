@@ -26,18 +26,6 @@ begin
     create policy "Users can update their own profile" on public.profiles
       for update using (auth.uid() = id);
   end if;
-
-  if not exists (
-    select 1 from pg_policies where schemaname = 'public' and tablename = 'profiles' and policyname = 'Admins can view all profiles'
-  ) then
-    create policy "Admins can view all profiles" on public.profiles
-      for select using (
-        exists (
-          select 1 from public.profiles p
-          where p.id = auth.uid() and p.role = 'admin'
-        )
-      );
-  end if;
 end $$;
 
 create table if not exists public.comments (
@@ -226,13 +214,9 @@ alter table public.books add column if not exists synopsis_zh text;
 alter table public.books add column if not exists asin text;
 alter table public.books add column if not exists sort_order integer;
 alter table public.books add column if not exists related_book_ids text[];
-alter table public.books add column if not exists category_id uuid references public.categories(id) on delete set null;
 
 create index if not exists books_catalogue_visible_sort_idx
   on public.books (visible, sort_order, created_at);
-
-create index if not exists books_category_idx
-  on public.books (category_id);
 
 create index if not exists books_title_fr_trgm_idx
   on public.books using gin (lower(title_fr) gin_trgm_ops);
@@ -297,6 +281,11 @@ where
 create unique index if not exists categories_slug_unique_idx
   on public.categories (slug)
   where slug is not null;
+
+alter table public.books add column if not exists category_id uuid references public.categories(id) on delete set null;
+
+create index if not exists books_category_idx
+  on public.books (category_id);
 
 alter table public.categories enable row level security;
 
