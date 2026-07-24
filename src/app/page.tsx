@@ -12,8 +12,9 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
-  UserRound,
+  Ticket,
   X,
+} from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { TopNav } from "@/components/top-nav";
 import { PromoBanner } from "@/components/promo-banner";
