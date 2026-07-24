@@ -12,10 +12,8 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
-  Ticket,
   UserRound,
   X,
-} from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { TopNav } from "@/components/top-nav";
 import { PromoBanner } from "@/components/promo-banner";
@@ -633,18 +631,17 @@ export default function HomePage() {
             <button className="overlay-close" type="button" onClick={() => setAuthOpen(false)}>
               <X size={18} />
             </button>
-            <div className="badge">
-              <UserRound size={16} />
-              Connexion inscription
+            <div className="actions-row" style={{ marginTop: 0, marginBottom: 12, justifyContent: "flex-start" }}>
+              <button className="pill-button" type="button" onClick={() => { setAuthMode("signin"); setAuthMessage(""); }}>
+                Connexion
+              </button>
+              <button className="pill-button" type="button" onClick={() => { setAuthMode("signup"); setAuthMessage(""); }}>
+                Inscription
+              </button>
             </div>
             <h2 className="section-title" style={{ fontFamily: "var(--font-heading), serif" }}>
               Entrer dans l&apos;univers Visd AR
             </h2>
-            <p className="muted">
-              L&apos;identite et le role sont lus depuis Supabase. Les comptes admin
-              affichent automatiquement le back-office, les autres restent sur
-              l&apos;espace lecteur.
-            </p>
             <div className="auth-provider-grid">
               <button className="cta-button auth-provider" type="button" onClick={() => void handleOAuth("google")}>
                 {isOAuthLoading === "google" ? <LoaderCircle size={16} className="spin" /> : null}
@@ -653,14 +650,6 @@ export default function HomePage() {
               <button className="cta-button secondary auth-provider" type="button" onClick={() => void handleOAuth("github")}>
                 {isOAuthLoading === "github" ? <LoaderCircle size={16} className="spin" /> : null}
                 Continuer avec GitHub
-              </button>
-            </div>
-            <div className="actions-row" style={{ marginTop: 10, justifyContent: "flex-start" }}>
-              <button className="pill-button" type="button" onClick={() => { setAuthMode("signin"); setAuthMessage(""); }}>
-                Connexion
-              </button>
-              <button className="pill-button" type="button" onClick={() => { setAuthMode("signup"); setAuthMessage(""); }}>
-                Inscription
               </button>
             </div>
             <form className="input-group auth-email-form" onSubmit={handlePasswordAuth}>
