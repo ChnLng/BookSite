@@ -615,6 +615,7 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  margin-top: 8px;
 }
 
 .active-mode {
@@ -622,6 +623,25 @@ select {
   box-shadow:
     0 18px 36px rgba(99, 102, 241, 0.1),
     0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.comment-delivery-switch .compact-submit {
+  flex: 1 1 0;
+  justify-content: center;
+  text-align: center;
+}
+
+.active-submit-mode {
+  box-shadow:
+    0 18px 36px rgba(99, 102, 241, 0.22),
+    0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.secondary-submit-mode {
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--text-main);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-glass);
 }
 
 .compact-form {

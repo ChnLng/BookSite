@@ -366,15 +366,15 @@ export default function HomePage() {
     setAuthOpen(false);
   };
 
-  const handleCommentSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const submitComment = async (mode: "site" | "email") => {
     if (!commentName.trim() || !commentContent.trim()) {
       setCommentMessage("Nom et commentaire sont requis.");
       return;
     }
 
-    if (commentDeliveryMode === "email" && (!user || !session?.access_token)) {
+    setCommentDeliveryMode(mode);
+
+    if (mode === "email" && (!user || !session?.access_token)) {
       setCommentMessage("Connectez-vous pour envoyer un message par email a l'administrateur.");
       return;
     }
@@ -386,7 +386,7 @@ export default function HomePage() {
       const formData = new FormData();
       formData.append("name", commentName);
       formData.append("content", commentContent);
-      formData.append("mode", commentDeliveryMode);
+      formData.append("mode", mode);
 
       const response = await fetch("/api/messages", {
         method: "POST",
@@ -405,7 +405,7 @@ export default function HomePage() {
         return;
       }
 
-      if (commentDeliveryMode === "site") {
+      if (mode === "site") {
         const newComment: CommentItem = {
           id: result.comment.id,
           name: commentName,
@@ -481,31 +481,7 @@ export default function HomePage() {
                 </article>
               ))}
             </div>
-            <form className="input-group compact-form" onSubmit={handleCommentSubmit}>
-              <div className="comment-delivery-switch">
-                <button
-                  className={commentDeliveryMode === "site" ? "pill-button active-mode" : "pill-button"}
-                  type="button"
-                  onClick={() => {
-                    setCommentDeliveryMode("site");
-                    setCommentMessage("");
-                  }}
-                >
-                  Publier sur le site
-                </button>
-                <button
-                  className={commentDeliveryMode === "email" ? "pill-button active-mode" : "pill-button"}
-                  type="button"
-                  disabled={!user}
-                  onClick={() => {
-                    setCommentDeliveryMode("email");
-                    setCommentMessage("");
-                  }}
-                  title={user ? "Envoyer par email a l'administrateur" : "Connexion requise"}
-                >
-                  Envoyer par email
-                </button>
-              </div>
+            <div className="input-group compact-form">
               <input
                 className="input compact-input"
                 name="name"
@@ -520,14 +496,30 @@ export default function HomePage() {
                 value={commentContent}
                 onChange={(event) => setCommentContent(event.target.value)}
               />
-              <button className="cta-button compact-submit" type="submit" disabled={isSubmittingComment}>
-                {isSubmittingComment ? "Envoi..." : "Envoyer"}
-              </button>
+              <div className="comment-delivery-switch">
+                <button
+                  className={commentDeliveryMode === "email" ? "cta-button compact-submit active-submit-mode" : "cta-button compact-submit secondary-submit-mode"}
+                  type="button"
+                  disabled={isSubmittingComment}
+                  onClick={() => void submitComment("email")}
+                  title={user ? "Envoyer par email a l'administrateur" : "Connexion requise"}
+                >
+                  {isSubmittingComment && commentDeliveryMode === "email" ? "Envoi..." : "Envoyer par email"}
+                </button>
+                <button
+                  className={commentDeliveryMode === "site" ? "cta-button compact-submit active-submit-mode" : "cta-button compact-submit secondary-submit-mode"}
+                  type="button"
+                  disabled={isSubmittingComment}
+                  onClick={() => void submitComment("site")}
+                >
+                  {isSubmittingComment && commentDeliveryMode === "site" ? "Envoi..." : "Publier sur le site"}
+                </button>
+              </div>
               {commentDeliveryMode === "email" && !user ? (
                 <p className="tiny comment-message">Connectez-vous pour envoyer votre message par email a l&apos;administrateur.</p>
               ) : null}
               {commentMessage ? <p className="tiny comment-message">{commentMessage}</p> : null}
-            </form>
+            </div>
           </aside>
         </div>
 
