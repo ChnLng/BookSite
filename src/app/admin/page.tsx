@@ -634,6 +634,10 @@ function AdminPageContent() {
     if (!state.slug.trim()) {
       throw new Error("请先填写书籍 slug。");
     }
+
+    if (!state.categoryId.trim()) {
+      throw new Error("请先为商品选择所属类目 Categories。");
+    }
   };
 
   const validateCategoryForm = (state: CategoryFormState) => {
@@ -885,6 +889,12 @@ function AdminPageContent() {
           coverImage: kind === "image" ? assetPath : current.coverImage,
           pdfFile: kind === "pdf" ? assetPath : current.pdfFile,
         }));
+        if (kind === "pdf") {
+          setCreateUploadStatus((current) => ({
+            ...current,
+            pdf: `PDF 上传成功: ${assetPath}`,
+          }));
+        }
         setCreateSelectedFiles((current) => ({ ...current, [kind]: null }));
         setCreateUploadStatus((current) => ({
           ...current,
@@ -944,6 +954,12 @@ function AdminPageContent() {
             pdfFile: kind === "pdf" ? assetPath : current[book.id].pdfFile,
           },
         }));
+        if (kind === "pdf") {
+          setPdfStatuses((current) => ({
+            ...current,
+            [book.id]: { exists: true, message: `已上传到 Supabase: ${assetPath}` },
+          }));
+        }
         setEditSelectedFiles((current) => ({
           ...current,
           [book.id]: { ...(current[book.id] || {}), [kind]: null },
@@ -985,6 +1001,12 @@ function AdminPageContent() {
             pdfFile: kind === "pdf" ? "" : current[book.id].pdfFile,
           },
         }));
+        if (kind === "pdf") {
+          setPdfStatuses((current) => ({
+            ...current,
+            [book.id]: { exists: false, message: "未上传到 Supabase" },
+          }));
+        }
         setEditUploadStatus((current) => ({
           ...current,
           [book.id]: {

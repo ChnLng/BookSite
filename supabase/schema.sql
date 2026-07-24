@@ -377,3 +377,125 @@ $$ language plpgsql security definer;
 create or replace trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
+
+create table if not exists public.admin_allowlist (
+  email text primary key,
+  note text,
+  created_at timestamptz default now()
+);
+
+insert into public.admin_allowlist (email, note)
+values ('visdar@outlook.fr', 'Primary admin inbox')
+on conflict (email) do nothing;
+
+create or replace function public.current_auth_email()
+returns text
+language sql
+stable
+as $$
+  select lower(coalesce(auth.jwt() ->> 'email', ''));
+$$;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.profiles
+    where id = auth.uid() and role = 'admin'
+  )
+  or exists (
+    select 1
+    from public.admin_allowlist
+    where email = public.current_auth_email()
+  );
+$$;
+
+update public.profiles
+set role = 'admin'
+where lower(coalesce(email, '')) in (select email from public.admin_allowlist);
+
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, email, display_name, role)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'full_name', new.email),
+    case
+      when lower(coalesce(new.email, '')) in (select email from public.admin_allowlist) then 'admin'
+      else 'reader'
+    end
+  )
+  on conflict (id) do update
+  set
+    email = excluded.email,
+    display_name = coalesce(public.profiles.display_name, excluded.display_name),
+    role = case
+      when lower(coalesce(excluded.email, '')) in (select email from public.admin_allowlist) then 'admin'
+      else public.profiles.role
+    end;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop policy if exists "Users can update their own profile" on public.profiles;
+drop policy if exists "Admins can view all profiles" on public.profiles;
+drop policy if exists "Admins can manage profiles" on public.profiles;
+
+create policy "Admins can view all profiles" on public.profiles
+  for select using (public.is_admin());
+
+create policy "Admins can manage profiles" on public.profiles
+  for all using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "Admins can manage books" on public.books;
+drop policy if exists "Admins can read all books" on public.books;
+
+create policy "Admins can read all books" on public.books
+  for select using (public.is_admin());
+
+create policy "Admins can manage books" on public.books
+  for all using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "Admins can manage categories" on public.categories;
+drop policy if exists "Admins can read all categories" on public.categories;
+
+create policy "Admins can read all categories" on public.categories
+  for select using (public.is_admin());
+
+create policy "Admins can manage categories" on public.categories
+  for all using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "Admins can manage promo codes" on public.promo_codes;
+drop policy if exists "Admins can read all promo codes" on public.promo_codes;
+
+create policy "Admins can read all promo codes" on public.promo_codes
+  for select using (public.is_admin());
+
+create policy "Admins can manage promo codes" on public.promo_codes
+  for all using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "Admins can view all downloads" on public.downloads;
+drop policy if exists "Admins can manage downloads" on public.downloads;
+drop policy if exists "Users can view downloads by email" on public.downloads;
+
+create policy "Admins can manage downloads" on public.downloads
+  for all using (public.is_admin()) with check (public.is_admin());
+
+create policy "Users can view downloads by email" on public.downloads
+  for select using (
+    user_email is not null
+    and lower(user_email) = public.current_auth_email()
+  );
+
+drop policy if exists "Admins can view all donations" on public.donations;
+drop policy if exists "Admins can manage donations" on public.donations;
+
+create policy "Admins can manage donations" on public.donations
+  for all using (public.is_admin()) with check (public.is_admin());
