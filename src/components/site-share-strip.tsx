@@ -3,11 +3,11 @@
 import { Facebook, Linkedin, Mail, MessageCircle, Send } from "lucide-react";
 
 const socialLinks = [
-  { label: "Telegram", href: "https://t.me/share/url", icon: Send, platform: "telegram" },
-  { label: "WhatsApp", href: "https://wa.me/", icon: MessageCircle, platform: "whatsapp" },
-  { label: "LinkedIn", href: "https://www.linkedin.com/sharing/share-offsite/", icon: Linkedin, platform: "linkedin" },
-  { label: "Facebook", href: "https://www.facebook.com/sharer/sharer.php", icon: Facebook, platform: "facebook" },
-  { label: "Email", href: "mailto:", icon: Mail, platform: "email" },
+  { label: "WhatsApp", href: "https://wa.me/", icon: MessageCircle, platform: "whatsapp", mobileOnly: true },
+  { label: "Email", href: "mailto:", icon: Mail, platform: "email", mobileOnly: true },
+  { label: "Telegram", href: "https://t.me/share/url", icon: Send, platform: "telegram", mobileOnly: false },
+  { label: "LinkedIn", href: "https://www.linkedin.com/sharing/share-offsite/", icon: Linkedin, platform: "linkedin", mobileOnly: false },
+  { label: "Facebook", href: "https://www.facebook.com/sharer/sharer.php", icon: Facebook, platform: "facebook", mobileOnly: false },
 ] as const;
 
 const shareTexts = [
@@ -52,10 +52,10 @@ export function SiteShareStrip() {
     <div className="share-strip">
       <span className="share-strip-label">Partagez cette decouverte</span>
       <div className="share-strip-actions">
-        {socialLinks.map(({ label, href, icon: Icon, platform }) => (
+        {socialLinks.map(({ label, href, icon: Icon, platform, mobileOnly }) => (
           <button
             key={label}
-            className="share-icon-button"
+            className={`share-icon-button ${mobileOnly ? "share-mobile-only" : ""}`.trim()}
             type="button"
             aria-label={`Partager sur ${label}`}
             title={`Partager sur ${label}`}
