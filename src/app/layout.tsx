@@ -19,7 +19,7 @@ const body = Nunito({
 export const metadata: Metadata = {
   title: "Hub bilingue 🇨🇳 Chinois - Français 🇫🇷",
   description:
-    "Boutique poetique pour les livres electroniques Visd AR, avec donation, espace client et administration bilingue.",
+    "Moins de mémorisation, plus d'immersion. Votre arc-en-ciel intuitif vers la Chine.",
   icons: {
     icon: "/images/logo.png",
     shortcut: "/images/logo.png",
