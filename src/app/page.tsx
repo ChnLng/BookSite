@@ -570,7 +570,13 @@ export default function HomePage() {
         </div>
 
         <section className="panel glass carousel-stage" id="scene">
-          <div className="badge">Albums illustrés bilingues 🇨🇳 chinois-français 🇫🇷</div>
+          <div className="badge mobile-break-badge">
+            <span>Albums illustrés bilingues</span>
+            <span className="mobile-flag-break" aria-hidden="true">
+              <br />
+            </span>
+            <span> 🇨🇳 chinois-français 🇫🇷</span>
+          </div>
 
           <div className="marquee-shell">
             <div className="marquee-inner">

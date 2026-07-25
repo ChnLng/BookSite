@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Ticket, X } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { TopNav } from "@/components/top-nav";
-import { useAuth } from "@/components/auth-provider";
 import { infoLinks } from "@/lib/legal-info";
 import type { DisplayBook } from "@/lib/books-service";
 
@@ -17,7 +16,6 @@ type CatalogueClientProps = {
 };
 
 export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
-  const { user } = useAuth();
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [payingBookId, setPayingBookId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,30 +44,8 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
 
   const handleBookCheckout = async (bookId: string) => {
     setPayingBookId(bookId);
-
-    try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          kind: "book",
-          id: bookId,
-          email: user?.email || undefined,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.url) {
-        return;
-      }
-
-      window.location.href = result.url;
-    } finally {
-      setPayingBookId(null);
-    }
+    window.location.href = `/livres/${bookId}?buy=1`;
+    setPayingBookId(null);
   };
 
   return (

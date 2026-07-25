@@ -143,31 +143,8 @@ export default function ReadBookPage() {
     }
 
     setPaying(true);
-
-    try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          kind: "book",
-          id: book.id,
-          email: user?.email || undefined,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.url) {
-        setPdfError(result.message || "Paiement indisponible.");
-        return;
-      }
-
-      window.location.href = result.url;
-    } finally {
-      setPaying(false);
-    }
+    window.location.href = `/livres/${book.id}?buy=1`;
+    setPaying(false);
   };
 
   if (!book) {

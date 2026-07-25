@@ -28,7 +28,6 @@ export function TopNav({
   const { user, isAdmin, signOut } = useAuth();
   const [preferDesktopView, setPreferDesktopView] = useState(false);
   const brandTitle = "Visd AR";
-  const brandSubtitle = "Hub bilingue 🇨🇳 Chinois - Français 🇫🇷";
 
   const headerClassName = ["topbar", "glass", className].filter(Boolean).join(" ");
   const resolvedSharePanel = sharePanel ?? <SiteShareStrip />;
@@ -72,7 +71,13 @@ export function TopNav({
           <BrandLogo />
           <div className="brand-copy">
             <strong>{brandTitle}</strong>
-            <div className="tiny">{brandSubtitle}</div>
+            <div className="tiny brand-subtitle">
+              <span>Hub bilingue</span>
+              <span className="mobile-flag-break" aria-hidden="true">
+                <br />
+              </span>
+              <span> 🇨🇳 Chinois - Français 🇫🇷</span>
+            </div>
           </div>
         </Link>
         {resolvedSharePanel ? <div className="topbar-share-wrap">{resolvedSharePanel}</div> : null}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Cormorant_Garamond, Nunito } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
+import { siteConfig } from "@/lib/site-config";
 import "./globals.css";
 
 const heading = Cormorant_Garamond({
@@ -41,7 +42,7 @@ export default function RootLayout({
         }}
       >
         <Script
-          src="https://www.paypal.com/sdk/js?client-id=BAAQOWw6DVBBenlHrUo5xWPqO1hOT3ukzJi5t1TWfXKaqjuAfo6E4VOzai2aXku4al_2GmAFDcowjxqLNw&components=hosted-buttons&disable-funding=venmo&currency=EUR"
+          src={`https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(siteConfig.paypalClientId)}&components=buttons,hosted-buttons&disable-funding=venmo&currency=EUR`}
           strategy="afterInteractive"
         />
         <Script
