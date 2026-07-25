@@ -626,7 +626,7 @@ function AdminPageContent() {
     }
   };
 
-  const validateBookForm = (state: BookFormState) => {
+  const validateBookForm = (state: BookFormState, options?: { requireCategory?: boolean }) => {
     if (!state.titleFr.trim() || !state.titleZh.trim()) {
       throw new Error("请先填写法语标题和中文标题。");
     }
@@ -635,7 +635,7 @@ function AdminPageContent() {
       throw new Error("请先填写书籍 slug。");
     }
 
-    if (!state.categoryId.trim()) {
+    if (options?.requireCategory && !state.categoryId.trim()) {
       throw new Error("请先为商品选择所属类目 Categories。");
     }
   };
@@ -672,17 +672,22 @@ function AdminPageContent() {
     };
   };
 
-  const createBook = async () => {
-    const supabase = getSupabaseBrowserClient();
+  const adminBooksFetch = async (init: RequestInit) => {
+    const response = await authorizedAdminFetch("/api/admin/books", init);
+    const result = (await response.json()) as { ok?: boolean; message?: string };
 
-    if (!supabase) {
-      return;
+    if (!response.ok || !result.ok) {
+      throw new Error(result.message || "图书操作失败。");
     }
 
+    return result;
+  };
+
+  const createBook = async () => {
     const nextForm = { ...form, slug: slugify(form.slug || form.titleFr) };
 
     try {
-      validateBookForm(nextForm);
+      validateBookForm(nextForm, { requireCategory: true });
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "书籍信息不完整。");
       return;
@@ -692,23 +697,13 @@ function AdminPageContent() {
       const nextSortOrder =
         books.reduce((max, book, index) => Math.max(max, bookSortValue(book, index)), 0) + 1;
       const payload = buildBookPayload(nextForm, nextSortOrder);
-
-      const { error } = await supabase.from("books").insert(payload);
-
-      if (error) {
-        const fallbackPayload = { ...payload };
-        delete (fallbackPayload as { category_id?: string | null }).category_id;
-
-        const fallbackResult = await supabase.from("books").insert(fallbackPayload);
-
-        if (fallbackResult.error) {
-          setStatusMessage(fallbackResult.error.message);
-          return;
-        }
-
-        setStatusMessage("新书已创建，但当前 books 表还未升级到类目字段。");
-        return;
-      }
+      await adminBooksFetch({
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload }),
+      });
 
       setForm(defaultBookForm);
       setCreateSelectedFiles({});
@@ -719,15 +714,14 @@ function AdminPageContent() {
   };
 
   const saveBook = async (bookId: string) => {
-    const supabase = getSupabaseBrowserClient();
     const edit = bookEdits[bookId];
 
-    if (!supabase || !edit) {
+    if (!edit) {
       return;
     }
 
     try {
-      validateBookForm(edit);
+      validateBookForm(edit, { requireCategory: false });
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "书籍信息不完整。");
       return;
@@ -736,34 +730,13 @@ function AdminPageContent() {
     await withBusyState(`save-book-${bookId}`, async () => {
       const currentBook = books.find((book) => book.id === bookId);
       const payload = buildBookPayload(edit, currentBook ? bookSortValue(currentBook, books.findIndex((entry) => entry.id === bookId)) : 1);
-
-      let error: { message: string } | null = null;
-
-      if (currentBook?.created_at) {
-        const updateResult = await supabase.from("books").update(payload).eq("id", bookId);
-        error = updateResult.error;
-      } else {
-        const upsertResult = await supabase.from("books").upsert(payload, { onConflict: "slug" });
-        error = upsertResult.error;
-      }
-
-      if (error) {
-        const fallbackPayload = { ...payload };
-        delete (fallbackPayload as { category_id?: string | null }).category_id;
-
-        if (currentBook?.created_at) {
-          const fallbackResult = await supabase.from("books").update(fallbackPayload).eq("id", bookId);
-          error = fallbackResult.error;
-        } else {
-          const fallbackResult = await supabase.from("books").upsert(fallbackPayload, { onConflict: "slug" });
-          error = fallbackResult.error;
-        }
-      }
-
-      if (error) {
-        setStatusMessage(error.message);
-        return;
-      }
+      await adminBooksFetch({
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "save", bookId, payload }),
+      });
 
       setEditingBookId(null);
       setEditSelectedFiles((current) => ({ ...current, [bookId]: {} }));
@@ -774,25 +747,14 @@ function AdminPageContent() {
   };
 
   const toggleVisibility = async (id: string, visible: boolean) => {
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      return;
-    }
-
     await withBusyState(`toggle-book-${id}`, async () => {
-      const currentBook = books.find((book) => book.id === id);
-      if (!currentBook?.created_at) {
-        setStatusMessage("这本书还是本地兜底数据，请先点 Modifier 再 Enregistrer，把它保存成真实数据库图书。");
-        return;
-      }
-
-      const { error } = await supabase.from("books").update({ visible: !visible }).eq("id", id);
-
-      if (error) {
-        setStatusMessage(error.message);
-        return;
-      }
+      await adminBooksFetch({
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "toggleVisibility", bookId: id, visible: !visible }),
+      });
 
       setStatusMessage(visible ? "图书已隐藏。" : "图书已发布。");
       await reload();
@@ -800,26 +762,14 @@ function AdminPageContent() {
   };
 
   const deleteBook = async (id: string) => {
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      return;
-    }
-
     await withBusyState(`delete-book-${id}`, async () => {
-      const currentBook = books.find((book) => book.id === id);
-
-      if (!currentBook?.created_at) {
-        setStatusMessage("这本书还是本地兜底数据，目前数据库里没有可删除的真实记录。");
-        return;
-      }
-
-      const { error } = await supabase.from("books").delete().eq("id", id);
-
-      if (error) {
-        setStatusMessage(error.message);
-        return;
-      }
+      await adminBooksFetch({
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bookId: id }),
+      });
 
       setStatusMessage("书籍记录已删除。");
       await reload();
@@ -827,12 +777,6 @@ function AdminPageContent() {
   };
 
   const moveBook = async (bookId: string, direction: "up" | "down") => {
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      return;
-    }
-
     const currentIndex = books.findIndex((book) => book.id === bookId);
     const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
 
@@ -846,20 +790,19 @@ function AdminPageContent() {
     const targetSortOrder = bookSortValue(targetBook, targetIndex);
 
     await withBusyState(`move-book-${bookId}-${direction}`, async () => {
-      if (!currentBook.created_at || !targetBook.created_at) {
-        setStatusMessage("排序只对真实数据库图书生效。请先把本地兜底书保存到数据库。");
-        return;
-      }
-
-      const [{ error: currentError }, { error: targetError }] = await Promise.all([
-        supabase.from("books").update({ sort_order: targetSortOrder }).eq("id", currentBook.id),
-        supabase.from("books").update({ sort_order: currentSortOrder }).eq("id", targetBook.id),
-      ]);
-
-      if (currentError || targetError) {
-        setStatusMessage(currentError?.message || targetError?.message || "排序更新失败。");
-        return;
-      }
+      await adminBooksFetch({
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "move",
+          bookId: currentBook.id,
+          targetBookId: targetBook.id,
+          currentSortOrder,
+          targetSortOrder,
+        }),
+      });
 
       setStatusMessage(direction === "up" ? "图书已上移。" : "图书已下移。");
       await reload();
@@ -1271,6 +1214,16 @@ function AdminPageContent() {
     }
 
     return [...currentValue, relatedBookId];
+  };
+
+  const cancelBookEditing = (book: BookRow) => {
+    setBookEdits((current) => ({
+      ...current,
+      [book.id]: bookEditFromRow(book),
+    }));
+    setEditSelectedFiles((current) => ({ ...current, [book.id]: {} }));
+    setEditUploadStatus((current) => ({ ...current, [book.id]: {} }));
+    setEditingBookId(null);
   };
 
   return (
@@ -1848,7 +1801,7 @@ function AdminPageContent() {
                               >
                                 {busyKey === `save-book-${book.id}` ? "Enregistrement..." : "Enregistrer"}
                               </button>
-                              <button className="pill-button" type="button" onClick={() => setEditingBookId(null)}>
+                              <button className="pill-button" type="button" onClick={() => cancelBookEditing(book)}>
                                 Annuler
                               </button>
                             </>
