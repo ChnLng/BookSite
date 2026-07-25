@@ -84,6 +84,10 @@ function renderFilledStars(count: number) {
   return "🌟".repeat(Math.max(0, Math.min(5, count)));
 }
 
+function renderStarButton(active: boolean) {
+  return active ? "🌟" : "✩";
+}
+
 export default function BookDetailPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
@@ -570,7 +574,7 @@ export default function BookDetailPage() {
                               }
                               aria-label={`Noter ${value} sur 5`}
                             >
-                              🌟
+                              {renderStarButton(active)}
                             </button>
                           );
                         })}
