@@ -227,6 +227,22 @@ select {
   width: 100%;
 }
 
+@media (min-width: 981px) {
+  .brand-mark,
+  .topbar-share-wrap .share-strip {
+    min-height: 76px;
+    box-sizing: border-box;
+  }
+
+  .topbar-share-wrap {
+    align-self: stretch;
+  }
+
+  .topbar-share-wrap .share-strip {
+    justify-content: center;
+  }
+}
+
 .share-icon-button {
   width: 38px;
   height: 38px;
