@@ -18,8 +18,6 @@ type TopNavProps = {
 };
 
 export function TopNav({
-  subtitle,
-  title,
   onLoginClick,
   className,
   showAdmin,
@@ -29,6 +27,8 @@ export function TopNav({
 }: TopNavProps) {
   const { user, isAdmin, signOut } = useAuth();
   const [preferDesktopView, setPreferDesktopView] = useState(false);
+  const brandTitle = "Visd AR";
+  const brandSubtitle = "Hub bilingue 🇨🇳 Chinois - Français 🇫🇷";
 
   const headerClassName = ["topbar", "glass", className].filter(Boolean).join(" ");
   const resolvedSharePanel = sharePanel ?? <SiteShareStrip />;
@@ -70,12 +70,10 @@ export function TopNav({
       <header className={headerClassName}>
         <Link href="/" className="brand-mark brand-link">
           <BrandLogo />
-          {subtitle || title ? (
-            <div>
-              {title ? <strong>{title}</strong> : null}
-              {subtitle ? <div className="tiny">{subtitle}</div> : null}
-            </div>
-          ) : null}
+          <div className="brand-copy">
+            <strong>{brandTitle}</strong>
+            <div className="tiny">{brandSubtitle}</div>
+          </div>
         </Link>
         {resolvedSharePanel ? <div className="topbar-share-wrap">{resolvedSharePanel}</div> : null}
         <nav className="nav-links">
