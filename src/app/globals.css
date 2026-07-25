@@ -230,7 +230,7 @@ select {
 @media (min-width: 981px) {
   .brand-mark,
   .topbar-share-wrap .share-strip {
-    min-height: 76px;
+    height: 76px;
     box-sizing: border-box;
   }
 
@@ -239,6 +239,7 @@ select {
   }
 
   .topbar-share-wrap .share-strip {
+    border-radius: 22px;
     justify-content: center;
   }
 }
