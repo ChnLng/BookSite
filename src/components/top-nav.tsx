@@ -72,8 +72,8 @@ export function TopNav({
           <BrandLogo />
           {subtitle || title ? (
             <div>
-              {subtitle ? <div className="tiny">{subtitle}</div> : null}
               {title ? <strong>{title}</strong> : null}
+              {subtitle ? <div className="tiny">{subtitle}</div> : null}
             </div>
           ) : null}
         </Link>

@@ -30,7 +30,7 @@ type DonationRecord = {
 };
 
 export default function AccountPage() {
-  const { user, profile, session, loading, isAdmin } = useAuth();
+  const { user, profile, session, loading } = useAuth();
   const [comments, setComments] = useState<CommentRecord[]>([]);
   const [downloads, setDownloads] = useState<DownloadRecord[]>([]);
   const [donations, setDonations] = useState<DonationRecord[]>([]);
@@ -166,7 +166,12 @@ export default function AccountPage() {
 
   return (
     <main className="page-shell">
-      <TopNav subtitle="Ma page" title="Ma page" showAdmin showLogout />
+      <TopNav
+        title="Visd AR"
+        subtitle="Hub bilingue 🇨🇳 Chinois - Français 🇫🇷"
+        showAdmin
+        showLogout
+      />
 
       <section className="panel glass" style={{ marginTop: 22 }}>
         <h1 className="section-title" style={{ fontFamily: "var(--font-heading), serif" }}>
