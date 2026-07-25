@@ -51,7 +51,7 @@ export function SiteShareStrip() {
   return (
     <div className="share-strip">
       <span className="share-strip-label">Partagez cette decouverte</span>
-      <div className="share-strip-actions">
+      <div className="share-strip-actions share-strip-actions-second-line">
         {socialLinks.map(({ label, href, icon: Icon, platform, mobileOnly }) => (
           <button
             key={label}

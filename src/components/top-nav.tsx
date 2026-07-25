@@ -64,7 +64,7 @@ export function TopNav({
           type="button"
           onClick={() => setPreferDesktopView((current) => !current)}
         >
-          {preferDesktopView ? "Version mobile" : "Version web"}
+          {preferDesktopView ? "Version mobile" : "Version ordinateur"}
         </button>
       </div>
       <header className={headerClassName}>

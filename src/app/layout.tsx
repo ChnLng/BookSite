@@ -17,9 +17,14 @@ const body = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Visd AR | Livres bilingues chinois-francais",
+  title: "Hub bilingue 🇨🇳 Chinois - Français 🇫🇷",
   description:
     "Boutique poetique pour les livres electroniques Visd AR, avec donation, espace client et administration bilingue.",
+  icons: {
+    icon: "/images/logo.png",
+    shortcut: "/images/logo.png",
+    apple: "/images/logo.png",
+  },
 };
 
 export default function RootLayout({

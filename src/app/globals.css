@@ -198,9 +198,9 @@ select {
 
 .share-strip {
   display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   padding: 10px 14px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.9);
@@ -221,6 +221,10 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+}
+
+.share-strip-actions-second-line {
+  width: 100%;
 }
 
 .share-icon-button {
@@ -1244,7 +1248,7 @@ select {
 
   .topbar-utility {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     margin-bottom: 10px;
   }
 
