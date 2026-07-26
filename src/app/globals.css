@@ -449,11 +449,15 @@ select {
 .ad-slot-shell {
   display: grid;
   gap: 10px;
+  min-height: 240px;
+  align-content: start;
 }
 
 .ad-slot-panel {
   padding: 18px;
   min-height: 280px;
+  width: 100%;
+  overflow: hidden;
 }
 
 .ad-slot-ins {
@@ -469,7 +473,7 @@ select {
   border: 1px solid var(--surface-border);
   background: var(--surface-glass);
   padding: 14px;
-  min-height: 160px;
+  min-height: 88px;
   display: flex;
   align-items: center;
   justify-content: center;

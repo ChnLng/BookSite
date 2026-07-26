@@ -56,6 +56,7 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
         title="Visd AR"
         showAdmin
         showLogout
+        hideCatalogueLink
       />
 
       <section className="catalog-grid" id="catalogue-scene">
