@@ -1112,8 +1112,24 @@ select {
 
 .book-review-average-stars,
 .book-review-inline-stars {
-  color: #8b5cf6;
-  letter-spacing: 0.08em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.book-review-average-star,
+.book-review-inline-star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  line-height: 1;
+}
+
+.book-review-average-star.active,
+.book-review-inline-star.active {
+  color: #f4b400;
 }
 
 .book-review-star-picker {

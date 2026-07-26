@@ -44,6 +44,35 @@ begin
     from pg_policies
     where schemaname = 'public'
       and tablename = 'book_reviews'
+      and policyname = 'Anyone can insert book reviews'
+  ) then
+    create policy "Anyone can insert book reviews" on public.book_reviews
+      for insert with check (
+        visible = true
+        and (
+          (auth.uid() is null and user_id is null)
+          or auth.uid() = user_id
+        )
+      );
+  end if;
+
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'book_reviews'
+      and policyname = 'Users can update their own book reviews'
+  ) then
+    create policy "Users can update their own book reviews" on public.book_reviews
+      for update using (auth.uid() = user_id)
+      with check (auth.uid() = user_id and visible = true);
+  end if;
+
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'book_reviews'
       and policyname = 'Admins can manage book reviews'
   ) then
     create policy "Admins can manage book reviews" on public.book_reviews

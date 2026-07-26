@@ -80,12 +80,24 @@ function buildDefaultAuthorName(email?: string | null, displayName?: string | nu
   return "";
 }
 
-function renderFilledStars(count: number) {
-  return "🌟".repeat(Math.max(0, Math.min(5, count)));
-}
-
 function renderStarButton(active: boolean) {
   return active ? "🌟" : "✩";
+}
+
+function renderFixedStars(activeCount: number, className: string) {
+  return Array.from({ length: 5 }, (_, index) => {
+    const active = index < activeCount;
+
+    return (
+      <span
+        key={`${className}-${index + 1}`}
+        className={active ? `${className} active` : className}
+        aria-hidden="true"
+      >
+        {active ? "🌟" : "✩"}
+      </span>
+    );
+  });
 }
 
 export default function BookDetailPage() {
@@ -118,6 +130,7 @@ export default function BookDetailPage() {
     () => buildDefaultAuthorName(user?.email, profile?.displayName),
     [profile?.displayName, user?.email],
   );
+  const roundedAverageRating = Math.round(reviewSummary.averageRating);
 
   useEffect(() => {
     setReviewForm((current) => {
@@ -440,7 +453,7 @@ export default function BookDetailPage() {
         rating: 5,
         reviewText: "",
       }));
-      setReviewMessage("Merci ! Votre note et votre ressenti sont bien enregistres.");
+      setReviewMessage("Merci ! Votre avis est bien en ligne.");
       await refreshReviews();
     } finally {
       setReviewSubmitting(false);
@@ -524,20 +537,20 @@ export default function BookDetailPage() {
                   <div className="book-review-summary">
                     <div>
                       <strong>Avis des lecteurs</strong>
-                      <p className="tiny" style={{ marginTop: 6, marginBottom: 0 }}>
-                        {reviewSummary.totalReviews > 0
-                          ? `${reviewSummary.averageRating.toFixed(1)} / 5 · ${reviewSummary.totalReviews} avis`
-                          : "Soyez le premier a laisser une note 🌟"}
-                      </p>
+                      {reviewSummary.totalReviews > 0 ? (
+                        <p className="tiny" style={{ marginTop: 6, marginBottom: 0 }}>
+                          {reviewSummary.averageRating.toFixed(1)} / 5 · {reviewSummary.totalReviews} avis
+                        </p>
+                      ) : null}
                     </div>
                     <div className="book-review-average-stars" aria-label={`Note moyenne ${reviewSummary.averageRating.toFixed(1)} sur 5`}>
-                      {reviewSummary.totalReviews > 0 ? renderFilledStars(Math.round(reviewSummary.averageRating)) : "🌟🌟🌟🌟🌟"}
+                      {renderFixedStars(roundedAverageRating, "book-review-average-star")}
                     </div>
                   </div>
 
                   <div className="input-group compact-form">
                     <label className="tiny" htmlFor="book-review-author">
-                      Votre nom
+                      Votre pseudo ou prenom
                     </label>
                     <input
                       id="book-review-author"
@@ -611,7 +624,9 @@ export default function BookDetailPage() {
                         <article className="book-review-item" key={review.id}>
                           <div className="book-review-item-header">
                             <strong>{review.authorName}</strong>
-                            <span className="book-review-inline-stars">{renderFilledStars(review.rating)}</span>
+                            <span className="book-review-inline-stars">
+                              {renderFixedStars(review.rating, "book-review-inline-star")}
+                            </span>
                           </div>
                           <p className="muted" style={{ marginBottom: 10 }}>
                             {review.reviewText}
@@ -627,7 +642,7 @@ export default function BookDetailPage() {
               </div>
 
               <div className="book-detail-copy">
-                <div className="badge">Livre bilingue</div>
+                <div className="badge">Collection : Album illustré apaisant en chinois facile</div>
                 <h1 className="section-title" style={{ marginTop: 18 }}>
                   {book.titleFr}
                 </h1>
