@@ -33,6 +33,18 @@ type PaymentSuccessState = {
   readUrl: string;
 };
 
+type AccessState = {
+  hasAccess: boolean;
+  requiresLogin: boolean;
+  isAdmin?: boolean;
+};
+
+type AppliedPromoState = {
+  code: string;
+  discountPercent: number;
+  discountedPrice: number;
+};
+
 type PayPalButtonsInstance = {
   render: (target: HTMLElement | string) => Promise<void> | void;
   close?: () => Promise<void> | void;
@@ -116,6 +128,18 @@ export default function BookDetailPage() {
   const [reviewForm, setReviewForm] = useState<ReviewFormState>(defaultReviewForm);
   const [reviewMessage, setReviewMessage] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [accessState, setAccessState] = useState<AccessState>({
+    hasAccess: false,
+    requiresLogin: true,
+  });
+  const [accessLoading, setAccessLoading] = useState(true);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoBusy, setPromoBusy] = useState(false);
+  const [promoMessage, setPromoMessage] = useState("");
+  const [promoMessageKind, setPromoMessageKind] = useState<"idle" | "success" | "error">("idle");
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromoState | null>(null);
+  const [shareUnlockPending, setShareUnlockPending] = useState(false);
+  const [shareUnlockBusy, setShareUnlockBusy] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentReady, setPaymentReady] = useState(false);
   const [paymentError, setPaymentError] = useState("");
@@ -131,6 +155,23 @@ export default function BookDetailPage() {
     [profile?.displayName, user?.email],
   );
   const roundedAverageRating = Math.round(reviewSummary.averageRating);
+  const finalPrice = appliedPromo?.discountedPrice ?? book?.priceEur ?? 0;
+  const zeroPriceUnlockMessage =
+    "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
+
+  const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (!session?.access_token) {
+      throw new Error("Connexion requise.");
+    }
+
+    const headers = new Headers(init?.headers);
+    headers.set("Authorization", `Bearer ${session.access_token}`);
+
+    return fetch(input, {
+      ...init,
+      headers,
+    });
+  };
 
   useEffect(() => {
     setReviewForm((current) => {
@@ -261,9 +302,41 @@ export default function BookDetailPage() {
       return;
     }
 
-    setShowPayment(true);
+    if (finalPrice > 0) {
+      setShowPayment(true);
+    }
     setAutoOpenedPayment(true);
-  }, [autoOpenedPayment, book, openBuyImmediately]);
+  }, [autoOpenedPayment, book, finalPrice, openBuyImmediately]);
+
+  const refreshAccess = async () => {
+    if (!bookId || !session?.access_token) {
+      setAccessState({
+        hasAccess: false,
+        requiresLogin: true,
+      });
+      setAccessLoading(false);
+      return;
+    }
+
+    setAccessLoading(true);
+    const response = await authorizedFetch(`/api/books/${bookId}/access`, {
+      cache: "no-store",
+    });
+    const result = (await response.json().catch(() => null)) as
+      | { ok?: boolean; hasAccess?: boolean; requiresLogin?: boolean; isAdmin?: boolean }
+      | null;
+
+    setAccessState({
+      hasAccess: Boolean(result?.hasAccess),
+      requiresLogin: Boolean(result?.requiresLogin),
+      isAdmin: Boolean(result?.isAdmin),
+    });
+    setAccessLoading(false);
+  };
+
+  useEffect(() => {
+    void refreshAccess();
+  }, [bookId, session?.access_token]);
 
   useEffect(() => {
     if (!showPayment) {
@@ -277,7 +350,7 @@ export default function BookDetailPage() {
       return;
     }
 
-    if (!book || !paypalContainerRef.current || typeof window === "undefined") {
+    if (!book || !paypalContainerRef.current || typeof window === "undefined" || finalPrice <= 0) {
       return;
     }
 
@@ -308,7 +381,7 @@ export default function BookDetailPage() {
               description: book.titleFr,
               amount: {
                 currency_code: "EUR",
-                value: book.priceEur.toFixed(2),
+                value: finalPrice.toFixed(2),
               },
             },
           ],
@@ -383,7 +456,62 @@ export default function BookDetailPage() {
 
       void buttons.close?.();
     };
-  }, [book, session?.access_token, showPayment]);
+  }, [book, finalPrice, session?.access_token, showPayment]);
+
+  useEffect(() => {
+    if (!shareUnlockPending || finalPrice > 0) {
+      return;
+    }
+
+    const handleShared = async () => {
+      if (!book || !session?.access_token || shareUnlockBusy) {
+        return;
+      }
+
+      setShareUnlockBusy(true);
+      setPaymentError("");
+
+      try {
+        const response = await authorizedFetch(`/api/books/${book.id}/claim`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            finalPrice,
+            promoCode: appliedPromo?.code || "",
+          }),
+        });
+        const result = (await response.json().catch(() => null)) as
+          | {
+              ok?: boolean;
+              message?: string;
+              readUrl?: string;
+            }
+          | null;
+
+        if (!response.ok || !result?.ok) {
+          setPaymentError(result?.message || "Impossible de deverrouiller ce livre.");
+          return;
+        }
+
+        setShareUnlockPending(false);
+        setPaymentSuccess({
+          accountUrl: "/account",
+          readUrl: result.readUrl || `/read/${book.id}`,
+        });
+        await refreshAccess();
+      } finally {
+        setShareUnlockBusy(false);
+      }
+    };
+
+    window.addEventListener("visdar:site-shared", handleShared);
+
+    return () => {
+      window.removeEventListener("visdar:site-shared", handleShared);
+    };
+  }, [authorizedFetch, book, finalPrice, refreshAccess, session?.access_token, shareUnlockBusy, shareUnlockPending]);
 
   const refreshReviews = async () => {
     if (!bookId) {
@@ -458,6 +586,96 @@ export default function BookDetailPage() {
     } finally {
       setReviewSubmitting(false);
     }
+  };
+
+  const handleApplyPromo = async () => {
+    if (!book) {
+      return;
+    }
+
+    setPromoBusy(true);
+    setPromoMessage("");
+    setPromoMessageKind("idle");
+
+    try {
+      const response = await fetch("/api/promo-codes/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: promoCode,
+          priceEur: book.priceEur,
+        }),
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            message?: string;
+            promo?: AppliedPromoState;
+          }
+        | null;
+
+      if (!response.ok || !result?.ok || !result.promo) {
+        setAppliedPromo(null);
+        setPromoMessageKind("error");
+        setPromoMessage(result?.message || "Code promo invalide.");
+        return;
+      }
+
+      setAppliedPromo(result.promo);
+      setPromoCode(result.promo.code);
+      setPromoMessageKind("success");
+      setPromoMessage(`Code ${result.promo.code} applique. Nouveau prix: ${result.promo.discountedPrice.toFixed(2)} EUR.`);
+    } finally {
+      setPromoBusy(false);
+    }
+  };
+
+  const handleBookDownload = async () => {
+    if (!book || !session?.access_token) {
+      setPaymentError("Connectez-vous pour telecharger le PDF.");
+      return;
+    }
+
+    const response = await authorizedFetch(`/api/books/${book.id}/pdf`);
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setPaymentError(payload?.message || "Impossible de telecharger le PDF.");
+      return;
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = `${book.id}_book.pdf`;
+    anchor.click();
+    URL.revokeObjectURL(objectUrl);
+  };
+
+  const handleBookCheckout = async () => {
+    if (!book) {
+      return;
+    }
+
+    setPaymentError("");
+
+    if (!user || !session?.access_token) {
+      setPaymentError("Connectez-vous d'abord pour obtenir ce livre.");
+      return;
+    }
+
+    if (finalPrice <= 0) {
+      setShareUnlockPending(true);
+      setPaymentSuccess(null);
+      setPaymentError(zeroPriceUnlockMessage);
+      return;
+    }
+
+    setShowPayment(true);
   };
 
   return (
@@ -649,9 +867,20 @@ export default function BookDetailPage() {
                 <p className="tiny">{book.titleZh}</p>
 
                 <div className="actions-row book-detail-actions-row">
-                  <button className="cta-button" type="button" onClick={() => setShowPayment(true)}>
-                    Acheter ce livre
-                  </button>
+                  {accessState.hasAccess ? (
+                    <>
+                      <Link className="cta-button" href={`/read/${book.id}`}>
+                        Lire maintenant
+                      </Link>
+                      <button className="cta-button secondary" type="button" onClick={() => void handleBookDownload()}>
+                        Telecharger le PDF
+                      </button>
+                    </>
+                  ) : (
+                    <button className="cta-button" type="button" onClick={() => void handleBookCheckout()}>
+                      {finalPrice <= 0 ? "Obtenir gratuitement" : "Acheter ce livre"}
+                    </button>
+                  )}
 
                   <div className="book-tooltip">
                     {book.amazonPaperbackUrl ? (
@@ -681,7 +910,10 @@ export default function BookDetailPage() {
                 <div className="book-detail-facts">
                   <div className="split-line">
                     <span>Prix</span>
-                    <strong>{book.priceEur.toFixed(2)} EUR</strong>
+                    <div className="promo-price-stack">
+                      {appliedPromo ? <span className="promo-original-price">{book.priceEur.toFixed(2)} EUR</span> : null}
+                      <strong>{finalPrice.toFixed(2)} EUR</strong>
+                    </div>
                   </div>
                   {book.publishDate ? (
                     <div className="split-line">
@@ -703,6 +935,42 @@ export default function BookDetailPage() {
                     <p className="muted">{book.teachingPointFr}</p>
                   </div>
                 ) : null}
+
+                <div className="promo-panel">
+                  <div className="split-line" style={{ paddingTop: 0 }}>
+                    <span>Code promo</span>
+                    {appliedPromo ? <strong>-{appliedPromo.discountPercent}%</strong> : <span className="tiny">Optionnel</span>}
+                  </div>
+                  <div className="promo-input-row">
+                    <input
+                      className="input"
+                      value={promoCode}
+                      onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
+                      placeholder="Code promo"
+                    />
+                    <button className="pill-button" type="button" disabled={promoBusy} onClick={() => void handleApplyPromo()}>
+                      {promoBusy ? "Verification..." : "Appliquer"}
+                    </button>
+                  </div>
+                  {promoMessage ? (
+                    <p className={promoMessageKind === "success" ? "tiny promo-message success" : "tiny promo-message error"}>
+                      {promoMessage}
+                    </p>
+                  ) : null}
+                  {finalPrice <= 0 && !accessState.hasAccess ? (
+                    <div className="share-unlock-box">
+                      <strong>Partage pour deverrouiller</strong>
+                      <p className="tiny">{zeroPriceUnlockMessage}</p>
+                      {shareUnlockPending ? (
+                        <p className="tiny">
+                          Cliquez maintenant sur l'un des boutons de partage en haut de la page. Le livre se deverrouillera aussitot.
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {accessLoading ? <p className="tiny">Verification de vos droits...</p> : null}
+                  {paymentError ? <p className="tiny promo-message error">{paymentError}</p> : null}
+                </div>
               </div>
             </div>
           )}
@@ -728,7 +996,10 @@ export default function BookDetailPage() {
             </p>
             <div className="split-line" style={{ paddingTop: 0 }}>
               <span>Montant</span>
-              <strong>{book.priceEur.toFixed(2)} EUR</strong>
+              <div className="promo-price-stack">
+                {appliedPromo ? <span className="promo-original-price">{book.priceEur.toFixed(2)} EUR</span> : null}
+                <strong>{finalPrice.toFixed(2)} EUR</strong>
+              </div>
             </div>
 
             {paymentSuccess ? (

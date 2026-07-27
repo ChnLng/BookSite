@@ -10,6 +10,12 @@ type RouteContext = {
 export async function POST(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const user = await getUserFromRequest(request);
+  const payload = (await request.json().catch(() => null)) as
+    | {
+        finalPrice?: number;
+        promoCode?: string;
+      }
+    | null;
 
   if (!user) {
     return NextResponse.json({ ok: false, message: "Connexion requise." }, { status: 401 });
@@ -31,7 +37,12 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Ressource introuvable." }, { status: 404 });
   }
 
-  const price = Number(resource.price_eur || 0);
+  const basePrice = Number(resource.price_eur || 0);
+  const requestedFinalPrice = Number(payload?.finalPrice);
+  const price =
+    Number.isFinite(requestedFinalPrice) && requestedFinalPrice >= 0 && requestedFinalPrice <= basePrice
+      ? Math.round(requestedFinalPrice * 100) / 100
+      : basePrice;
 
   if (price > 0) {
     return NextResponse.json({ ok: false, message: "Cette ressource doit etre achetee." }, { status: 400 });

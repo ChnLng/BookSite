@@ -1206,6 +1206,59 @@ select {
   margin-top: 10px;
 }
 
+.promo-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid var(--surface-border);
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: var(--shadow-glass);
+}
+
+.promo-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.promo-price-stack,
+.promo-price-tag-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.promo-original-price {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.promo-message {
+  margin: 0;
+}
+
+.promo-message.success {
+  color: #0f766e;
+}
+
+.promo-message.error {
+  color: #be123c;
+}
+
+.share-unlock-box {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(99, 102, 241, 0.16);
+  background: rgba(99, 102, 241, 0.08);
+}
+
 .book-detail-empty {
   display: grid;
   align-content: start;
@@ -2324,6 +2377,10 @@ select {
   .coin-ludique-downloads,
   .coin-ludique-actions {
     flex-direction: column;
+  }
+
+  .promo-input-row {
+    grid-template-columns: 1fr;
   }
 
   .partner-link-button {

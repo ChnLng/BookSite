@@ -24,6 +24,26 @@ export function SiteShareStrip() {
       return;
     }
 
+    try {
+      window.sessionStorage.setItem(
+        "visdar-last-share-action",
+        JSON.stringify({
+          platform,
+          at: Date.now(),
+        }),
+      );
+      window.dispatchEvent(
+        new CustomEvent("visdar:site-shared", {
+          detail: {
+            platform,
+            at: Date.now(),
+          },
+        }),
+      );
+    } catch {
+      // Ignore storage/event issues and still open the share target.
+    }
+
     const randomText = shareTexts[Math.floor(Math.random() * shareTexts.length)];
     const shareUrl = window.location.origin;
     const encodedUrl = encodeURIComponent(shareUrl);

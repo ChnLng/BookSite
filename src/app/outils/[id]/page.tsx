@@ -15,6 +15,12 @@ type AccessState = {
   isAdmin?: boolean;
 };
 
+type AppliedPromoState = {
+  code: string;
+  discountPercent: number;
+  discountedPrice: number;
+};
+
 export default function ResourceDetailPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
@@ -29,10 +35,20 @@ export default function ResourceDetailPage() {
   const [accessLoading, setAccessLoading] = useState(true);
   const [actionBusy, setActionBusy] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoBusy, setPromoBusy] = useState(false);
+  const [promoMessage, setPromoMessage] = useState("");
+  const [promoMessageKind, setPromoMessageKind] = useState<"idle" | "success" | "error">("idle");
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromoState | null>(null);
+  const [shareUnlockPending, setShareUnlockPending] = useState(false);
+  const [shareUnlockBusy, setShareUnlockBusy] = useState(false);
 
   const resourceId = Array.isArray(params?.id) ? params.id[0] : params?.id || "";
   const purchaseSucceeded = searchParams.get("success") === "1";
   const purchaseCanceled = searchParams.get("cancel") === "1";
+  const finalPrice = appliedPromo?.discountedPrice ?? resource?.priceEur ?? 0;
+  const zeroPriceUnlockMessage =
+    "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -122,7 +138,97 @@ export default function ResourceDetailPage() {
     }
   }, [purchaseCanceled, purchaseSucceeded]);
 
-  const priceLabel = useMemo(() => `${(resource?.priceEur || 0).toFixed(2)} EUR`, [resource?.priceEur]);
+  const priceLabel = useMemo(() => `${finalPrice.toFixed(2)} EUR`, [finalPrice]);
+
+  useEffect(() => {
+    if (!shareUnlockPending || finalPrice > 0) {
+      return;
+    }
+
+    const handleShared = async () => {
+      if (!resource || !session?.access_token || shareUnlockBusy) {
+        return;
+      }
+
+      setShareUnlockBusy(true);
+
+      try {
+        const response = await authorizedFetch(`/api/resources/${resource.slug || resource.id}/claim`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            finalPrice,
+            promoCode: appliedPromo?.code || "",
+          }),
+        });
+        const result = (await response.json().catch(() => null)) as { ok?: boolean; message?: string } | null;
+
+        if (!response.ok || !result?.ok) {
+          setActionMessage(result?.message || "Impossible de deverrouiller cette ressource.");
+          return;
+        }
+
+        setShareUnlockPending(false);
+        setActionMessage(result.message || "La ressource est maintenant debloquee.");
+        await refreshAccess();
+      } finally {
+        setShareUnlockBusy(false);
+      }
+    };
+
+    window.addEventListener("visdar:site-shared", handleShared);
+
+    return () => {
+      window.removeEventListener("visdar:site-shared", handleShared);
+    };
+  }, [authorizedFetch, finalPrice, refreshAccess, resource, session?.access_token, shareUnlockBusy, shareUnlockPending]);
+
+  const handleApplyPromo = async () => {
+    if (!resource) {
+      return;
+    }
+
+    setPromoBusy(true);
+    setPromoMessage("");
+    setPromoMessageKind("idle");
+
+    try {
+      const response = await fetch("/api/promo-codes/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: promoCode,
+          priceEur: resource.priceEur,
+        }),
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            message?: string;
+            promo?: AppliedPromoState;
+          }
+        | null;
+
+      if (!response.ok || !result?.ok || !result.promo) {
+        setAppliedPromo(null);
+        setPromoMessageKind("error");
+        setPromoMessage(result?.message || "Code promo invalide.");
+        return;
+      }
+
+      setAppliedPromo(result.promo);
+      setPromoCode(result.promo.code);
+      setPromoMessageKind("success");
+      setPromoMessage(`Code ${result.promo.code} applique. Nouveau prix: ${result.promo.discountedPrice.toFixed(2)} EUR.`);
+    } finally {
+      setPromoBusy(false);
+    }
+  };
 
   const handleCheckout = async () => {
     if (!resource) {
@@ -138,19 +244,9 @@ export default function ResourceDetailPage() {
     setActionMessage("");
 
     try {
-      if (resource.priceEur <= 0) {
-        const response = await authorizedFetch(`/api/resources/${resource.slug || resource.id}/claim`, {
-          method: "POST",
-        });
-        const result = (await response.json().catch(() => null)) as { ok?: boolean; message?: string } | null;
-
-        if (!response.ok || !result?.ok) {
-          setActionMessage(result?.message || "Impossible d'activer ce telechargement gratuit.");
-          return;
-        }
-
-        setActionMessage(result.message || "La ressource est debloquee.");
-        await refreshAccess();
+      if (finalPrice <= 0) {
+        setShareUnlockPending(true);
+        setActionMessage(zeroPriceUnlockMessage);
         return;
       }
 
@@ -164,6 +260,8 @@ export default function ResourceDetailPage() {
           id: resource.slug || resource.id,
           userId: user.id,
           userEmail: user.email || "",
+          finalPrice,
+          promoCode: appliedPromo?.code || "",
         }),
       });
 
@@ -267,9 +365,12 @@ export default function ResourceDetailPage() {
           <span className="badge">Coin ludique & Outils</span>
           <h1 className="book-detail-title" style={{ marginTop: 18 }}>{resource.titleFr}</h1>
           <div className="resource-meta-row">
-            <span className="resource-price-tag">{priceLabel}</span>
+            <div className="promo-price-tag-wrap">
+              {appliedPromo ? <span className="promo-original-price">{resource.priceEur.toFixed(2)} EUR</span> : null}
+              <span className="resource-price-tag">{priceLabel}</span>
+            </div>
             <span className="tiny">
-              {resource.priceEur <= 0 ? "Acces gratuit apres validation" : "Paiement securise puis telechargement"}
+              {finalPrice <= 0 ? "Acces gratuit apres partage" : "Paiement securise puis telechargement"}
             </span>
           </div>
 
@@ -300,6 +401,40 @@ export default function ResourceDetailPage() {
 
           {actionMessage ? <p className="tiny" style={{ marginTop: 14 }}>{actionMessage}</p> : null}
           {accessLoading ? <p className="tiny" style={{ marginTop: 6 }}>Verification de vos droits...</p> : null}
+
+          <div className="promo-panel">
+            <div className="split-line" style={{ paddingTop: 0 }}>
+              <span>Code promo</span>
+              {appliedPromo ? <strong>-{appliedPromo.discountPercent}%</strong> : <span className="tiny">Optionnel</span>}
+            </div>
+            <div className="promo-input-row">
+              <input
+                className="input"
+                value={promoCode}
+                onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
+                placeholder="Code promo"
+              />
+              <button className="pill-button" type="button" disabled={promoBusy} onClick={() => void handleApplyPromo()}>
+                {promoBusy ? "Verification..." : "Appliquer"}
+              </button>
+            </div>
+            {promoMessage ? (
+              <p className={promoMessageKind === "success" ? "tiny promo-message success" : "tiny promo-message error"}>
+                {promoMessage}
+              </p>
+            ) : null}
+            {finalPrice <= 0 && !accessState.hasAccess ? (
+              <div className="share-unlock-box">
+                <strong>Partage pour deverrouiller</strong>
+                <p className="tiny">{zeroPriceUnlockMessage}</p>
+                {shareUnlockPending ? (
+                  <p className="tiny">
+                    Cliquez maintenant sur l'un des boutons de partage en haut de la page. Les telechargements se deverrouilleront aussitot.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
 
           <div className="resource-download-panel">
             <div className="split-line">

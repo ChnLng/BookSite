@@ -53,7 +53,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, message: "Ressource introuvable." }, { status: 404 });
     }
 
-    const amount = Number(resource.price_eur || 0);
+    const baseAmount = Number(resource.price_eur || 0);
+    const requestedAmount = Number(payload.finalPrice);
+    const amount =
+      Number.isFinite(requestedAmount) && requestedAmount >= 0 && requestedAmount <= baseAmount
+        ? Math.round(requestedAmount * 100) / 100
+        : baseAmount;
 
     if (amount <= 0) {
       return NextResponse.json({
@@ -81,6 +86,8 @@ export async function POST(request: Request) {
         resourceId: resource.id,
         resourceSlug: resource.slug || resource.id,
         resourceTitle: resource.title_fr || resource.slug || resource.id,
+        finalPrice: amount.toFixed(2),
+        promoCode: String(payload.promoCode || "").trim().toUpperCase(),
         defaultDownloadUrl: firstFile?.file_path || firstFile?.file_url || firstFile?.external_url || "",
         resourceFileId: firstFile?.id || "",
         userId: String(payload.userId || "").trim(),
