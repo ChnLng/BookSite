@@ -1960,6 +1960,91 @@ select {
   margin-top: 16px;
 }
 
+.coin-ludique-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.coin-ludique-card {
+  display: grid;
+  gap: 16px;
+}
+
+.coin-ludique-copy {
+  min-width: 0;
+}
+
+.coin-ludique-qr-wrap {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.coin-ludique-qr-placeholder {
+  width: 88px;
+  height: 88px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+}
+
+.coin-ludique-downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.coin-ludique-download-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-glass);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.coin-ludique-download-button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.coin-ludique-platform {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent-primary);
+  font-size: 0.78rem;
+}
+
+.coin-ludique-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.coin-ludique-empty {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+}
+
 .home-custom-card {
   overflow: hidden;
 }
@@ -2036,6 +2121,11 @@ select {
   }
 
   .home-resource-header {
+    flex-direction: column;
+  }
+
+  .coin-ludique-downloads,
+  .coin-ludique-actions {
     flex-direction: column;
   }
 
