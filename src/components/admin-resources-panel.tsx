@@ -25,8 +25,10 @@ type ResourceDraft = {
   slug: string;
   titleFr: string;
   summaryFr: string;
+  coverImageUrl: string;
   qrImageUrl: string;
   externalUrl: string;
+  priceEur: string;
   visible: boolean;
   sortOrder: string;
   downloads: ResourceVariantDraft[];
@@ -38,8 +40,10 @@ type ResourceRow = {
   slug: string | null;
   title_fr: string | null;
   summary_fr: string | null;
+  cover_image_url: string | null;
   qr_image_url: string | null;
   external_url: string | null;
+  price_eur: number | string | null;
   visible: boolean | null;
   sort_order: number | null;
 };
@@ -67,8 +71,10 @@ const defaultDraft: ResourceDraft = {
   slug: "",
   titleFr: "",
   summaryFr: "",
+  coverImageUrl: "",
   qrImageUrl: "",
   externalUrl: "",
+  priceEur: "0",
   visible: true,
   sortOrder: "10",
   downloads: [defaultVariant()],
@@ -143,7 +149,7 @@ export function AdminResourcesPanel() {
         .order("homepage_sort_order", { ascending: true }),
       supabase
         .from("resource_items")
-        .select("id, category_id, slug, title_fr, summary_fr, qr_image_url, external_url, visible, sort_order")
+        .select("id, category_id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true }),
       supabase
@@ -188,8 +194,10 @@ export function AdminResourcesPanel() {
       slug: resource.slug || "",
       titleFr: resource.title_fr || "",
       summaryFr: resource.summary_fr || "",
+      coverImageUrl: resource.cover_image_url || "",
       qrImageUrl: resource.qr_image_url || "",
       externalUrl: resource.external_url || "",
+      priceEur: String(resource.price_eur ?? 0),
       visible: resource.visible !== false,
       sortOrder: String(resource.sort_order || 0),
       downloads:
@@ -228,8 +236,10 @@ export function AdminResourcesPanel() {
         slug: normalizedSlug,
         title_fr: draft.titleFr.trim(),
         summary_fr: draft.summaryFr.trim() || null,
+        cover_image_url: draft.coverImageUrl.trim() || null,
         qr_image_url: draft.qrImageUrl.trim() || null,
         external_url: draft.externalUrl.trim() || null,
+        price_eur: Number.parseFloat(draft.priceEur || "0") || 0,
         visible: draft.visible,
         sort_order: Number(draft.sortOrder || 0),
       };
@@ -324,6 +334,22 @@ export function AdminResourcesPanel() {
     }
   };
 
+  const uploadCoverImage = async (file: File) => {
+    const filename = `${slugify(draft.slug || draft.titleFr || `cover-${Date.now()}`)}-cover.${file.name.split(".").pop() || "png"}`;
+
+    setBusyKey("upload-resource-cover");
+
+    try {
+      const assetPath = await uploadAsset("image", file, filename);
+      setDraft((current) => ({ ...current, coverImageUrl: assetPath }));
+      setStatusMessage("Image carree telechargee.");
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Upload image impossible.");
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
   const uploadVariantFile = async (index: number, file: File) => {
     const extension = file.name.split(".").pop()?.toLowerCase() || "zip";
     const filename = `${slugify(draft.slug || draft.titleFr || `resource-${Date.now()}`)}-${index + 1}.${extension}`;
@@ -391,9 +417,21 @@ export function AdminResourcesPanel() {
         />
         <input
           className="input"
+          placeholder="Prix EUR"
+          value={draft.priceEur}
+          onChange={(event) => setDraft({ ...draft, priceEur: event.target.value })}
+        />
+        <input
+          className="input"
           placeholder="Ordre"
           value={draft.sortOrder}
           onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })}
+        />
+        <input
+          className="input"
+          placeholder="Image carree /images/..."
+          value={draft.coverImageUrl}
+          onChange={(event) => setDraft({ ...draft, coverImageUrl: event.target.value })}
         />
         <input
           className="input"
@@ -421,6 +459,21 @@ export function AdminResourcesPanel() {
           value={draft.summaryFr}
           onChange={(event) => setDraft({ ...draft, summaryFr: event.target.value })}
         />
+      </div>
+
+      <div className="actions-row">
+        <input
+          className="input"
+          type="file"
+          accept="image/*"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) {
+              void uploadCoverImage(file);
+            }
+          }}
+        />
+        <span className="tiny">Uploader l'image carree de la carte</span>
       </div>
 
       <div className="actions-row">
@@ -568,7 +621,7 @@ export function AdminResourcesPanel() {
             <div>
               <strong>{resource.title_fr}</strong>
               <p className="tiny">
-                {(filesByResource[resource.id] || []).length} version(s) · {resource.visible ? "Visible" : "Masquee"}
+                {(filesByResource[resource.id] || []).length} version(s) · {Number(resource.price_eur ?? 0).toFixed(2)} EUR · {resource.visible ? "Visible" : "Masquee"}
               </p>
             </div>
             <div className="actions-row">

@@ -1967,6 +1967,29 @@ select {
   gap: 16px;
 }
 
+.resource-marquee-shell {
+  margin-top: 22px;
+}
+
+.resource-carousel-card {
+  width: 246px;
+}
+
+.resource-carousel-image {
+  aspect-ratio: 1 / 1;
+}
+
+.resource-carousel-caption {
+  display: grid;
+  gap: 6px;
+  min-height: 82px;
+}
+
+.resource-carousel-caption span {
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
 .coin-ludique-card {
   display: grid;
   gap: 16px;
@@ -2066,12 +2089,14 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
+  margin-top: 22px;
 }
 
-.partner-link-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
+.partner-link-button {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.9);
   background: rgba(255, 255, 255, 0.76);
   box-shadow: var(--shadow-glass);
@@ -2084,8 +2109,142 @@ select {
     box-shadow 0.2s ease;
 }
 
-.partner-link-icon:hover {
+.partner-link-button:hover {
   transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.14);
+}
+
+.partner-link-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  object-fit: cover;
+}
+
+.partner-link-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translateX(-50%) translateY(6px);
+  width: 220px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.92);
+  color: white;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.22);
+}
+
+.partner-link-button:hover .partner-link-tooltip,
+.partner-link-button:focus-visible .partner-link-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.resource-detail-layout {
+  align-items: start;
+}
+
+.resource-cover-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.resource-detail-sidebar {
+  display: grid;
+  gap: 18px;
+}
+
+.resource-detail-cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.resource-detail-cover-image {
+  object-fit: cover;
+}
+
+.resource-qr-box {
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+.resource-detail-main {
+  display: grid;
+  gap: 12px;
+}
+
+.resource-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.resource-price-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+
+.resource-download-panel {
+  margin-top: 8px;
+  padding: 18px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+}
+
+.coin-ludique-download-button.disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.resource-related-strip {
+  display: grid;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.resource-related-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.resource-related-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+}
+
+.resource-related-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 18px;
 }
 
 .admin-inline-card {
@@ -2107,7 +2266,8 @@ select {
 
 @media (max-width: 767px) {
   .book-detail-layout,
-  .book-detail-hero {
+  .book-detail-hero,
+  .resource-detail-layout {
     grid-template-columns: 1fr;
   }
 
@@ -2127,6 +2287,19 @@ select {
   .coin-ludique-downloads,
   .coin-ludique-actions {
     flex-direction: column;
+  }
+
+  .partner-link-button {
+    width: 64px;
+    height: 64px;
+  }
+
+  .resource-related-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resource-detail-sidebar {
+    display: grid;
   }
 
   .page-shell,

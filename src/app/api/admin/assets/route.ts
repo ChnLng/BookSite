@@ -66,7 +66,18 @@ async function ensureResourceDownloadsBucket() {
   }
 
   await supabase.storage.createBucket(resourceDownloadsBucketName, {
-    public: true,
+    public: false,
+    fileSizeLimit: 200 * 1024 * 1024,
+    allowedMimeTypes: [
+      "application/zip",
+      "application/x-zip-compressed",
+      "application/octet-stream",
+      "application/x-7z-compressed",
+    ],
+  });
+
+  await supabase.storage.updateBucket(resourceDownloadsBucketName, {
+    public: false,
     fileSizeLimit: 200 * 1024 * 1024,
     allowedMimeTypes: [
       "application/zip",
@@ -324,9 +335,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, message: uploadError.message }, { status: 500 });
       }
 
-      const { data: publicData } = supabase.storage.from(resourceDownloadsBucketName).getPublicUrl(storagePath);
-
-      return NextResponse.json({ ok: true, assetPath: publicData.publicUrl || storagePath });
+      return NextResponse.json({ ok: true, assetPath: storagePath });
     }
 
     return NextResponse.json({ ok: false, message: "Type de ressource inconnu." }, { status: 400 });

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { CoinLudiqueSection } from "@/components/coin-ludique-section";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
+import { PartnerLinksSection } from "@/components/partner-links-section";
 import { TopNav } from "@/components/top-nav";
 import { PromoBanner } from "@/components/promo-banner";
 import { useAuth } from "@/components/auth-provider";
@@ -641,6 +642,7 @@ export default function HomePage() {
           </section>
 
           <CoinLudiqueSection />
+          <PartnerLinksSection />
         </div>
       </section>
 

@@ -33,6 +33,11 @@ export async function POST(request: Request) {
     const bookId = metadata.bookId;
     const bookTitle = metadata.bookTitle;
     const pdfFile = metadata.pdfFile;
+    const resourceId = metadata.resourceId;
+    const resourceTitle = metadata.resourceTitle;
+    const resourceFileId = metadata.resourceFileId;
+    const defaultDownloadUrl = metadata.defaultDownloadUrl;
+    const downloadKind = metadata.downloadKind;
 
     if (bookId && pdfFile) {
       const supabase = getSupabaseServiceClient();
@@ -58,6 +63,36 @@ export async function POST(request: Request) {
           book_id: bookId,
           book_title: bookTitle || bookId,
           download_url: pdfFile,
+          stripe_session_id: session.id,
+        });
+      }
+    }
+
+    if (downloadKind === "resource" && resourceId) {
+      const supabase = getSupabaseServiceClient();
+
+      if (supabase) {
+        const customerEmail = session.customer_details?.email || session.customer_email || null;
+        let userId: string | null = metadata.userId || null;
+
+        if (!userId && customerEmail) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("email", customerEmail)
+            .maybeSingle();
+
+          userId = profile?.id || null;
+        }
+
+        await supabase.from("downloads").insert({
+          user_id: userId,
+          user_email: customerEmail,
+          download_kind: "resource",
+          resource_id: resourceId,
+          resource_title: resourceTitle || resourceId,
+          resource_file_id: resourceFileId || null,
+          download_url: defaultDownloadUrl || null,
           stripe_session_id: session.id,
         });
       }

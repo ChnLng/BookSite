@@ -16,8 +16,11 @@ type CommentRecord = {
 
 type DownloadRecord = {
   id: string;
+  download_kind: string | null;
   book_id: string | null;
   book_title: string | null;
+  resource_id: string | null;
+  resource_title: string | null;
   download_url: string | null;
   created_at: string | null;
 };
@@ -53,9 +56,9 @@ export default function AccountPage() {
       const email = user.email || "";
       const [{ data: commentData }, { data: downloadByUser }, { data: downloadByEmail }, { data: donationData }] = await Promise.all([
         supabase.from("comments").select("id, content, author_name, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("downloads").select("id, book_id, book_title, download_url, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("downloads").select("id, download_kind, book_id, book_title, resource_id, resource_title, download_url, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
         email
-          ? supabase.from("downloads").select("id, book_id, book_title, download_url, created_at").eq("user_email", email).order("created_at", { ascending: false })
+          ? supabase.from("downloads").select("id, download_kind, book_id, book_title, resource_id, resource_title, download_url, created_at").eq("user_email", email).order("created_at", { ascending: false })
           : Promise.resolve({ data: [] }),
         supabase.from("donations").select("id, amount, note, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
       ]);
@@ -156,6 +159,26 @@ export default function AccountPage() {
     anchor.download = `${bookId}_book.pdf`;
     anchor.click();
     URL.revokeObjectURL(objectUrl);
+  };
+
+  const handleResourceDownload = async (resourceId: string) => {
+    if (!session?.access_token) {
+      return;
+    }
+
+    const response = await fetch(`/api/resources/${resourceId}/download`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    const result = (await response.json().catch(() => null)) as { ok?: boolean; url?: string } | null;
+
+    if (!response.ok || !result?.ok || !result.url) {
+      return;
+    }
+
+    window.open(result.url, "_blank", "noopener,noreferrer");
   };
 
   const tabs = [
@@ -268,18 +291,33 @@ export default function AccountPage() {
                   ) : (
                     downloads.map((download) => {
                       const readBookId = bookIdFromDownload(download);
+                      const isResourceDownload = download.download_kind === "resource" && download.resource_id;
 
                       return (
                       <div key={download.id} className="split-line" style={{ marginTop: 8 }}>
                         <div>
-                          <span>{download.book_title || "Livre"}</span>
+                          <span>{isResourceDownload ? download.resource_title || "Ressource" : download.book_title || "Livre"}</span>
                           <div className="actions-row" style={{ marginTop: 6, marginBottom: 0 }}>
-                            {readBookId ? (
+                            {isResourceDownload ? (
+                              <Link className="cta-button compact-submit" href={`/outils/${download.resource_id}`}>
+                                Voir la fiche
+                              </Link>
+                            ) : null}
+                            {isResourceDownload && download.resource_id ? (
+                              <button
+                                className="cta-button secondary compact-submit"
+                                type="button"
+                                onClick={() => void handleResourceDownload(download.resource_id as string)}
+                              >
+                                Telecharger
+                              </button>
+                            ) : null}
+                            {!isResourceDownload && readBookId ? (
                               <Link className="cta-button compact-submit" href={`/read/${readBookId}`}>
                                 Lire en ligne
                               </Link>
                             ) : null}
-                            {readBookId ? (
+                            {!isResourceDownload && readBookId ? (
                               <button
                                 className="cta-button secondary compact-submit"
                                 type="button"

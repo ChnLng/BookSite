@@ -11,6 +11,17 @@ export function normalizeResourceAssetPath(assetPath?: string | null) {
     return null;
   }
 
+  const publicUrlPrefixPattern = /^https?:\/\/[^/]+\/storage\/v1\/object\/public\/resource-downloads\//i;
+  const signedUrlPrefixPattern = /^https?:\/\/[^/]+\/storage\/v1\/object\/sign\/resource-downloads\//i;
+
+  if (publicUrlPrefixPattern.test(trimmed)) {
+    return trimmed.replace(publicUrlPrefixPattern, "").split("?")[0];
+  }
+
+  if (signedUrlPrefixPattern.test(trimmed)) {
+    return trimmed.replace(signedUrlPrefixPattern, "").split("?")[0];
+  }
+
   if (/^https?:\/\//i.test(trimmed)) {
     return trimmed;
   }

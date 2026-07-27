@@ -7,6 +7,12 @@ type PurchaseCheckParams = {
   bookId: string;
 };
 
+type ResourcePurchaseCheckParams = {
+  userId: string;
+  email?: string | null;
+  resourceId: string;
+};
+
 function expectedPdfPath(bookId: string) {
   return bookPdfPath(bookId);
 }
@@ -77,4 +83,42 @@ export function bookIdFromDownload(record: {
   }
 
   return extractBookSlugFromPdfAsset(record.download_url);
+}
+
+function resourceDownloadMatches(
+  row: { resource_id?: string | null; download_kind?: string | null },
+  resourceId: string,
+) {
+  if (row.resource_id === resourceId) {
+    return true;
+  }
+
+  return row.download_kind === "resource" && row.resource_id === resourceId;
+}
+
+export async function hasPurchasedResource(
+  supabase: SupabaseClient,
+  params: ResourcePurchaseCheckParams,
+): Promise<boolean> {
+  const { userId, email, resourceId } = params;
+
+  const { data: byUserId } = await supabase
+    .from("downloads")
+    .select("id, resource_id, download_kind")
+    .eq("user_id", userId);
+
+  if (byUserId?.some((row) => resourceDownloadMatches(row, resourceId))) {
+    return true;
+  }
+
+  if (!email) {
+    return false;
+  }
+
+  const { data: byEmail } = await supabase
+    .from("downloads")
+    .select("id, resource_id, download_kind")
+    .eq("user_email", email);
+
+  return Boolean(byEmail?.some((row) => resourceDownloadMatches(row, resourceId)));
 }

@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { donationOptions } from "@/data/books";
+import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -20,6 +21,85 @@ export async function POST(request: Request) {
       ok: true,
       url: `${origin}/livres/${encodeURIComponent(bookId)}?buy=1`,
     });
+  }
+
+  if (kind === "resource") {
+    const resourceId = String(payload.id || "").trim();
+
+    if (!resourceId) {
+      return NextResponse.json({ ok: false, message: "Ressource introuvable." }, { status: 404 });
+    }
+
+    if (!stripeSecretKey) {
+      return NextResponse.json({
+        ok: false,
+        message: "STRIPE_SECRET_KEY manquant.",
+      });
+    }
+
+    const supabase = getSupabaseServiceClient();
+
+    if (!supabase) {
+      return NextResponse.json({ ok: false, message: "Supabase indisponible." }, { status: 503 });
+    }
+
+    const { data: resource } = await supabase
+      .from("resource_items")
+      .select("id, slug, title_fr, price_eur, visible")
+      .or(`slug.eq.${resourceId},id.eq.${resourceId}`)
+      .maybeSingle();
+
+    if (!resource || resource.visible === false) {
+      return NextResponse.json({ ok: false, message: "Ressource introuvable." }, { status: 404 });
+    }
+
+    const amount = Number(resource.price_eur || 0);
+
+    if (amount <= 0) {
+      return NextResponse.json({
+        ok: true,
+        url: `${origin}/outils/${encodeURIComponent(resource.slug || resource.id)}?free=1`,
+      });
+    }
+
+    const { data: firstFile } = await supabase
+      .from("resource_item_files")
+      .select("id, file_path, file_url, external_url")
+      .eq("resource_id", resource.id)
+      .order("sort_order", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    const stripe = new Stripe(stripeSecretKey);
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      success_url: `${origin}/outils/${encodeURIComponent(resource.slug || resource.id)}?success=1`,
+      cancel_url: `${origin}/outils/${encodeURIComponent(resource.slug || resource.id)}?cancel=1`,
+      customer_email: String(payload.userEmail || "").trim() || undefined,
+      metadata: {
+        downloadKind: "resource",
+        resourceId: resource.id,
+        resourceSlug: resource.slug || resource.id,
+        resourceTitle: resource.title_fr || resource.slug || resource.id,
+        defaultDownloadUrl: firstFile?.file_path || firstFile?.file_url || firstFile?.external_url || "",
+        resourceFileId: firstFile?.id || "",
+        userId: String(payload.userId || "").trim(),
+      },
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: resource.title_fr || "Ressource numerique",
+            },
+            unit_amount: Math.round(amount * 100),
+          },
+          quantity: 1,
+        },
+      ],
+    });
+
+    return NextResponse.json({ ok: true, url: session.url });
   }
 
   if (!stripeSecretKey) {
