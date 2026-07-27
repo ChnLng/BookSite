@@ -2,12 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type {
-  MouseEvent as ReactMouseEvent,
-  PointerEvent as ReactPointerEvent,
-  WheelEvent as ReactWheelEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Blocks,
   Gamepad2,
@@ -157,21 +152,6 @@ export function HomeExpandedSections() {
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [partnerLinks, setPartnerLinks] = useState<PartnerLink[]>([]);
   const [activeSectionId, setActiveSectionId] = useState<string>("scene");
-  const resourceCarouselRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const dragStateRef = useRef<{
-    sectionId: string | null;
-    pointerId: number | null;
-    startX: number;
-    startScrollLeft: number;
-    moved: boolean;
-  }>({
-    sectionId: null,
-    pointerId: null,
-    startX: 0,
-    startScrollLeft: 0,
-    moved: false,
-  });
-  const suppressCarouselClickRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -438,96 +418,6 @@ export function HomeExpandedSections() {
     [activeSectionId, getTargetScrollTop],
   );
 
-  const setResourceCarouselRef = useCallback((sectionId: string, node: HTMLDivElement | null) => {
-    resourceCarouselRefs.current[sectionId] = node;
-  }, []);
-
-  const handleResourceWheel = useCallback((sectionId: string, event: ReactWheelEvent<HTMLDivElement>) => {
-    const container = resourceCarouselRefs.current[sectionId];
-
-    if (!container) {
-      return;
-    }
-
-    const delta = Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
-
-    if (delta === 0) {
-      return;
-    }
-
-    event.preventDefault();
-    container.scrollBy({ left: delta, behavior: "smooth" });
-  }, []);
-
-  const handleResourcePointerDown = useCallback((sectionId: string, event: ReactPointerEvent<HTMLDivElement>) => {
-    const container = resourceCarouselRefs.current[sectionId];
-
-    if (!container) {
-      return;
-    }
-
-    dragStateRef.current = {
-      sectionId,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startScrollLeft: container.scrollLeft,
-      moved: false,
-    };
-
-    container.setPointerCapture(event.pointerId);
-  }, []);
-
-  const handleResourcePointerMove = useCallback((sectionId: string, event: ReactPointerEvent<HTMLDivElement>) => {
-    const container = resourceCarouselRefs.current[sectionId];
-    const dragState = dragStateRef.current;
-
-    if (!container || dragState.sectionId !== sectionId || dragState.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const deltaX = event.clientX - dragState.startX;
-
-    if (Math.abs(deltaX) > 6 && !dragState.moved) {
-      dragStateRef.current = {
-        ...dragState,
-        moved: true,
-      };
-    }
-
-    container.scrollLeft = dragState.startScrollLeft - deltaX;
-  }, []);
-
-  const handleResourceCardClick = useCallback((event: ReactMouseEvent<HTMLAnchorElement>) => {
-    if (!suppressCarouselClickRef.current) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    suppressCarouselClickRef.current = false;
-  }, []);
-
-  const clearResourceDragState = useCallback((sectionId: string, event?: ReactPointerEvent<HTMLDivElement>) => {
-    const container = resourceCarouselRefs.current[sectionId];
-    const dragState = dragStateRef.current;
-
-    if (container && event && dragState.pointerId === event.pointerId && container.hasPointerCapture(event.pointerId)) {
-      container.releasePointerCapture(event.pointerId);
-    }
-
-    if (dragState.sectionId === sectionId) {
-      suppressCarouselClickRef.current = dragState.moved;
-
-      dragStateRef.current = {
-        sectionId: null,
-        pointerId: null,
-        startX: 0,
-        startScrollLeft: 0,
-        moved: false,
-      };
-    }
-  }, []);
-
   return (
     <>
       <aside className="home-floating-nav" aria-label="Navigation rapide des sections">
@@ -566,24 +456,13 @@ export function HomeExpandedSections() {
               {section.resources.length === 0 ? (
                 <p className="tiny">Cette categorie est prete. Ajoutez maintenant ses premiers outils dans l&apos;admin.</p>
               ) : (
-                <div
-                  ref={(node) => setResourceCarouselRef(section.id, node)}
-                  className="home-resource-carousel"
-                  role="list"
-                  onWheel={(event) => handleResourceWheel(section.id, event)}
-                  onPointerDown={(event) => handleResourcePointerDown(section.id, event)}
-                  onPointerMove={(event) => handleResourcePointerMove(section.id, event)}
-                  onPointerUp={(event) => clearResourceDragState(section.id, event)}
-                  onPointerCancel={(event) => clearResourceDragState(section.id, event)}
-                  onPointerLeave={(event) => clearResourceDragState(section.id, event)}
-                >
+                <div className="home-resource-carousel" role="list">
                   {section.resources.map((resource) => (
                     <Link
                       className="home-resource-carousel-card"
                       href={`/outils/${resource.slug || resource.id}`}
                       key={resource.id}
                       role="listitem"
-                      onClick={handleResourceCardClick}
                     >
                       <div className="home-resource-carousel-image">
                         <Image
