@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Blocks,
   Gamepad2,
@@ -12,6 +12,7 @@ import {
   Sparkles,
   Wrench,
 } from "lucide-react";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import {
   loadExpandedHomeData,
   type CategoryEntry,
@@ -20,6 +21,7 @@ import {
   type PartnerLink,
   type ResourceItem,
 } from "@/lib/home-sections";
+import { loadDisplayResources } from "@/lib/resources-service";
 
 const iconMap = {
   sparkles: Sparkles,
@@ -35,6 +37,43 @@ type FloatingSectionLink = {
   id: string;
   label: string;
 };
+
+function getHeaderOffset() {
+  if (typeof document === "undefined") {
+    return 120;
+  }
+
+  const utilityBar = document.querySelector(".topbar-utility") as HTMLElement | null;
+  const topbar = document.querySelector(".topbar") as HTMLElement | null;
+  const utilityHeight = utilityBar ? utilityBar.getBoundingClientRect().height : 0;
+  const topbarHeight = topbar ? topbar.getBoundingClientRect().height : 88;
+
+  return Math.ceil(utilityHeight + topbarHeight + 20);
+}
+
+async function loadFallbackPartnerLinks() {
+  const supabase = getSupabaseBrowserClient();
+
+  if (!supabase) {
+    return [] as PartnerLink[];
+  }
+
+  const { data } = await supabase
+    .from("partner_links")
+    .select("id, title_fr, icon_url, target_url, sort_order, visible")
+    .eq("visible", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  return (data || []).map((item) => ({
+    id: String(item.id),
+    titleFr: String(item.title_fr || "Lien"),
+    iconUrl: String(item.icon_url || "/images/logo.png"),
+    targetUrl: String(item.target_url || "https://visdar.fr"),
+    sortOrder: Number(item.sort_order || 0),
+    visible: item.visible !== false,
+  }));
+}
 
 function resolveCategoryIcon(iconName?: string) {
   if (!iconName) {
@@ -87,15 +126,57 @@ export function HomeExpandedSections() {
   const [entries, setEntries] = useState<CategoryEntry[]>([]);
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [partnerLinks, setPartnerLinks] = useState<PartnerLink[]>([]);
+  const [activeSectionId, setActiveSectionId] = useState<string>("scene");
 
   useEffect(() => {
-    void loadExpandedHomeData().then((result) => {
-      setCategories(result.categories);
-      setFieldRules(result.fieldRules);
-      setEntries(result.entries);
-      setResources(result.resources);
-      setPartnerLinks(result.partnerLinks);
-    });
+    let cancelled = false;
+
+    const loadSections = async () => {
+      const [expandedData, fallbackResources, fallbackPartnerLinks] = await Promise.all([
+        loadExpandedHomeData(),
+        loadDisplayResources(),
+        loadFallbackPartnerLinks(),
+      ]);
+
+      if (cancelled) {
+        return;
+      }
+
+      setCategories(expandedData.categories);
+      setFieldRules(expandedData.fieldRules);
+      setEntries(expandedData.entries);
+      setResources(
+        expandedData.resources.length > 0
+          ? expandedData.resources
+          : fallbackResources.map((resource) => ({
+              id: resource.id,
+              slug: resource.slug,
+              categoryId: null,
+              titleFr: resource.titleFr,
+              summaryFr: resource.summaryFr,
+              qrImageUrl: resource.qrImageUrl || resource.coverImageUrl,
+              externalUrl: resource.externalUrl,
+              visible: resource.visible,
+              sortOrder: resource.sortOrder,
+              downloads: resource.downloads.map((download) => ({
+                id: download.id,
+                resourceId: resource.id,
+                platform: download.platform,
+                labelFr: download.labelFr,
+                filePath: download.filePath,
+                externalUrl: download.externalUrl,
+                sortOrder: download.sortOrder,
+              })),
+            })),
+      );
+      setPartnerLinks(expandedData.partnerLinks.length > 0 ? expandedData.partnerLinks : fallbackPartnerLinks);
+    };
+
+    void loadSections();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const customCategories = useMemo(
@@ -116,17 +197,17 @@ export function HomeExpandedSections() {
   );
 
   const floatingLinks = useMemo(() => {
-    const links: FloatingSectionLink[] = [{ id: "scene", label: "Livres" }];
+    const links: FloatingSectionLink[] = [{ id: "scene", label: "图书专区" }];
 
     resourceCategories.forEach((category) => {
       links.push({
         id: `resource-${category.slug}`,
-        label: category.titleFr,
+        label: category.titleFr || "工具天地",
       });
     });
 
     if (resourceCategories.length === 0 && uncategorizedResources.length > 0) {
-      links.push({ id: "coin-ludique-outils", label: "Coin ludique" });
+      links.push({ id: "coin-ludique-outils", label: "工具天地" });
     }
 
     customCategories.forEach((category) => {
@@ -137,26 +218,118 @@ export function HomeExpandedSections() {
     });
 
     if (partnerLinks.length > 0) {
-      links.push({ id: "liens-partenaires", label: "Liens" });
+      links.push({ id: "liens-partenaires", label: "友情链接" });
     }
 
-    links.push({ id: "footer-rules", label: "Infos" });
     return links;
   }, [customCategories, partnerLinks.length, resourceCategories, uncategorizedResources.length]);
+
+  const updateActiveSection = useCallback(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const anchorLine = getHeaderOffset() + 8;
+    const availableSections = floatingLinks
+      .map((link) => ({
+        id: link.id,
+        element: document.getElementById(link.id),
+      }))
+      .filter((item): item is { id: string; element: HTMLElement } => Boolean(item.element));
+
+    if (availableSections.length === 0) {
+      return;
+    }
+
+    const containing = availableSections.find(({ element }) => {
+      const rect = element.getBoundingClientRect();
+      return rect.top <= anchorLine && rect.bottom > anchorLine;
+    });
+
+    if (containing) {
+      setActiveSectionId(containing.id);
+      return;
+    }
+
+    const passedSections = availableSections.filter(({ element }) => element.getBoundingClientRect().top <= anchorLine);
+
+    if (passedSections.length > 0) {
+      setActiveSectionId(passedSections[passedSections.length - 1].id);
+      return;
+    }
+
+    setActiveSectionId(availableSections[0].id);
+  }, [floatingLinks]);
+
+  useEffect(() => {
+    updateActiveSection();
+
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (ticking) {
+        return;
+      }
+
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        updateActiveSection();
+        ticking = false;
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [updateActiveSection]);
+
+  const handleAnchorClick = useCallback(
+    (targetId: string) => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      if (activeSectionId === targetId) {
+        return;
+      }
+
+      const target = document.getElementById(targetId);
+
+      if (!target) {
+        return;
+      }
+
+      const top = window.scrollY + target.getBoundingClientRect().top - getHeaderOffset();
+
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: "smooth",
+      });
+    },
+    [activeSectionId],
+  );
 
   return (
     <>
       <aside className="home-floating-nav" aria-label="Navigation rapide des sections">
         {floatingLinks.map((link) => (
-          <a
+          <button
             key={link.id}
-            href={`#${link.id}`}
-            className="home-floating-nav-link"
+            type="button"
+            className={activeSectionId === link.id ? "home-floating-nav-link active" : "home-floating-nav-link"}
             aria-label={link.label}
-            title={link.label}
+            aria-current={activeSectionId === link.id ? "true" : undefined}
+            onClick={() => handleAnchorClick(link.id)}
           >
             <span className="home-floating-nav-dot" aria-hidden="true" />
-          </a>
+            <span className="home-floating-nav-tooltip" role="tooltip">
+              {link.label}
+            </span>
+          </button>
         ))}
       </aside>
 

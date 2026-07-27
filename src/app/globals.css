@@ -2169,14 +2169,21 @@ select {
 
 .home-floating-nav {
   position: fixed;
-  right: max(20px, calc((100vw - 1280px) / 2 + 12px));
-  top: 180px;
-  z-index: 9;
+  right: clamp(10px, 2vw, 24px);
+  top: 50%;
+  transform: translateY(-42%);
+  z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  padding: 18px 10px;
+  padding: 16px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
 }
 
 .home-floating-nav::before {
@@ -2194,12 +2201,16 @@ select {
 .home-floating-nav-link {
   position: relative;
   z-index: 1;
+  border: none;
+  padding: 0;
+  background: transparent;
   width: 16px;
   height: 16px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
@@ -2209,6 +2220,10 @@ select {
   transform: scale(1.08);
 }
 
+.home-floating-nav-link.active {
+  transform: scale(1.12);
+}
+
 .home-floating-nav-dot {
   width: 12px;
   height: 12px;
@@ -2216,6 +2231,47 @@ select {
   border: 2px solid rgba(99, 102, 241, 0.35);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 6px 16px rgba(99, 102, 241, 0.16);
+}
+
+.home-floating-nav-link.active .home-floating-nav-dot {
+  border-color: rgba(99, 102, 241, 0.9);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(168, 85, 247, 0.95));
+  box-shadow:
+    0 10px 22px rgba(99, 102, 241, 0.26),
+    0 0 0 5px rgba(99, 102, 241, 0.12);
+}
+
+.home-floating-nav-tooltip {
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 7px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow-glass);
+  color: var(--text-main);
+  font-size: 0.82rem;
+  line-height: 1;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.home-floating-nav-link:hover .home-floating-nav-tooltip,
+.home-floating-nav-link:focus-visible .home-floating-nav-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+#scene,
+#coin-ludique-outils,
+#liens-partenaires,
+[id^="resource-"],
+[id^="category-"] {
+  scroll-margin-top: 122px;
 }
 
 .home-custom-grid {
