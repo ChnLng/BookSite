@@ -1461,9 +1461,13 @@ select {
 }
 
 .account-tab-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: nowrap;
   gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .account-tab {
@@ -1475,6 +1479,9 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex: 1 0 0;
+  min-width: max-content;
+  white-space: nowrap;
   cursor: pointer;
   color: inherit;
 }
@@ -2309,6 +2316,8 @@ select {
   flex-wrap: nowrap;
   gap: 16px;
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   padding: 8px 2px 4px;
   margin-top: 18px;
   scroll-snap-type: x proximity;
@@ -2316,8 +2325,8 @@ select {
 }
 
 .home-resource-carousel-card {
-  flex: 0 0 min(280px, calc(100vw - 96px));
-  min-width: 260px;
+  flex: 0 0 auto;
+  min-width: 280px;
   display: grid;
   gap: 12px;
   padding: 14px;
