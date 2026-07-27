@@ -10,6 +10,7 @@ type RouteContext = {
 export async function GET(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const supabase = getSupabaseServiceClient();
+  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
 
   if (!supabase) {
     return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
@@ -32,7 +33,7 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: true, hasAccess: false, requiresLogin: true });
   }
 
-  const admin = await isAdminUser(user);
+  const admin = await isAdminUser(user, accessToken);
 
   if (admin) {
     return NextResponse.json({ ok: true, hasAccess: true, isAdmin: true });

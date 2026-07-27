@@ -1,6 +1,5 @@
-import { createClient, type User } from "@supabase/supabase-js";
-import { siteConfig } from "@/lib/site-config";
-import { getSupabaseServiceClient } from "@/lib/supabase-server";
+import type { User } from "@supabase/supabase-js";
+import { getSupabaseRequestClient, getSupabaseServiceClient } from "@/lib/supabase-server";
 
 const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
   .split(",")
@@ -8,12 +7,6 @@ const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
   .filter(Boolean);
 
 export async function getUserFromRequest(request: Request): Promise<User | null> {
-  const supabase = getSupabaseServiceClient();
-
-  if (!supabase) {
-    return null;
-  }
-
   const authHeader = request.headers.get("Authorization");
 
   if (!authHeader) {
@@ -21,6 +14,11 @@ export async function getUserFromRequest(request: Request): Promise<User | null>
   }
 
   const token = authHeader.replace("Bearer ", "");
+  const supabase = getSupabaseRequestClient(token);
+
+  if (!supabase) {
+    return null;
+  }
 
   try {
     const { data, error } = await supabase.auth.getUser(token);
@@ -35,14 +33,14 @@ export async function getUserFromRequest(request: Request): Promise<User | null>
   }
 }
 
-export async function isAdminUser(user: User): Promise<boolean> {
+export async function isAdminUser(user: User, accessToken?: string): Promise<boolean> {
   const email = user.email?.toLowerCase() || "";
 
   if (email && adminEmails.includes(email)) {
     return true;
   }
 
-  const serviceClient = getSupabaseServiceClient();
+  const serviceClient = getSupabaseServiceClient() || getSupabaseRequestClient(accessToken);
 
   if (!serviceClient) {
     return false;

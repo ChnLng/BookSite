@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   Blocks,
@@ -105,12 +106,26 @@ export function HomeExpandedSections() {
     () => categories.filter((category) => category.kind === "resource" && category.homepageVisible),
     [categories],
   );
-  const resourceCategory = resourceCategories[0] || null;
+  const uncategorizedResources = useMemo(
+    () =>
+      resources.filter(
+        (resource) =>
+          !resource.categoryId || !resourceCategories.some((category) => category.id === resource.categoryId),
+      ),
+    [resourceCategories, resources],
+  );
 
   const floatingLinks = useMemo(() => {
     const links: FloatingSectionLink[] = [{ id: "scene", label: "Livres" }];
 
-    if (resourceCategory || resources.length > 0) {
+    resourceCategories.forEach((category) => {
+      links.push({
+        id: `resource-${category.slug}`,
+        label: category.titleFr,
+      });
+    });
+
+    if (resourceCategories.length === 0 && uncategorizedResources.length > 0) {
       links.push({ id: "coin-ludique-outils", label: "Coin ludique" });
     }
 
@@ -127,7 +142,7 @@ export function HomeExpandedSections() {
 
     links.push({ id: "footer-rules", label: "Infos" });
     return links;
-  }, [customCategories, partnerLinks.length, resourceCategory, resources.length]);
+  }, [customCategories, partnerLinks.length, resourceCategories, uncategorizedResources.length]);
 
   return (
     <>
@@ -145,74 +160,95 @@ export function HomeExpandedSections() {
         ))}
       </aside>
 
-      {resourceCategory || resources.length > 0 ? (
+      {resourceCategories.map((category) => {
+        const categoryResources = resources.filter((resource) => resource.categoryId === category.id);
+
+        return (
+          <section className="panel glass home-section-panel" id={`resource-${category.slug}`} key={category.id}>
+            <div className="split-line">
+              <div>
+                <div className="badge">
+                  <Gamepad2 size={16} />
+                  {category.titleFr}
+                </div>
+                <h2 className="section-title" style={{ marginTop: 18 }}>
+                  {category.titleFr}
+                </h2>
+                <p className="section-caption">
+                  {category.introFr ||
+                    "Jeux a telecharger, mini outils bienveillants et ressources multi-plateformes pour prolonger l'experience du site."}
+                </p>
+              </div>
+            </div>
+
+            {categoryResources.length === 0 ? (
+              <p className="tiny">Cette categorie est prete. Ajoutez maintenant ses premiers outils dans l&apos;admin.</p>
+            ) : (
+              <div className="home-resource-carousel" role="list">
+                {categoryResources.map((resource) => (
+                  <Link className="home-resource-carousel-card" href={`/outils/${resource.slug || resource.id}`} key={resource.id} role="listitem">
+                    <div className="home-resource-carousel-image">
+                      <Image
+                        src={resource.qrImageUrl || "/images/logo.png"}
+                        alt={resource.titleFr}
+                        fill
+                        sizes="280px"
+                        className="carousel-cover-image"
+                      />
+                    </div>
+                    <div className="home-resource-carousel-copy">
+                      <strong>{resource.titleFr}</strong>
+                      <p className="tiny">{resource.summaryFr || "Ouvrez la fiche pour voir les details et les options de telechargement."}</p>
+                      <span className="home-resource-carousel-meta">
+                        {resource.downloads.length > 0 ? `${resource.downloads.length} version(s)` : "Voir la fiche"}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        );
+      })}
+
+      {resourceCategories.length === 0 && uncategorizedResources.length > 0 ? (
         <section className="panel glass home-section-panel" id="coin-ludique-outils">
           <div className="split-line">
             <div>
               <div className="badge">
                 <Gamepad2 size={16} />
-                {resourceCategory?.titleFr || "Coin ludique & Outils"}
+                Coin ludique & Outils
               </div>
               <h2 className="section-title" style={{ marginTop: 18 }}>
                 Coin ludique & Outils
               </h2>
               <p className="section-caption">
-                {resourceCategory?.introFr ||
-                  "Jeux a telecharger, mini outils bienveillants et ressources multi-plateformes pour prolonger l'experience du site."}
+                Jeux a telecharger, mini outils bienveillants et ressources multi-plateformes pour prolonger l&apos;experience du site.
               </p>
             </div>
           </div>
-
-          {resources.length === 0 ? (
-            <p className="tiny">Le coin ludique est pret a accueillir vos premiers outils.</p>
-          ) : (
-            <div className="home-resource-grid">
-              {resources.map((resource) => (
-                <article className="home-resource-card" key={resource.id}>
-                  <div className="home-resource-header">
-                    <div>
-                      <strong>{resource.titleFr}</strong>
-                      <p className="tiny" style={{ marginTop: 8, marginBottom: 0 }}>
-                        {resource.summaryFr}
-                      </p>
-                    </div>
-                    {resource.qrImageUrl ? (
-                      <div className="home-resource-qr">
-                        <Image
-                          src={resource.qrImageUrl}
-                          alt={resource.titleFr}
-                          width={88}
-                          height={88}
-                          className="home-resource-qr-image"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="home-resource-downloads">
-                    {resource.downloads
-                      .filter((variant) => variant.externalUrl || variant.filePath)
-                      .map((variant) => (
-                        <a
-                          className="pill-button"
-                          key={variant.id}
-                          href={variant.externalUrl || variant.filePath}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {variant.labelFr} · {variant.platform}
-                        </a>
-                      ))}
-                    {resource.externalUrl ? (
-                      <a className="cta-button secondary" href={resource.externalUrl} target="_blank" rel="noreferrer">
-                        Telechargement externe
-                      </a>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
+          <div className="home-resource-carousel" role="list">
+            {uncategorizedResources.map((resource) => (
+              <Link className="home-resource-carousel-card" href={`/outils/${resource.slug || resource.id}`} key={resource.id} role="listitem">
+                <div className="home-resource-carousel-image">
+                  <Image
+                    src={resource.qrImageUrl || "/images/logo.png"}
+                    alt={resource.titleFr}
+                    fill
+                    sizes="280px"
+                    className="carousel-cover-image"
+                  />
+                </div>
+                <div className="home-resource-carousel-copy">
+                  <strong>{resource.titleFr}</strong>
+                  <p className="tiny">{resource.summaryFr || "Ouvrez la fiche pour voir les details et les options de telechargement."}</p>
+                  <span className="home-resource-carousel-meta">
+                    {resource.downloads.length > 0 ? `${resource.downloads.length} version(s)` : "Voir la fiche"}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </section>
       ) : null}
 

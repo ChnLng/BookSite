@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { useAuth } from "@/components/auth-provider";
 import { SiteShareStrip } from "@/components/site-share-strip";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type TopNavProps = {
   subtitle?: string;
@@ -18,6 +19,13 @@ type TopNavProps = {
   sharePanel?: React.ReactNode;
 };
 
+type DynamicNavCategory = {
+  id: string;
+  slug: string;
+  titleFr: string;
+  kind: string;
+};
+
 export function TopNav({
   onLoginClick,
   className,
@@ -29,6 +37,7 @@ export function TopNav({
 }: TopNavProps) {
   const { user, isAdmin, signOut } = useAuth();
   const [preferDesktopView, setPreferDesktopView] = useState(false);
+  const [dynamicCategories, setDynamicCategories] = useState<DynamicNavCategory[]>([]);
   const brandTitle = "Visd AR";
 
   const headerClassName = ["topbar", "glass", className].filter(Boolean).join(" ");
@@ -56,6 +65,51 @@ export function TopNav({
     delete document.documentElement.dataset.preferredView;
     window.localStorage.removeItem("visdar-preferred-view");
   }, [preferDesktopView]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadDynamicCategories = async () => {
+      const supabase = getSupabaseBrowserClient();
+
+      if (!supabase) {
+        return;
+      }
+
+      const { data } = await supabase
+        .from("categories")
+        .select("id, slug, title_fr, kind, homepage_visible, homepage_sort_order")
+        .eq("homepage_visible", true)
+        .in("kind", ["resource", "custom"])
+        .order("homepage_sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+
+      if (cancelled || !data) {
+        return;
+      }
+
+      setDynamicCategories(
+        data.map((category) => ({
+          id: String(category.id),
+          slug: String(category.slug || category.id),
+          titleFr: String(category.title_fr || "Section"),
+          kind: String(category.kind || "custom"),
+        })),
+      );
+    };
+
+    void loadDynamicCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const dynamicLinks = dynamicCategories.map((category) => ({
+    id: category.id,
+    label: category.titleFr,
+    href: category.kind === "resource" ? `/#resource-${category.slug}` : `/#category-${category.slug}`,
+  }));
 
   return (
     <>
@@ -86,6 +140,11 @@ export function TopNav({
         <nav className="nav-links">
           {!isHomePage ? <Link href="/">Accueil</Link> : null}
           {!hideCatalogueLink ? <Link href="/catalogue">Catalogue</Link> : null}
+          {dynamicLinks.map((link) => (
+            <Link href={link.href} key={link.id}>
+              {link.label}
+            </Link>
+          ))}
           {user ? (
             <>
               <Link href="/account">Ma page</Link>

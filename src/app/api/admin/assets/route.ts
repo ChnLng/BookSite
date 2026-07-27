@@ -28,12 +28,13 @@ function githubHeaders() {
 
 async function requireAdmin(request: Request) {
   const user = await getUserFromRequest(request);
+  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
 
   if (!user) {
     return { error: NextResponse.json({ ok: false, message: "Connexion requise." }, { status: 401 }) };
   }
 
-  const admin = await isAdminUser(user);
+  const admin = await isAdminUser(user, accessToken);
 
   if (!admin) {
     return { error: NextResponse.json({ ok: false, message: "Acces admin requis." }, { status: 403 }) };

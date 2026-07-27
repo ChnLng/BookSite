@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
-import { getSupabaseServiceClient } from "@/lib/supabase-server";
+import { getSupabaseRequestClient, getSupabaseServiceClient } from "@/lib/supabase-server";
 
 type PartnerLinkPayload = {
   id?: string;
@@ -13,18 +13,24 @@ type PartnerLinkPayload = {
 
 async function requireAdmin(request: Request) {
   const user = await getUserFromRequest(request);
+  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
 
   if (!user) {
     return { error: NextResponse.json({ ok: false, message: "Connexion requise." }, { status: 401 }) };
   }
 
-  const admin = await isAdminUser(user);
+  const admin = await isAdminUser(user, accessToken);
 
   if (!admin) {
     return { error: NextResponse.json({ ok: false, message: "Acces admin requis." }, { status: 403 }) };
   }
 
   return { user };
+}
+
+function getAdminSupabase(request: Request) {
+  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
+  return getSupabaseServiceClient() || getSupabaseRequestClient(accessToken);
 }
 
 export async function GET(request: Request) {
@@ -34,10 +40,10 @@ export async function GET(request: Request) {
     return auth.error;
   }
 
-  const supabase = getSupabaseServiceClient();
+  const supabase = getAdminSupabase(request);
 
   if (!supabase) {
-    return NextResponse.json({ ok: false, message: "SUPABASE_SERVICE_ROLE_KEY manquant." }, { status: 503 });
+    return NextResponse.json({ ok: false, message: "Client Supabase admin indisponible." }, { status: 503 });
   }
 
   const { data, error } = await supabase
@@ -60,10 +66,10 @@ export async function POST(request: Request) {
     return auth.error;
   }
 
-  const supabase = getSupabaseServiceClient();
+  const supabase = getAdminSupabase(request);
 
   if (!supabase) {
-    return NextResponse.json({ ok: false, message: "SUPABASE_SERVICE_ROLE_KEY manquant." }, { status: 503 });
+    return NextResponse.json({ ok: false, message: "Client Supabase admin indisponible." }, { status: 503 });
   }
 
   const payload = (await request.json().catch(() => null)) as { payload?: PartnerLinkPayload } | null;
@@ -107,10 +113,10 @@ export async function PATCH(request: Request) {
     return auth.error;
   }
 
-  const supabase = getSupabaseServiceClient();
+  const supabase = getAdminSupabase(request);
 
   if (!supabase) {
-    return NextResponse.json({ ok: false, message: "SUPABASE_SERVICE_ROLE_KEY manquant." }, { status: 503 });
+    return NextResponse.json({ ok: false, message: "Client Supabase admin indisponible." }, { status: 503 });
   }
 
   const payload = (await request.json().catch(() => null)) as
@@ -151,10 +157,10 @@ export async function DELETE(request: Request) {
     return auth.error;
   }
 
-  const supabase = getSupabaseServiceClient();
+  const supabase = getAdminSupabase(request);
 
   if (!supabase) {
-    return NextResponse.json({ ok: false, message: "SUPABASE_SERVICE_ROLE_KEY manquant." }, { status: 503 });
+    return NextResponse.json({ ok: false, message: "Client Supabase admin indisponible." }, { status: 503 });
   }
 
   const payload = (await request.json().catch(() => null)) as { id?: string } | null;

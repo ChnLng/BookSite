@@ -462,7 +462,7 @@ select {
 }
 
 .donation-column-compact {
-  min-height: 260px;
+  min-height: auto;
 }
 
 .comment-column {
@@ -491,19 +491,19 @@ select {
 .ad-slot-shell {
   display: grid;
   gap: 8px;
-  min-height: 208px;
+  min-height: auto;
   align-content: start;
 }
 
 .ad-slot-panel {
   padding: 16px;
-  min-height: 248px;
+  min-height: auto;
   width: 100%;
   overflow: hidden;
 }
 
 .ad-slot-ins {
-  min-height: 208px;
+  min-height: 0;
   width: 100%;
   border-radius: 24px;
   overflow: hidden;
@@ -2128,6 +2128,7 @@ select {
   margin-top: 0;
   border-radius: 28px;
   padding: 16px 18px;
+  align-self: start;
 }
 
 .section-heading {
@@ -2217,7 +2218,6 @@ select {
   box-shadow: 0 6px 16px rgba(99, 102, 241, 0.16);
 }
 
-.home-resource-grid,
 .home-custom-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2225,13 +2225,66 @@ select {
   margin-top: 22px;
 }
 
-.home-resource-card,
 .home-custom-card,
 .admin-inline-card {
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.84);
   background: rgba(255, 255, 255, 0.7);
   box-shadow: var(--shadow-glass);
+}
+
+.home-resource-carousel {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 8px 2px 4px;
+  margin-top: 18px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.home-resource-carousel-card {
+  flex: 0 0 min(280px, calc(100vw - 96px));
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: var(--shadow-glass);
+  scroll-snap-align: start;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.home-resource-carousel-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 18px 36px rgba(99, 102, 241, 0.12),
+    0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.home-resource-carousel-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.home-resource-carousel-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.home-resource-carousel-copy p {
+  margin: 0;
+}
+
+.home-resource-carousel-meta {
+  color: var(--accent-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .home-resource-card,
@@ -2641,7 +2694,6 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .home-resource-grid,
   .home-custom-grid {
     grid-template-columns: 1fr;
   }

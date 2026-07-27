@@ -14,9 +14,8 @@ import {
   Ticket,
   X,
 } from "lucide-react";
-import { CoinLudiqueSection } from "@/components/coin-ludique-section";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
-import { PartnerLinksSection } from "@/components/partner-links-section";
+import { HomeExpandedSections } from "@/components/home-expanded-sections";
 import { TopNav } from "@/components/top-nav";
 import { PromoBanner } from "@/components/promo-banner";
 import { useAuth } from "@/components/auth-provider";
@@ -645,8 +644,7 @@ export default function HomePage() {
             </div>
           </section>
 
-          <CoinLudiqueSection />
-          <PartnerLinksSection />
+          <HomeExpandedSections />
         </div>
       </section>
 

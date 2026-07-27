@@ -10,6 +10,7 @@ type RouteContext = {
 export async function POST(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const user = await getUserFromRequest(request);
+  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
   const payload = (await request.json().catch(() => null)) as
     | {
         finalPrice?: number;
@@ -48,7 +49,7 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Cette ressource doit etre achetee." }, { status: 400 });
   }
 
-  const admin = await isAdminUser(user);
+  const admin = await isAdminUser(user, accessToken);
 
   if (!admin) {
     const existing = await hasPurchasedResource(supabase, {
