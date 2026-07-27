@@ -3,7 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from "react";
+import type {
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+  WheelEvent as ReactWheelEvent,
+} from "react";
 import {
   Blocks,
   Gamepad2,
@@ -159,12 +163,15 @@ export function HomeExpandedSections() {
     pointerId: number | null;
     startX: number;
     startScrollLeft: number;
+    moved: boolean;
   }>({
     sectionId: null,
     pointerId: null,
     startX: 0,
     startScrollLeft: 0,
+    moved: false,
   });
+  const suppressCarouselClickRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -464,6 +471,7 @@ export function HomeExpandedSections() {
       pointerId: event.pointerId,
       startX: event.clientX,
       startScrollLeft: container.scrollLeft,
+      moved: false,
     };
 
     container.setPointerCapture(event.pointerId);
@@ -478,7 +486,25 @@ export function HomeExpandedSections() {
     }
 
     const deltaX = event.clientX - dragState.startX;
+
+    if (Math.abs(deltaX) > 6 && !dragState.moved) {
+      dragStateRef.current = {
+        ...dragState,
+        moved: true,
+      };
+    }
+
     container.scrollLeft = dragState.startScrollLeft - deltaX;
+  }, []);
+
+  const handleResourceCardClick = useCallback((event: ReactMouseEvent<HTMLAnchorElement>) => {
+    if (!suppressCarouselClickRef.current) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    suppressCarouselClickRef.current = false;
   }, []);
 
   const clearResourceDragState = useCallback((sectionId: string, event?: ReactPointerEvent<HTMLDivElement>) => {
@@ -490,11 +516,14 @@ export function HomeExpandedSections() {
     }
 
     if (dragState.sectionId === sectionId) {
+      suppressCarouselClickRef.current = dragState.moved;
+
       dragStateRef.current = {
         sectionId: null,
         pointerId: null,
         startX: 0,
         startScrollLeft: 0,
+        moved: false,
       };
     }
   }, []);
@@ -549,7 +578,13 @@ export function HomeExpandedSections() {
                   onPointerLeave={(event) => clearResourceDragState(section.id, event)}
                 >
                   {section.resources.map((resource) => (
-                    <Link className="home-resource-carousel-card" href={`/outils/${resource.slug || resource.id}`} key={resource.id} role="listitem">
+                    <Link
+                      className="home-resource-carousel-card"
+                      href={`/outils/${resource.slug || resource.id}`}
+                      key={resource.id}
+                      role="listitem"
+                      onClick={handleResourceCardClick}
+                    >
                       <div className="home-resource-carousel-image">
                         <Image
                           src={resource.qrImageUrl || "/images/logo.png"}
