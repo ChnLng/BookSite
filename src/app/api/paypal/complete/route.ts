@@ -5,10 +5,22 @@ import { getUserFromRequest } from "@/lib/auth-request";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
 type ResolvedBook = {
+  kind: "book";
   id: string;
   titleFr: string;
-  pdfFile: string;
+  downloadUrl: string;
 };
+
+type ResolvedResource = {
+  kind: "resource";
+  id: string;
+  slug: string;
+  titleFr: string;
+  resourceFileId: string | null;
+  downloadUrl: string | null;
+};
+
+type ResolvedPurchase = ResolvedBook | ResolvedResource;
 
 async function resolveBook(bookId: string): Promise<ResolvedBook | null> {
   const supabase = getSupabaseServiceClient();
@@ -16,16 +28,17 @@ async function resolveBook(bookId: string): Promise<ResolvedBook | null> {
   if (supabase) {
     const { data } = await supabase
       .from("books")
-      .select("id, slug, title_fr, price_eur, pdf_file, cover_image")
+      .select("id, slug, title_fr, pdf_file")
       .or(`slug.eq.${bookId},id.eq.${bookId}`)
       .maybeSingle();
 
     if (data) {
       const slug = data.slug || bookId;
       return {
+        kind: "book",
         id: slug,
         titleFr: data.title_fr,
-        pdfFile: data.pdf_file || bookPdfPath(slug),
+        downloadUrl: data.pdf_file || bookPdfPath(slug),
       };
     }
   }
@@ -37,9 +50,45 @@ async function resolveBook(bookId: string): Promise<ResolvedBook | null> {
   }
 
   return {
+    kind: "book",
     id: fallback.id,
     titleFr: fallback.titleFr,
-    pdfFile: bookPdfPath(fallback.id),
+    downloadUrl: bookPdfPath(fallback.id),
+  };
+}
+
+async function resolveResource(resourceId: string): Promise<ResolvedResource | null> {
+  const supabase = getSupabaseServiceClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data: resource } = await supabase
+    .from("resource_items")
+    .select("id, slug, title_fr, visible")
+    .or(`slug.eq.${resourceId},id.eq.${resourceId}`)
+    .maybeSingle();
+
+  if (!resource || resource.visible === false) {
+    return null;
+  }
+
+  const { data: firstFile } = await supabase
+    .from("resource_item_files")
+    .select("id, file_path, file_url, external_url")
+    .eq("resource_id", resource.id)
+    .order("sort_order", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  return {
+    kind: "resource",
+    id: resource.id,
+    slug: resource.slug || resource.id,
+    titleFr: resource.title_fr || resource.slug || resource.id,
+    resourceFileId: firstFile?.id || null,
+    downloadUrl: firstFile?.file_path || firstFile?.file_url || firstFile?.external_url || null,
   };
 }
 
@@ -53,24 +102,34 @@ export async function POST(request: Request) {
   const payload = (await request.json().catch(() => null)) as
     | {
         bookId?: string;
+        resourceId?: string;
         orderId?: string;
         payerEmail?: string;
-        payerName?: string;
       }
     | null;
 
   const bookId = String(payload?.bookId || "").trim();
+  const resourceId = String(payload?.resourceId || "").trim();
   const orderId = String(payload?.orderId || "").trim();
   const payerEmail = String(payload?.payerEmail || "").trim();
 
-  if (!bookId || !orderId) {
+  if ((!bookId && !resourceId) || !orderId) {
     return NextResponse.json({ ok: false, message: "Paiement PayPal incomplet." }, { status: 400 });
   }
 
-  const book = await resolveBook(bookId);
+  let purchase: ResolvedPurchase | null = null;
 
-  if (!book) {
-    return NextResponse.json({ ok: false, message: "Livre introuvable." }, { status: 404 });
+  if (resourceId) {
+    purchase = await resolveResource(resourceId);
+  } else if (bookId) {
+    purchase = await resolveBook(bookId);
+  }
+
+  if (!purchase) {
+    return NextResponse.json(
+      { ok: false, message: resourceId ? "Ressource introuvable." : "Livre introuvable." },
+      { status: 404 },
+    );
   }
 
   const { data: existing } = await supabase
@@ -84,21 +143,34 @@ export async function POST(request: Request) {
       ok: true,
       alreadyRecorded: true,
       accountUrl: "/account",
-      readUrl: `/read/${book.id}`,
+      readUrl: purchase.kind === "book" ? `/read/${purchase.id}` : undefined,
+      resourceUrl: purchase.kind === "resource" ? `/outils/${purchase.slug}` : undefined,
     });
   }
 
   const user = await getUserFromRequest(request);
   const purchaserEmail = user?.email || payerEmail || null;
 
-  const { error } = await supabase.from("downloads").insert({
-    user_id: user?.id || null,
-    user_email: purchaserEmail,
-    book_id: book.id,
-    book_title: book.titleFr,
-    download_url: book.pdfFile,
-    paypal_order_id: orderId,
-  });
+  const { error } =
+    purchase.kind === "book"
+      ? await supabase.from("downloads").insert({
+          user_id: user?.id || null,
+          user_email: purchaserEmail,
+          book_id: purchase.id,
+          book_title: purchase.titleFr,
+          download_url: purchase.downloadUrl,
+          paypal_order_id: orderId,
+        })
+      : await supabase.from("downloads").insert({
+          user_id: user?.id || null,
+          user_email: purchaserEmail,
+          download_kind: "resource",
+          resource_id: purchase.id,
+          resource_title: purchase.titleFr,
+          resource_file_id: purchase.resourceFileId,
+          download_url: purchase.downloadUrl,
+          paypal_order_id: orderId,
+        });
 
   if (error) {
     return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
@@ -107,6 +179,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     accountUrl: "/account",
-    readUrl: `/read/${book.id}`,
+    readUrl: purchase.kind === "book" ? `/read/${purchase.id}` : undefined,
+    resourceUrl: purchase.kind === "resource" ? `/outils/${purchase.slug}` : undefined,
   });
 }

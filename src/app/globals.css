@@ -1009,6 +1009,47 @@ select {
   gap: 10px;
 }
 
+.book-detail-cta-panel {
+  margin-top: 4px;
+}
+
+.book-detail-cta-stack,
+.resource-action-stack,
+.resource-inline-promo {
+  display: grid;
+  gap: 12px;
+}
+
+.book-promo-row,
+.resource-promo-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.book-promo-input,
+.resource-promo-input {
+  width: 12rem;
+  max-width: 200px;
+  flex: 0 0 auto;
+}
+
+.book-buy-row,
+.resource-buy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.book-buy-button,
+.resource-buy-button {
+  min-width: 14rem;
+  width: auto;
+  flex: 0 1 16rem;
+}
+
 .book-detail-facts,
 .book-detail-related-list {
   display: grid;
@@ -2393,7 +2434,7 @@ select {
   width: 100%;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.86);
 }
 
@@ -2413,6 +2454,13 @@ select {
 .resource-detail-main {
   display: grid;
   gap: 10px;
+}
+
+.resource-inline-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
 }
 
 .resource-meta-row {
@@ -2492,6 +2540,11 @@ select {
 }
 
 @media (min-width: 1024px) {
+  .book-detail-cta-stack,
+  .resource-inline-promo {
+    gap: 14px;
+  }
+
   .detail-promo-cta {
     flex-direction: row;
     align-items: flex-start;

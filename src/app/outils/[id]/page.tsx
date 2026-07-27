@@ -3,11 +3,30 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, ExternalLink, QrCode } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayResources, resolveDisplayResourceById, type DisplayResource } from "@/lib/resources-service";
+
+type ReviewRecord = {
+  id: string;
+  authorName: string;
+  rating: number;
+  reviewText: string;
+  createdAt: string | null;
+};
+
+type ReviewSummary = {
+  averageRating: number;
+  totalReviews: number;
+};
+
+type ReviewFormState = {
+  authorName: string;
+  rating: number;
+  reviewText: string;
+};
 
 type AccessState = {
   hasAccess: boolean;
@@ -24,6 +43,78 @@ type AppliedPromoState = {
   isFreeShare: boolean;
 };
 
+type PaymentSuccessState = {
+  accountUrl: string;
+  resourceUrl: string;
+};
+
+type PayPalButtonsInstance = {
+  render: (target: HTMLElement | string) => Promise<void> | void;
+  close?: () => Promise<void> | void;
+};
+
+type PayPalWindow = Window & {
+  paypal?: {
+    Buttons?: (config: Record<string, unknown>) => PayPalButtonsInstance;
+  };
+};
+
+const defaultReviewForm: ReviewFormState = {
+  authorName: "",
+  rating: 5,
+  reviewText: "",
+};
+
+function formatReviewDate(value: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString("fr-FR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function buildDefaultAuthorName(email?: string | null, displayName?: string | null) {
+  if (displayName?.trim()) {
+    return displayName.trim();
+  }
+
+  if (email?.trim()) {
+    return email.split("@")[0];
+  }
+
+  return "";
+}
+
+function renderStarButton(active: boolean) {
+  return active ? "🌟" : "✩";
+}
+
+function renderFixedStars(activeCount: number, className: string) {
+  return Array.from({ length: 5 }, (_, index) => {
+    const active = index < activeCount;
+
+    return (
+      <span
+        key={`${className}-${index + 1}`}
+        className={active ? `${className} active` : className}
+        aria-hidden="true"
+      >
+        {active ? "🌟" : "✩"}
+      </span>
+    );
+  });
+}
+
 export default function ResourceDetailPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
@@ -31,6 +122,15 @@ export default function ResourceDetailPage() {
   const [resource, setResource] = useState<DisplayResource | null>(null);
   const [relatedResources, setRelatedResources] = useState<DisplayResource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviews, setReviews] = useState<ReviewRecord[]>([]);
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary>({
+    averageRating: 0,
+    totalReviews: 0,
+  });
+  const [reviewForm, setReviewForm] = useState<ReviewFormState>(defaultReviewForm);
+  const [reviewMessage, setReviewMessage] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [accessState, setAccessState] = useState<AccessState>({
     hasAccess: false,
     requiresLogin: true,
@@ -45,6 +145,11 @@ export default function ResourceDetailPage() {
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromoState | null>(null);
   const [shareUnlockPending, setShareUnlockPending] = useState(false);
   const [shareUnlockBusy, setShareUnlockBusy] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentReady, setPaymentReady] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+  const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(null);
+  const paypalContainerRef = useRef<HTMLDivElement | null>(null);
 
   const resourceId = Array.isArray(params?.id) ? params.id[0] : params?.id || "";
   const purchaseSucceeded = searchParams.get("success") === "1";
@@ -55,6 +160,11 @@ export default function ResourceDetailPage() {
   const promoUnlocksFreeAccess = hasAppliedPromo && finalPrice <= 0;
   const promoError = promoMessageKind === "error" ? promoMessage : "";
   const promoSuccess = promoMessageKind === "success" ? promoMessage : "";
+  const roundedAverageRating = Math.round(reviewSummary.averageRating);
+  const defaultAuthorName = useMemo(
+    () => buildDefaultAuthorName(user?.email, user?.user_metadata?.full_name),
+    [user?.email, user?.user_metadata?.full_name],
+  );
   const zeroPriceUnlockMessage =
     "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
 
@@ -107,6 +217,79 @@ export default function ResourceDetailPage() {
     };
   }, [resourceId]);
 
+  useEffect(() => {
+    setReviewForm((current) => {
+      if (current.authorName.trim()) {
+        return current;
+      }
+
+      if (!defaultAuthorName) {
+        return current;
+      }
+
+      return {
+        ...current,
+        authorName: defaultAuthorName,
+      };
+    });
+  }, [defaultAuthorName]);
+
+  useEffect(() => {
+    if (!resourceId) {
+      setReviews([]);
+      setReviewSummary({ averageRating: 0, totalReviews: 0 });
+      setReviewsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadReviews = async () => {
+      setReviewsLoading(true);
+
+      try {
+        const response = await fetch(`/api/resources/${resourceId}/reviews`, {
+          cache: "no-store",
+        });
+        const result = (await response.json().catch(() => null)) as
+          | {
+              ok?: boolean;
+              summary?: ReviewSummary;
+              reviews?: ReviewRecord[];
+            }
+          | null;
+
+        if (cancelled) {
+          return;
+        }
+
+        if (!response.ok || !result?.ok) {
+          setReviews([]);
+          setReviewSummary({ averageRating: 0, totalReviews: 0 });
+          return;
+        }
+
+        setReviews(result.reviews || []);
+        setReviewSummary(
+          result.summary || {
+            averageRating: 0,
+            totalReviews: 0,
+          },
+        );
+      } finally {
+        if (!cancelled) {
+          setReviewsLoading(false);
+        }
+      }
+    };
+
+    void loadReviews();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resourceId]);
+
   const refreshAccess = async () => {
     if (!resourceId || !session?.access_token) {
       setAccessState({
@@ -145,6 +328,122 @@ export default function ResourceDetailPage() {
       setActionMessage("Paiement annule. Vous pouvez reprendre quand vous voulez.");
     }
   }, [purchaseCanceled, purchaseSucceeded]);
+
+  useEffect(() => {
+    if (!showPayment) {
+      setPaymentReady(false);
+      setPaymentError("");
+
+      if (paypalContainerRef.current) {
+        paypalContainerRef.current.innerHTML = "";
+      }
+
+      return;
+    }
+
+    if (!resource || !paypalContainerRef.current || typeof window === "undefined" || finalPrice <= 0) {
+      return;
+    }
+
+    paypalContainerRef.current.innerHTML = "";
+    setPaymentReady(false);
+    setPaymentError("");
+    setPaymentSuccess(null);
+
+    const paypalWindow = window as PayPalWindow;
+    const buttonsFactory = paypalWindow.paypal?.Buttons;
+
+    if (!buttonsFactory) {
+      setPaymentError("Le module PayPal est en cours de chargement. Reessayez dans un instant.");
+      return;
+    }
+
+    const buttons = buttonsFactory({
+      style: {
+        layout: "vertical",
+        shape: "pill",
+        label: "paypal",
+      },
+      createOrder: (_data: unknown, actions: any) =>
+        actions.order.create({
+          purchase_units: [
+            {
+              custom_id: resource.slug || resource.id,
+              description: resource.titleFr,
+              amount: {
+                currency_code: "EUR",
+                value: finalPrice.toFixed(2),
+              },
+            },
+          ],
+        }),
+      onApprove: async (data: any, actions: any) => {
+        const order = await actions.order.capture();
+        const payerEmail = order?.payer?.email_address || "";
+
+        const response = await fetch("/api/paypal/complete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(session?.access_token
+              ? {
+                  Authorization: `Bearer ${session.access_token}`,
+                }
+              : {}),
+          },
+          body: JSON.stringify({
+            resourceId: resource.slug || resource.id,
+            orderId: order?.id || data?.orderID,
+            payerEmail,
+          }),
+        });
+
+        const result = (await response.json().catch(() => null)) as
+          | {
+              ok?: boolean;
+              message?: string;
+              accountUrl?: string;
+              resourceUrl?: string;
+            }
+          | null;
+
+        if (!response.ok || !result?.ok) {
+          throw new Error(result?.message || "Paiement valide, mais enregistrement impossible.");
+        }
+
+        setPaymentSuccess({
+          accountUrl: result.accountUrl || "/account",
+          resourceUrl: result.resourceUrl || `/outils/${resource.slug || resource.id}`,
+        });
+        setActionMessage("Paiement confirme. Vos telechargements sont maintenant debloques.");
+        await refreshAccess();
+
+        if (paypalContainerRef.current) {
+          paypalContainerRef.current.innerHTML = "";
+        }
+      },
+      onError: () => {
+        setPaymentError("Impossible d'ouvrir PayPal pour le moment.");
+      },
+    });
+
+    const rendered = buttons.render(paypalContainerRef.current);
+    Promise.resolve(rendered)
+      .then(() => {
+        setPaymentReady(true);
+      })
+      .catch(() => {
+        setPaymentError("Impossible d'ouvrir PayPal pour le moment.");
+      });
+
+    return () => {
+      if (paypalContainerRef.current) {
+        paypalContainerRef.current.innerHTML = "";
+      }
+
+      void buttons.close?.();
+    };
+  }, [finalPrice, refreshAccess, resource, session?.access_token, showPayment]);
 
   const priceLabel = useMemo(
     () => `${(hasAppliedPromo ? finalPrice : basePrice).toFixed(2)} EUR`,
@@ -247,6 +546,81 @@ export default function ResourceDetailPage() {
     }
   };
 
+  const refreshReviews = async () => {
+    if (!resourceId) {
+      return;
+    }
+
+    const response = await fetch(`/api/resources/${resourceId}/reviews`, {
+      cache: "no-store",
+    });
+    const result = (await response.json().catch(() => null)) as
+      | {
+          ok?: boolean;
+          summary?: ReviewSummary;
+          reviews?: ReviewRecord[];
+        }
+      | null;
+
+    if (!response.ok || !result?.ok) {
+      return;
+    }
+
+    setReviews(result.reviews || []);
+    setReviewSummary(
+      result.summary || {
+        averageRating: 0,
+        totalReviews: 0,
+      },
+    );
+  };
+
+  const handleReviewSubmit = async () => {
+    if (!resource) {
+      return;
+    }
+
+    setReviewSubmitting(true);
+    setReviewMessage("");
+
+    try {
+      const response = await fetch(`/api/resources/${resource.slug || resource.id}/reviews`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token
+            ? {
+                Authorization: `Bearer ${session.access_token}`,
+              }
+            : {}),
+        },
+        body: JSON.stringify(reviewForm),
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            message?: string;
+          }
+        | null;
+
+      if (!response.ok || !result?.ok) {
+        setReviewMessage(result?.message || "Impossible d'enregistrer votre avis.");
+        return;
+      }
+
+      setReviewForm((current) => ({
+        authorName: current.authorName,
+        rating: 5,
+        reviewText: "",
+      }));
+      setReviewMessage("Merci ! Votre avis est bien en ligne.");
+      await refreshReviews();
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
   const handleCheckout = async () => {
     if (!resource) {
       return;
@@ -259,6 +633,7 @@ export default function ResourceDetailPage() {
 
     setActionBusy(true);
     setActionMessage("");
+    setPaymentError("");
 
     try {
       if (finalPrice <= 0) {
@@ -266,30 +641,7 @@ export default function ResourceDetailPage() {
         setActionMessage(zeroPriceUnlockMessage);
         return;
       }
-
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          kind: "resource",
-          id: resource.slug || resource.id,
-          userId: user.id,
-          userEmail: user.email || "",
-          finalPrice,
-          promoCode: appliedPromo?.code || "",
-        }),
-      });
-
-      const result = (await response.json().catch(() => null)) as { ok?: boolean; message?: string; url?: string } | null;
-
-      if (!response.ok || !result?.ok || !result.url) {
-        setActionMessage(result?.message || "Impossible d'ouvrir le paiement.");
-        return;
-      }
-
-      window.location.href = result.url;
+      setShowPayment(true);
     } finally {
       setActionBusy(false);
     }
@@ -381,79 +733,81 @@ export default function ResourceDetailPage() {
         <section className="panel glass resource-detail-main">
           <span className="badge">Coin ludique & Outils</span>
           <h1 className="book-detail-title" style={{ marginTop: 18 }}>{resource.titleFr}</h1>
-          <div className="resource-meta-row">
-            <div className="promo-price-tag-wrap">
-              {hasAppliedPromo ? <span className="promo-original-price">{basePrice.toFixed(2)} EUR</span> : null}
-              <span className="resource-price-tag">{priceLabel}</span>
+          <div className="resource-action-stack">
+            <div className="resource-inline-price">
+              <div className="promo-price-tag-wrap">
+                {hasAppliedPromo ? <span className="promo-original-price">{basePrice.toFixed(2)} EUR</span> : null}
+                <span className="resource-price-tag">{priceLabel}</span>
+              </div>
+              <span className="tiny">
+                {promoUnlocksFreeAccess ? "Acces gratuit apres partage" : "Paiement securise puis telechargement"}
+              </span>
             </div>
-            <span className="tiny">
-              {promoUnlocksFreeAccess ? "Acces gratuit apres partage" : "Paiement securise puis telechargement"}
-            </span>
+
+            <div className="resource-inline-promo">
+              <div className="resource-promo-row">
+                <input
+                  type="text"
+                  className="input resource-promo-input"
+                  value={promoCode}
+                  onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
+                  placeholder="Code promo"
+                  title="Optionnel"
+                  maxLength={8}
+                  autoComplete="off"
+                  spellCheck={false}
+                  name="promo-code-input"
+                />
+                <button
+                  type="button"
+                  className="pill-button shrink-0 px-5"
+                  disabled={promoBusy}
+                  onClick={() => void handleApplyPromo()}
+                >
+                  {promoBusy ? "..." : "Appliquer"}
+                </button>
+              </div>
+
+              {promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
+
+              <div className="resource-buy-row">
+                <button
+                  type="button"
+                  className="cta-button resource-buy-button"
+                  disabled={actionBusy || accessState.hasAccess}
+                  onClick={() => void handleCheckout()}
+                >
+                  {accessState.hasAccess
+                    ? "Acces deja debloque"
+                    : actionBusy
+                      ? "Ouverture..."
+                      : promoUnlocksFreeAccess
+                        ? "Partager pour deverrouiller"
+                        : "Acheter cet outil"}
+                </button>
+
+                {resource.externalUrl ? (
+                  <a
+                    href={resource.externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pill-button shrink-0 flex items-center gap-2"
+                  >
+                    <ExternalLink size={16} />
+                    <span>Voir aussi le lien externe</span>
+                  </a>
+                ) : null}
+              </div>
+            </div>
           </div>
 
           <p className="section-caption" style={{ marginTop: 18 }}>{resource.summaryFr}</p>
-
-          <div className="mt-6 flex flex-col gap-4">
-            <div className="flex flex-nowrap items-center gap-2">
-              <input
-                type="text"
-                className="input shrink-0"
-                value={promoCode}
-                onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
-                placeholder="Code promo"
-                title="Optionnel"
-                maxLength={8}
-                autoComplete="off"
-                spellCheck={false}
-                name="promo-code-input"
-                style={{ width: "12rem", maxWidth: "200px" }}
-              />
-              <button
-                type="button"
-                className="pill-button shrink-0 px-5"
-                disabled={promoBusy}
-                onClick={() => void handleApplyPromo()}
-              >
-                {promoBusy ? "..." : "Appliquer"}
-              </button>
-            </div>
-
-            {promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
-
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                className="cta-button min-w-[14rem] flex-1"
-                disabled={actionBusy || accessState.hasAccess}
-                onClick={() => void handleCheckout()}
-              >
-                {accessState.hasAccess
-                  ? "Acces deja debloque"
-                  : actionBusy
-                    ? "Ouverture..."
-                    : promoUnlocksFreeAccess
-                      ? "Partager pour deverrouiller"
-                      : "Acheter cet outil"}
-              </button>
-
-              {resource.externalUrl ? (
-                <a
-                  href={resource.externalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="pill-button shrink-0 flex items-center gap-2"
-                >
-                  <ExternalLink size={16} />
-                  <span>Voir aussi le lien externe</span>
-                </a>
-              ) : null}
-            </div>
-          </div>
 
           {promoSuccess ? <p className="tiny promo-message success">{promoSuccess}</p> : null}
 
           {actionMessage ? <p className="tiny">{actionMessage}</p> : null}
           {accessLoading ? <p className="tiny">Verification de vos droits...</p> : null}
+          {paymentError ? <p className="tiny promo-message error">{paymentError}</p> : null}
 
           {promoUnlocksFreeAccess && !accessState.hasAccess ? (
             <div className="share-unlock-box">
@@ -496,6 +850,113 @@ export default function ResourceDetailPage() {
             ) : null}
           </div>
 
+          <div className="book-review-card">
+            <div className="book-review-summary">
+              <div>
+                <strong>Avis des lecteurs</strong>
+                {reviewSummary.totalReviews > 0 ? (
+                  <p className="tiny" style={{ marginTop: 6, marginBottom: 0 }}>
+                    {reviewSummary.averageRating.toFixed(1)} / 5 · {reviewSummary.totalReviews} avis
+                  </p>
+                ) : null}
+              </div>
+              <div className="book-review-average-stars" aria-label={`Note moyenne ${reviewSummary.averageRating.toFixed(1)} sur 5`}>
+                {renderFixedStars(roundedAverageRating, "book-review-average-star")}
+              </div>
+            </div>
+
+            <div className="input-group compact-form">
+              <label className="tiny" htmlFor="resource-review-author">
+                Votre pseudo ou prenom
+              </label>
+              <input
+                id="resource-review-author"
+                className="input compact-input"
+                value={reviewForm.authorName}
+                onChange={(event) =>
+                  setReviewForm((current) => ({
+                    ...current,
+                    authorName: event.target.value,
+                  }))
+                }
+                placeholder="Votre prenom ou pseudo"
+              />
+
+              <div>
+                <div className="tiny" style={{ marginBottom: 8 }}>
+                  Votre note
+                </div>
+                <div className="book-review-star-picker">
+                  {Array.from({ length: 5 }, (_, index) => {
+                    const value = index + 1;
+                    const active = value <= reviewForm.rating;
+
+                    return (
+                      <button
+                        key={value}
+                        className={active ? "book-review-star active" : "book-review-star"}
+                        type="button"
+                        onClick={() =>
+                          setReviewForm((current) => ({
+                            ...current,
+                            rating: value,
+                          }))
+                        }
+                        aria-label={`Noter ${value} sur 5`}
+                      >
+                        {renderStarButton(active)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <label className="tiny" htmlFor="resource-review-text">
+                Votre ressenti apres utilisation
+              </label>
+              <textarea
+                id="resource-review-text"
+                className="textarea compact-textarea"
+                value={reviewForm.reviewText}
+                onChange={(event) =>
+                  setReviewForm((current) => ({
+                    ...current,
+                    reviewText: event.target.value,
+                  }))
+                }
+                placeholder="Partagez votre experience en quelques lignes..."
+              />
+
+              <button className="cta-button" type="button" disabled={reviewSubmitting} onClick={() => void handleReviewSubmit()}>
+                {reviewSubmitting ? "Publication..." : "Publier votre avis"}
+              </button>
+              {reviewMessage ? <p className="tiny">{reviewMessage}</p> : null}
+            </div>
+
+            <div className="book-review-list">
+              {reviewsLoading ? (
+                <p className="muted">Chargement des avis...</p>
+              ) : reviews.length > 0 ? (
+                reviews.map((review) => (
+                  <article className="book-review-item" key={review.id}>
+                    <div className="book-review-item-header">
+                      <strong>{review.authorName}</strong>
+                      <span className="book-review-inline-stars">
+                        {renderFixedStars(review.rating, "book-review-inline-star")}
+                      </span>
+                    </div>
+                    <p className="muted" style={{ marginBottom: 10 }}>
+                      {review.reviewText}
+                    </p>
+                    <span className="tiny">{formatReviewDate(review.createdAt)}</span>
+                  </article>
+                ))
+              ) : (
+                <p className="muted">Aucun retour pour l&apos;instant. Votre experience peut lancer la premiere etoile.</p>
+              )}
+            </div>
+          </div>
+
           {relatedResources.length > 0 ? (
             <div className="resource-related-strip">
               <div className="split-line">
@@ -523,6 +984,66 @@ export default function ResourceDetailPage() {
           ) : null}
         </section>
       </section>
+
+      {showPayment && resource ? (
+        <div className="overlay-backdrop" role="presentation" onClick={() => setShowPayment(false)}>
+          <div
+            className="overlay-card glass book-payment-card"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Paiement PayPal pour ${resource.titleFr}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button className="overlay-close" type="button" onClick={() => setShowPayment(false)}>
+              Fermer
+            </button>
+            <div className="badge">PayPal</div>
+            <h2 style={{ marginTop: 14, marginBottom: 10 }}>{resource.titleFr}</h2>
+            <div className="split-line" style={{ paddingTop: 0 }}>
+              <span>Montant</span>
+              <div className="promo-price-stack">
+                {appliedPromo ? <span className="promo-original-price">{resource.priceEur.toFixed(2)} EUR</span> : null}
+                <strong>{finalPrice.toFixed(2)} EUR</strong>
+              </div>
+            </div>
+
+            {paymentSuccess ? (
+              <div className="book-payment-success">
+                <p className="muted">
+                  Paiement confirme. Les telechargements sont maintenant ajoutes a votre espace lecteur.
+                </p>
+                <div className="actions-row">
+                  <Link className="cta-button" href={paymentSuccess.resourceUrl}>
+                    Revenir a cette fiche
+                  </Link>
+                  <Link className="pill-button" href={paymentSuccess.accountUrl}>
+                    Ouvrir Ma page
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="muted" style={{ marginTop: 16 }}>
+                  Reglez ici avec PayPal. Une fois la transaction validee, les telechargements seront debloques automatiquement.
+                </p>
+                <div className="book-payment-shell">
+                  <div ref={paypalContainerRef} />
+                </div>
+                {!paymentReady && !paymentError ? (
+                  <p className="tiny" style={{ marginTop: 12 }}>
+                    Chargement de PayPal...
+                  </p>
+                ) : null}
+                {paymentError ? (
+                  <p className="tiny" style={{ marginTop: 12 }}>
+                    {paymentError}
+                  </p>
+                ) : null}
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

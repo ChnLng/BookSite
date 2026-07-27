@@ -880,53 +880,20 @@ export default function BookDetailPage() {
                 </h1>
                 <p className="tiny">{book.titleZh}</p>
 
-                <p className="muted">{book.synopsisFr}</p>
-                {book.synopsisZh ? <p className="muted">{book.synopsisZh}</p> : null}
-
-                <div className="book-detail-facts">
-                  <div className="split-line">
-                    <span>Prix</span>
-                    <div className="promo-price-stack">
-                      {hasAppliedPromo ? <span className="promo-original-price">{basePrice.toFixed(2)} EUR</span> : null}
-                      <strong>{(hasAppliedPromo ? finalPrice : basePrice).toFixed(2)} EUR</strong>
-                    </div>
-                  </div>
-                  {book.publishDate ? (
-                    <div className="split-line">
-                      <span>Date de parution</span>
-                      <strong>{book.publishDate}</strong>
-                    </div>
-                  ) : null}
-                  {book.asin ? (
-                    <div className="split-line">
-                      <span>ASIN</span>
-                      <strong>{book.asin}</strong>
-                    </div>
-                  ) : null}
-                </div>
-
-                {book.teachingPointFr ? (
-                  <div className="book-detail-note">
-                    <strong>Point fort</strong>
-                    <p className="muted">{book.teachingPointFr}</p>
-                  </div>
-                ) : null}
-
-                <div className="promo-panel">
-                  <div className="mt-6 flex flex-col gap-4">
-                      <div className="flex flex-nowrap items-center gap-2">
+                <div className="promo-panel book-detail-cta-panel">
+                  <div className="book-detail-cta-stack">
+                    <div className="book-promo-row">
                       <input
                         type="text"
-                          className="input shrink-0"
+                        className="input book-promo-input"
                         value={promoCode}
-                          onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
+                        onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
                         placeholder="Code promo"
                         title="Optionnel"
-                          maxLength={8}
-                          autoComplete="off"
-                          spellCheck={false}
-                          name="promo-code-input"
-                          style={{ width: "12rem", maxWidth: "200px" }}
+                        maxLength={8}
+                        autoComplete="off"
+                        spellCheck={false}
+                        name="promo-code-input"
                       />
                       <button
                         type="button"
@@ -940,18 +907,18 @@ export default function BookDetailPage() {
 
                     {promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
 
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="book-buy-row">
                       {accessState.hasAccess ? (
                         <>
-                          <Link className="cta-button min-w-[14rem] flex-1" href={`/read/${book.id}`}>
+                          <Link className="cta-button book-buy-button" href={`/read/${book.id}`}>
                             Lire maintenant
                           </Link>
-                          <button className="cta-button secondary min-w-[14rem] flex-1" type="button" onClick={() => void handleBookDownload()}>
+                          <button className="cta-button secondary book-buy-button" type="button" onClick={() => void handleBookDownload()}>
                             Telecharger le PDF
                           </button>
                         </>
                       ) : (
-                        <button className="cta-button min-w-[14rem] flex-1" type="button" onClick={() => void handleBookCheckout()}>
+                        <button className="cta-button book-buy-button" type="button" onClick={() => void handleBookCheckout()}>
                           {promoUnlocksFreeAccess ? "Partager pour deverrouiller" : "Acheter ce livre"}
                         </button>
                       )}
@@ -989,6 +956,38 @@ export default function BookDetailPage() {
                   {accessLoading ? <p className="tiny">Verification de vos droits...</p> : null}
                   {paymentError ? <p className="tiny promo-message error">{paymentError}</p> : null}
                 </div>
+
+                <div className="book-detail-facts">
+                  <div className="split-line">
+                    <span>Prix</span>
+                    <div className="promo-price-stack">
+                      {hasAppliedPromo ? <span className="promo-original-price">{basePrice.toFixed(2)} EUR</span> : null}
+                      <strong>{(hasAppliedPromo ? finalPrice : basePrice).toFixed(2)} EUR</strong>
+                    </div>
+                  </div>
+                  {book.publishDate ? (
+                    <div className="split-line">
+                      <span>Date de parution</span>
+                      <strong>{book.publishDate}</strong>
+                    </div>
+                  ) : null}
+                  {book.asin ? (
+                    <div className="split-line">
+                      <span>ASIN</span>
+                      <strong>{book.asin}</strong>
+                    </div>
+                  ) : null}
+                </div>
+
+                <p className="muted">{book.synopsisFr}</p>
+                {book.synopsisZh ? <p className="muted">{book.synopsisZh}</p> : null}
+
+                {book.teachingPointFr ? (
+                  <div className="book-detail-note">
+                    <strong>Point fort</strong>
+                    <p className="muted">{book.teachingPointFr}</p>
+                  </div>
+                ) : null}
               </div>
             </div>
           )}
