@@ -376,28 +376,28 @@ export default function ResourceDetailPage() {
 
           <p className="section-caption" style={{ marginTop: 18 }}>{resource.summaryFr}</p>
 
-          <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
-            <div className="flex w-full flex-col gap-2 lg:w-[16rem] lg:min-w-[16rem]">
-              <div className="flex items-center justify-between">
+          <div className="detail-promo-cta">
+            <div className="detail-promo-compact">
+              <div className="detail-promo-meta">
                 <span className="tiny">Optionnel</span>
                 {appliedPromo ? <strong className="tiny">-{appliedPromo.discountPercent}%</strong> : null}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="detail-promo-inline">
                 <input
-                  className="input min-w-0 flex-1"
+                  className="input detail-promo-input"
                   value={promoCode}
                   onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
                   placeholder="Code promo"
                 />
-                <button className="pill-button shrink-0" type="button" disabled={promoBusy} onClick={() => void handleApplyPromo()}>
+                <button className="pill-button detail-promo-apply" type="button" disabled={promoBusy} onClick={() => void handleApplyPromo()}>
                   {promoBusy ? "Verification..." : "Appliquer"}
                 </button>
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center lg:justify-end">
+            <div className="detail-buy-group">
               <button
-                className="cta-button w-full lg:min-w-[16rem] lg:w-[16rem]"
+                className="cta-button detail-buy-button"
                 type="button"
                 disabled={actionBusy || accessState.hasAccess}
                 onClick={() => void handleCheckout()}
@@ -411,7 +411,7 @@ export default function ResourceDetailPage() {
                       : "Acheter cet outil"}
               </button>
               {resource.externalUrl ? (
-                <a className="cta-button secondary w-full lg:w-auto" href={resource.externalUrl} target="_blank" rel="noreferrer">
+                <a className="cta-button secondary detail-secondary-button" href={resource.externalUrl} target="_blank" rel="noreferrer">
                   <ExternalLink size={16} />
                   Voir aussi le lien externe
                 </a>

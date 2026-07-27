@@ -423,14 +423,8 @@ select {
 
 .home-main-flow {
   display: grid;
-  gap: 18px;
+  gap: 14px;
   min-width: 0;
-}
-
-.donation-column,
-.comment-column,
-.carousel-stage {
-  min-height: calc(100vh - 112px);
 }
 
 .donation-column,
@@ -447,6 +441,11 @@ select {
   min-height: auto;
   padding: 18px 20px;
   gap: 12px;
+}
+
+.carousel-stage {
+  min-height: auto;
+  padding-bottom: 18px;
 }
 
 .homepage-responsive-grid .comment-column {
@@ -544,9 +543,9 @@ select {
 .marquee-shell {
   position: relative;
   overflow: hidden;
-  margin-top: 22px;
+  margin-top: 14px;
   border-radius: 32px;
-  padding: 18px 0 10px;
+  padding: 14px 0 6px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.12) 100%);
 }
 
@@ -656,7 +655,7 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 22px;
+  margin-top: 14px;
 }
 
 .social-row {
@@ -1209,8 +1208,8 @@ select {
 .promo-panel {
   display: grid;
   gap: 12px;
-  margin-top: 18px;
-  padding: 18px;
+  margin-top: 12px;
+  padding: 16px;
   border-radius: 22px;
   border: 1px solid var(--surface-border);
   background: rgba(255, 255, 255, 0.68);
@@ -1222,6 +1221,57 @@ select {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
+}
+
+.detail-promo-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-promo-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.detail-promo-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.detail-promo-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-promo-input {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.detail-promo-apply {
+  flex: 0 0 auto;
+}
+
+.detail-buy-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.detail-buy-button {
+  width: 100%;
+}
+
+.detail-secondary-button {
+  width: 100%;
+  justify-content: center;
 }
 
 .promo-price-stack,
@@ -1939,9 +1989,9 @@ select {
 }
 
 .home-section-panel {
-  margin-top: 24px;
+  margin-top: 0;
   border-radius: 28px;
-  padding: 24px;
+  padding: 22px;
 }
 
 .section-heading {
@@ -2094,7 +2144,7 @@ select {
 }
 
 .resource-marquee-shell {
-  margin-top: 16px;
+  margin-top: 10px;
 }
 
 .resource-carousel-card {
@@ -2341,7 +2391,7 @@ select {
 }
 
 .resource-download-panel {
-  margin-top: 8px;
+  margin-top: 4px;
   padding: 18px;
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.58);
@@ -2396,6 +2446,32 @@ select {
 
   .reader-frame {
     min-height: 60vh;
+  }
+}
+
+@media (max-width: 767px) {
+  .detail-promo-cta {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .detail-promo-compact,
+  .detail-buy-button {
+    width: 16rem;
+    min-width: 16rem;
+  }
+
+  .detail-buy-group {
+    width: auto;
+    flex: 1 1 auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .detail-secondary-button {
+    width: auto;
   }
 }
 

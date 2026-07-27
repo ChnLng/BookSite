@@ -866,44 +866,6 @@ export default function BookDetailPage() {
                 </h1>
                 <p className="tiny">{book.titleZh}</p>
 
-                <div className="actions-row book-detail-actions-row">
-                  {accessState.hasAccess ? (
-                    <>
-                      <Link className="cta-button" href={`/read/${book.id}`}>
-                        Lire maintenant
-                      </Link>
-                      <button className="cta-button secondary" type="button" onClick={() => void handleBookDownload()}>
-                        Telecharger le PDF
-                      </button>
-                    </>
-                  ) : (
-                    <button className="cta-button" type="button" onClick={() => void handleBookCheckout()}>
-                      {finalPrice <= 0 ? "Obtenir gratuitement" : "Acheter ce livre"}
-                    </button>
-                  )}
-
-                  <div className="book-tooltip">
-                    {book.amazonPaperbackUrl ? (
-                      <a
-                        className="pill-button"
-                        href={book.amazonPaperbackUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        title="Ce bouton ouvre la page Amazon de ce livre broche."
-                      >
-                        Amazon broche
-                      </a>
-                    ) : (
-                      <button className="pill-button" type="button" disabled>
-                        Amazon broche
-                      </button>
-                    )}
-                    <span className="book-tooltip-bubble">
-                      Cliquez ici pour ouvrir la page Amazon correspondante.
-                    </span>
-                  </div>
-                </div>
-
                 <p className="muted">{book.synopsisFr}</p>
                 {book.synopsisZh ? <p className="muted">{book.synopsisZh}</p> : null}
 
@@ -937,21 +899,69 @@ export default function BookDetailPage() {
                 ) : null}
 
                 <div className="promo-panel">
-                  <div className="split-line" style={{ paddingTop: 0 }}>
-                    <span>Code promo</span>
-                    {appliedPromo ? <strong>-{appliedPromo.discountPercent}%</strong> : <span className="tiny">Optionnel</span>}
+                  <div className="detail-promo-cta">
+                    <div className="detail-promo-compact">
+                      <div className="detail-promo-meta">
+                        <span className="tiny">Optionnel</span>
+                        {appliedPromo ? <strong className="tiny">-{appliedPromo.discountPercent}%</strong> : null}
+                      </div>
+                      <div className="detail-promo-inline">
+                        <input
+                          className="input detail-promo-input"
+                          value={promoCode}
+                          onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
+                          placeholder="Code promo"
+                        />
+                        <button
+                          className="pill-button detail-promo-apply"
+                          type="button"
+                          disabled={promoBusy}
+                          onClick={() => void handleApplyPromo()}
+                        >
+                          {promoBusy ? "Verification..." : "Appliquer"}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="detail-buy-group">
+                      {accessState.hasAccess ? (
+                        <>
+                          <Link className="cta-button detail-buy-button" href={`/read/${book.id}`}>
+                            Lire maintenant
+                          </Link>
+                          <button className="cta-button secondary detail-secondary-button" type="button" onClick={() => void handleBookDownload()}>
+                            Telecharger le PDF
+                          </button>
+                        </>
+                      ) : (
+                        <button className="cta-button detail-buy-button" type="button" onClick={() => void handleBookCheckout()}>
+                          {finalPrice <= 0 ? "Obtenir gratuitement" : "Acheter ce livre"}
+                        </button>
+                      )}
+
+                      <div className="book-tooltip">
+                        {book.amazonPaperbackUrl ? (
+                          <a
+                            className="pill-button detail-secondary-button"
+                            href={book.amazonPaperbackUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Ce bouton ouvre la page Amazon de ce livre broche."
+                          >
+                            Amazon broche
+                          </a>
+                        ) : (
+                          <button className="pill-button detail-secondary-button" type="button" disabled>
+                            Amazon broche
+                          </button>
+                        )}
+                        <span className="book-tooltip-bubble">
+                          Cliquez ici pour ouvrir la page Amazon correspondante.
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="promo-input-row">
-                    <input
-                      className="input"
-                      value={promoCode}
-                      onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
-                      placeholder="Code promo"
-                    />
-                    <button className="pill-button" type="button" disabled={promoBusy} onClick={() => void handleApplyPromo()}>
-                      {promoBusy ? "Verification..." : "Appliquer"}
-                    </button>
-                  </div>
+
                   {promoMessage ? (
                     <p className={promoMessageKind === "success" ? "tiny promo-message success" : "tiny promo-message error"}>
                       {promoMessage}
