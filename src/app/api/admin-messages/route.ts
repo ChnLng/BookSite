@@ -60,11 +60,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
   }
 
-  // 2. 通过 Resend 发送真实邮件到你的 Outlook
+  // 2. 通过 Resend 发送测试邮件到你的注册邮箱
   try {
     await resend.emails.send({
       from: "BookSite <onboarding@resend.dev>",
-      to: ["visdar@outlook.fr"],
+      to: ["chinelangue@outlook.fr"], // 改为你的 Resend 注册邮箱
       subject: `[BookSite] Nouveau message de ${pseudo || user.email}`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
