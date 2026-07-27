@@ -74,7 +74,6 @@ export default function HomePage() {
   const emailLoginHintText = "Veuillez vous connecter pour envoyer un email à l'administrateur.";
   const siteCommentSuccessText = "Message bien enregistré ! Il est bien au chaud dans votre espace « Ma page ».";
   const commentLikeLoginHintText = "Connectez-vous pour ajouter un petit coeur à ce commentaire.";
-  const adminEmail = "visdar@outlook.fr";
   const [authOpen, setAuthOpen] = useState(false);
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -381,19 +380,41 @@ export default function HomePage() {
     }
 
     if (mode === "email") {
-      const mailtoBody = [
-        `Bonjour,`,
-        "",
-        `Email du compte : ${user?.email || ""}`,
-        `Pseudo : ${commentName.trim() || defaultCommentName || "Lecteur"}`,
-        "",
-        commentContent.trim(),
-      ].join("\n");
+      if (!commentContent.trim()) {
+        setCommentMessage("Votre message est vide.");
+        return;
+      }
 
-      window.location.href = `mailto:${adminEmail}?subject=${encodeURIComponent(
-        "Message pour l'administrateur Visd AR",
-      )}&body=${encodeURIComponent(mailtoBody)}`;
+      setIsSubmittingComment(true);
       setCommentMessage("");
+
+      try {
+        const response = await fetch("/api/admin-messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token || ""}`,
+            ...(visitorToken ? { "x-visitor-token": visitorToken } : {}),
+          },
+          body: JSON.stringify({
+            pseudo: commentName.trim() || defaultCommentName || "Lecteur",
+            email: user?.email || "",
+            content: commentContent.trim(),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Erreur lors de l'envoi");
+        }
+
+        setCommentMessage("Message envoye a l'administrateur avec succes !");
+        setCommentContent("");
+      } catch {
+        setCommentMessage("Erreur d'envoi. Veuillez reessayer.");
+      } finally {
+        setIsSubmittingComment(false);
+      }
+
       return;
     }
 
@@ -450,10 +471,6 @@ export default function HomePage() {
       return;
     }
 
-    if (!visitorToken) {
-      return;
-    }
-
     const previousComment = comments.find((comment) => comment.id === commentId);
 
     if (!previousComment) {
@@ -480,7 +497,7 @@ export default function HomePage() {
         method: "POST",
         headers: {
           Authorization: `Bearer ${session.access_token}`,
-          "x-visitor-token": visitorToken,
+          ...(visitorToken ? { "x-visitor-token": visitorToken } : {}),
         },
       });
 
@@ -506,8 +523,8 @@ export default function HomePage() {
           comment.id === commentId
             ? {
                 ...comment,
-                likeCount: result.likeCount ?? comment.likeCount,
-                likedByViewer: Boolean(result.liked),
+                likeCount: typeof result?.likeCount === "number" ? result.likeCount : comment.likeCount,
+                likedByViewer: typeof result?.liked === "boolean" ? result.liked : comment.likedByViewer,
               }
             : comment,
         ),
