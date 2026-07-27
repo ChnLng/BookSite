@@ -108,10 +108,7 @@ export function HomeExpandedSections() {
   const resourceCategory = resourceCategories[0] || null;
 
   const floatingLinks = useMemo(() => {
-    const links: FloatingSectionLink[] = [
-      { id: "scene", label: "Livres" },
-      { id: "donation", label: "Donation" },
-    ];
+    const links: FloatingSectionLink[] = [{ id: "scene", label: "Livres" }];
 
     if (resourceCategory || resources.length > 0) {
       links.push({ id: "coin-ludique-outils", label: "Coin ludique" });
@@ -136,8 +133,14 @@ export function HomeExpandedSections() {
     <>
       <aside className="home-floating-nav" aria-label="Navigation rapide des sections">
         {floatingLinks.map((link) => (
-          <a key={link.id} href={`#${link.id}`} className="home-floating-nav-link">
-            {link.label}
+          <a
+            key={link.id}
+            href={`#${link.id}`}
+            className="home-floating-nav-link"
+            aria-label={link.label}
+            title={link.label}
+          >
+            <span className="home-floating-nav-dot" aria-hidden="true" />
           </a>
         ))}
       </aside>

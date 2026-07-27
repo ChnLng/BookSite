@@ -471,8 +471,8 @@ export default function HomePage() {
         isHomePage={true}
       />
 
-      <section className="hero-scene">
-        <div className="left-column-stack">
+      <section className="homepage-responsive-grid">
+        <aside className="left-column-stack">
           <aside className="panel glass donation-column donation-column-compact" id="donation">
             <span className="badge">
               <Sparkles size={16} />
@@ -492,7 +492,7 @@ export default function HomePage() {
             slot="8355506858"
           />
 
-          <aside className="panel glass comment-column">
+          <aside className="panel glass comment-column" id="commentaires">
             <span className="badge">
               <MessageCircleHeart size={16} />
               Votre avis nous intéresse ...
@@ -568,79 +568,81 @@ export default function HomePage() {
               ) : null}
             </div>
           </aside>
-        </div>
+        </aside>
 
-        <section className="panel glass carousel-stage" id="scene">
-          <div className="badge mobile-break-badge">
-            <span>Albums illustrés bilingues</span>
-            <span className="mobile-flag-break" aria-hidden="true">
-              <br />
-            </span>
-            <span> 🇨🇳 chinois-français 🇫🇷</span>
-          </div>
+        <div className="home-main-flow">
+          <section className="panel glass carousel-stage" id="scene">
+            <div className="badge mobile-break-badge">
+              <span>Albums illustrés bilingues</span>
+              <span className="mobile-flag-break" aria-hidden="true">
+                <br />
+              </span>
+              <span> 🇨🇳 chinois-français 🇫🇷</span>
+            </div>
 
-          <div className="marquee-shell">
-            <div className="marquee-inner">
-              <div className="marquee-track">
-                {displayBooks.map((book, index) => (
-                  <Link className="carousel-card carousel-card-link" href={`/livres/${book.id}`} key={`${book.id}-${index}`}>
-                    <div className="carousel-image">
-                      <Image
-                        src={book.coverImage}
-                        alt={book.titleFr}
-                        fill
-                        sizes="270px"
-                        className="carousel-cover-image"
-                      />
-                    </div>
-                    <div className="carousel-caption">
-                      <strong>{book.titleFr}</strong>
-                      <span>{book.priceEur.toFixed(2)} EUR</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              <div className="marquee-track" aria-hidden="true">
-                {displayBooks.map((book, index) => (
-                  <Link
-                    className="carousel-card carousel-card-link"
-                    href={`/livres/${book.id}`}
-                    key={`${book.id}-clone-${index}`}
-                    tabIndex={-1}
-                  >
-                    <div className="carousel-image">
-                      <Image
-                        src={book.coverImage}
-                        alt={book.titleFr}
-                        fill
-                        sizes="270px"
-                        className="carousel-cover-image"
-                      />
-                    </div>
-                    <div className="carousel-caption">
-                      <strong>{book.titleFr}</strong>
-                      <span>{book.priceEur.toFixed(2)} EUR</span>
-                    </div>
-                  </Link>
-                ))}
+            <div className="marquee-shell">
+              <div className="marquee-inner">
+                <div className="marquee-track">
+                  {displayBooks.map((book, index) => (
+                    <Link className="carousel-card carousel-card-link" href={`/livres/${book.id}`} key={`${book.id}-${index}`}>
+                      <div className="carousel-image">
+                        <Image
+                          src={book.coverImage}
+                          alt={book.titleFr}
+                          fill
+                          sizes="270px"
+                          className="carousel-cover-image"
+                        />
+                      </div>
+                      <div className="carousel-caption">
+                        <strong>{book.titleFr}</strong>
+                        <span>{book.priceEur.toFixed(2)} EUR</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                <div className="marquee-track" aria-hidden="true">
+                  {displayBooks.map((book, index) => (
+                    <Link
+                      className="carousel-card carousel-card-link"
+                      href={`/livres/${book.id}`}
+                      key={`${book.id}-clone-${index}`}
+                      tabIndex={-1}
+                    >
+                      <div className="carousel-image">
+                        <Image
+                          src={book.coverImage}
+                          alt={book.titleFr}
+                          fill
+                          sizes="270px"
+                          className="carousel-cover-image"
+                        />
+                      </div>
+                      <div className="carousel-caption">
+                        <strong>{book.titleFr}</strong>
+                        <span>{book.priceEur.toFixed(2)} EUR</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="scene-actions">
-            <Link className="cta-button" href="/catalogue">
-              Explorer les livres
-            </Link>
-            {displayBooks[0]?.amazonPaperbackUrl ? (
-              <a className="cta-button secondary" href={displayBooks[0].amazonPaperbackUrl} target="_blank">
-                Version papier Amazon
-              </a>
-            ) : null}
-          </div>
-        </section>
+            <div className="scene-actions">
+              <Link className="cta-button" href="/catalogue">
+                Explorer les livres
+              </Link>
+              {displayBooks[0]?.amazonPaperbackUrl ? (
+                <a className="cta-button secondary" href={displayBooks[0].amazonPaperbackUrl} target="_blank">
+                  Version papier Amazon
+                </a>
+              ) : null}
+            </div>
+          </section>
+
+          <HomeExpandedSections />
+        </div>
       </section>
-
-      <HomeExpandedSections />
 
       <footer className="panel glass footer-rules" id="footer-rules">
         <div className="footer-inline">
