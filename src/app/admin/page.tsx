@@ -50,10 +50,21 @@ type CategoryRow = {
 type DownloadRow = {
   id: string;
   book_id: string | null;
+  resource_id?: string | null;
+  download_kind?: string | null;
   user_email: string | null;
   book_title: string | null;
+  resource_title?: string | null;
   download_url: string | null;
   created_at: string | null;
+};
+
+type ResourceCountRow = {
+  id: string;
+};
+
+type PartnerCountRow = {
+  id: string;
 };
 
 type DonationRow = {
@@ -117,9 +128,9 @@ type PdfStorageStatus = {
 const adminSections = [
   { key: "categories", label: "类目 Categories" },
   { key: "engine", label: "引擎 Moteur" },
+  { key: "books", label: "图书 Livres" },
   { key: "resources", label: "资源 Outils" },
   { key: "partners", label: "友链 Liens" },
-  { key: "books", label: "图书 Livres" },
   { key: "promo", label: "优惠码 Codes promo" },
   { key: "downloads", label: "下载 Downloads" },
   { key: "donations", label: "赞助 Donations" },
@@ -315,6 +326,20 @@ function displayCategoryName(category: CategoryRow) {
   return category.title_zh || category.title_fr || category.slug || "Categorie";
 }
 
+function downloadEntryKind(download: DownloadRow) {
+  return (download.download_kind || (download.resource_id ? "resource" : "book")).toLowerCase();
+}
+
+function downloadEntryTitle(download: DownloadRow) {
+  return download.resource_title || download.book_title || `Produit ${downloadEntryKind(download)}`;
+}
+
+function downloadEntryKey(download: DownloadRow) {
+  const kind = downloadEntryKind(download);
+  const entityId = download.resource_id || download.book_id || download.download_url || download.id;
+  return `${kind}:${entityId}`;
+}
+
 function AdminPageContent() {
   const { profile, session } = useAuth();
   const [books, setBooks] = useState<BookRow[]>([]);
@@ -322,6 +347,8 @@ function AdminPageContent() {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [downloads, setDownloads] = useState<DownloadRow[]>([]);
   const [donations, setDonations] = useState<DonationRow[]>([]);
+  const [resourceCount, setResourceCount] = useState(0);
+  const [partnerCount, setPartnerCount] = useState(0);
   const [loadWarnings, setLoadWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<AdminSectionKey>("categories");
@@ -439,13 +466,44 @@ function AdminPageContent() {
     let nextDownloads: DownloadRow[] = [];
     const downloadsQuery = await supabase
       .from("downloads")
-      .select("id, book_id, user_email, book_title, download_url, created_at")
+      .select("id, book_id, resource_id, download_kind, user_email, book_title, resource_title, download_url, created_at")
       .order("created_at", { ascending: false });
 
     if (downloadsQuery.error) {
-      warnings.push(`下载 Downloads 读取失败: ${downloadsQuery.error.message}`);
+      const fallbackDownloadsQuery = await supabase
+        .from("downloads")
+        .select("id, book_id, user_email, book_title, download_url, created_at")
+        .order("created_at", { ascending: false });
+
+      if (fallbackDownloadsQuery.error) {
+        warnings.push(`下载 Downloads 读取失败: ${fallbackDownloadsQuery.error.message}`);
+      } else {
+        nextDownloads = ((fallbackDownloadsQuery.data || []) as DownloadRow[]).map((row) => ({
+          ...row,
+          resource_id: null,
+          download_kind: "book",
+          resource_title: null,
+        }));
+        warnings.push("下载记录仍在旧结构，已兼容读取图书下载。");
+      }
     } else {
       nextDownloads = (downloadsQuery.data || []) as DownloadRow[];
+    }
+
+    let nextResourceCount = 0;
+    const resourcesCountQuery = await supabase.from("resource_items").select("id");
+    if (resourcesCountQuery.error) {
+      warnings.push(`资源 Outils 读取失败: ${resourcesCountQuery.error.message}`);
+    } else {
+      nextResourceCount = ((resourcesCountQuery.data || []) as ResourceCountRow[]).length;
+    }
+
+    let nextPartnerCount = 0;
+    const partnerCountQuery = await supabase.from("partner_links").select("id");
+    if (partnerCountQuery.error) {
+      warnings.push(`友链 Liens 读取失败: ${partnerCountQuery.error.message}`);
+    } else {
+      nextPartnerCount = ((partnerCountQuery.data || []) as PartnerCountRow[]).length;
     }
 
     let nextDonations: DonationRow[] = [];
@@ -467,6 +525,8 @@ function AdminPageContent() {
     setPromoCodes(nextPromos);
     setDownloads(nextDownloads);
     setDonations(nextDonations);
+    setResourceCount(nextResourceCount);
+    setPartnerCount(nextPartnerCount);
     setLoadWarnings(warnings);
     setBookEdits(Object.fromEntries(nextBooks.map((book) => [book.id, bookEditFromRow(book)])));
     setCategoryEdits(Object.fromEntries(nextCategories.map((category) => [category.id, categoryEditFromRow(category)])));
@@ -476,7 +536,7 @@ function AdminPageContent() {
 
   useEffect(() => {
     void reload();
-  }, []);
+  }, [session?.access_token]);
 
   useEffect(() => {
     if (!session?.access_token || books.length === 0) {
@@ -552,13 +612,13 @@ function AdminPageContent() {
       books: books.length,
       categories: categories.length,
       engine: categories.length,
-      resources: 0,
-      partners: 0,
+      resources: resourceCount,
+      partners: partnerCount,
       promo: promoCodes.length,
       downloads: downloads.length,
       donations: donations.length,
     }),
-    [books.length, categories.length, promoCodes.length, downloads.length, donations.length],
+    [books.length, categories.length, resourceCount, partnerCount, promoCodes.length, downloads.length, donations.length],
   );
 
   const downloadCounts = useMemo(() => {
@@ -573,6 +633,29 @@ function AdminPageContent() {
     });
 
     return counts;
+  }, [downloads]);
+
+  const downloadTotals = useMemo(() => {
+    const counts: Record<string, { label: string; kind: string; total: number }> = {};
+
+    downloads.forEach((download) => {
+      const key = downloadEntryKey(download);
+      const label = downloadEntryTitle(download);
+      const kind = downloadEntryKind(download);
+      const current = counts[key];
+
+      if (current) {
+        current.total += 1;
+      } else {
+        counts[key] = {
+          label,
+          kind,
+          total: 1,
+        };
+      }
+    });
+
+    return Object.values(counts).sort((left, right) => right.total - left.total || left.label.localeCompare(right.label));
   }, [downloads]);
 
   const withBusyState = async <T,>(key: string, action: () => Promise<T>) => {
@@ -2261,19 +2344,28 @@ function AdminPageContent() {
             <div className="section-block">
               <h3>Historique de téléchargements 下载记录</h3>
               <div className="admin-list" style={{ marginBottom: 16 }}>
-                {books.map((book) => (
-                  <div className="split-line" key={book.id}>
-                    <span>{book.title_fr}</span>
-                    <span className="tiny">{downloadCounts[book.slug || book.id] || 0} 次下载</span>
-                  </div>
-                ))}
+                {downloadTotals.length === 0 ? (
+                  <p className="muted">Aucun produit telecharge pour le moment.</p>
+                ) : (
+                  downloadTotals.map((entry) => (
+                    <div className="split-line" key={`${entry.kind}-${entry.label}`}>
+                      <span>{entry.label}</span>
+                      <span className="tiny">
+                        {entry.kind === "resource" ? "Outil" : entry.kind === "book" ? "Livre" : entry.kind} · {entry.total} telechargement(s)
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
               {downloads.length === 0 ? (
                 <p className="muted">Aucun téléchargement enregistré.</p>
               ) : (
                 downloads.map((download) => (
                   <div className="split-line" key={download.id}>
-                    <span>{download.book_title || "Livre"}</span>
+                    <span>{downloadEntryTitle(download)}</span>
+                    <span className="tiny">
+                      {downloadEntryKind(download) === "resource" ? "Outil" : downloadEntryKind(download) === "book" ? "Livre" : downloadEntryKind(download)}
+                    </span>
                     <span className="tiny">{download.user_email || "—"}</span>
                     <span className="tiny">
                       {download.created_at ? new Date(download.created_at).toLocaleString("fr-FR") : "—"}

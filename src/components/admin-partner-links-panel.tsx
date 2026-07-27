@@ -37,6 +37,7 @@ export function AdminPartnerLinksPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -75,21 +76,38 @@ export function AdminPartnerLinksPanel() {
     const supabase = getSupabaseBrowserClient();
 
     if (!supabase) {
+      setStatusMessage("Supabase indisponible dans le navigateur.");
+      setLoading(false);
       return;
     }
 
-    const { data } = await supabase
+    if (!session?.access_token) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    const { data, error } = await supabase
       .from("partner_links")
       .select("id, title_fr, icon_url, target_url, sort_order, visible")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
 
-    setLinks((data || []) as PartnerLinkRow[]);
+    if (error) {
+      setStatusMessage(error.message);
+      setLinks([]);
+    } else {
+      setLinks((data || []) as PartnerLinkRow[]);
+      setStatusMessage("");
+    }
+
+    setLoading(false);
   };
 
   useEffect(() => {
     void loadData();
-  }, []);
+  }, [session?.access_token]);
 
   const resetDraft = () => {
     setDraft(defaultDraft);
@@ -230,6 +248,7 @@ export function AdminPartnerLinksPanel() {
       </div>
 
       {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
+      {loading ? <p className="muted">Chargement des liens...</p> : null}
 
       <div className="input-group admin-form-grid">
         <input
@@ -295,6 +314,7 @@ export function AdminPartnerLinksPanel() {
       </div>
 
       <div className="admin-dynamic-stack">
+        {!loading && links.length === 0 ? <p className="muted">Aucun lien partenaire charge.</p> : null}
         {links.map((link) => (
           <div className="admin-inline-card" key={link.id}>
             <div>

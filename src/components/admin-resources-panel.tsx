@@ -10,6 +10,14 @@ type CategoryOption = {
   kind: string;
 };
 
+type LegacyCategoryRow = {
+  id: string;
+  title_fr?: string | null;
+  title_zh?: string | null;
+  name?: string | null;
+  kind?: string | null;
+};
+
 type ResourceVariantDraft = {
   id?: string;
   platform: string;
@@ -99,6 +107,7 @@ export function AdminResourcesPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -138,47 +147,127 @@ export function AdminResourcesPanel() {
     const supabase = getSupabaseBrowserClient();
 
     if (!supabase) {
+      setStatusMessage("Supabase indisponible dans le navigateur.");
+      setLoading(false);
       return;
     }
 
-    const [categoriesResult, resourcesResult, filesResult] = await Promise.all([
-      supabase
+    if (!session?.access_token) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    const warnings: string[] = [];
+
+    const categoriesResult = await supabase
+      .from("categories")
+      .select("id, title_fr, title_zh, kind")
+      .in("kind", ["resource", "custom"])
+      .order("created_at", { ascending: true });
+
+    let nextCategories: CategoryOption[] = [];
+    if (categoriesResult.error) {
+      const fallbackCategoriesResult = await supabase
         .from("categories")
-        .select("id, title_fr, kind")
-        .in("kind", ["resource", "custom"])
-        .order("homepage_sort_order", { ascending: true }),
-      supabase
+        .select("id, title_fr, title_zh, name")
+        .order("created_at", { ascending: true });
+
+      if (fallbackCategoriesResult.error) {
+        warnings.push(`Categories: ${fallbackCategoriesResult.error.message}`);
+      } else {
+        nextCategories = ((fallbackCategoriesResult.data || []) as LegacyCategoryRow[]).map((item) => ({
+          id: item.id,
+          titleFr: item.title_fr || item.title_zh || item.name || "Categorie",
+          kind: "resource",
+        }));
+      }
+    } else {
+      nextCategories = ((categoriesResult.data || []) as LegacyCategoryRow[]).map((item) => ({
+        id: item.id,
+        titleFr: item.title_fr || item.title_zh || item.name || "Categorie",
+        kind: item.kind || "resource",
+      }));
+    }
+
+    const resourcesResult = await supabase
+      .from("resource_items")
+      .select("id, category_id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+    let nextResources: ResourceRow[] = [];
+    if (resourcesResult.error) {
+      const fallbackResourcesResult = await supabase
         .from("resource_items")
-        .select("id, category_id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
+        .select("id, category_id, slug, title_fr, summary_fr, qr_image_url, external_url, visible, sort_order")
         .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: true }),
-      supabase
+        .order("created_at", { ascending: true });
+
+      if (fallbackResourcesResult.error) {
+        warnings.push(`Outils: ${fallbackResourcesResult.error.message}`);
+      } else {
+        nextResources = ((fallbackResourcesResult.data || []) as ResourceRow[]).map((item) => ({
+          ...item,
+          cover_image_url: item.qr_image_url || null,
+          price_eur: 0,
+        }));
+      }
+    } else {
+      nextResources = (resourcesResult.data || []) as ResourceRow[];
+    }
+
+    const filesResult = await supabase
+      .from("resource_item_files")
+      .select("id, resource_id, platform, label_fr, file_path, file_url, external_url, sort_order")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+    let nextFilesByResource: Record<string, ResourceFileRow[]> = {};
+    if (filesResult.error) {
+      const fallbackFilesResult = await supabase
         .from("resource_item_files")
         .select("id, resource_id, platform, label_fr, file_path, external_url, sort_order")
         .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: true }),
-    ]);
+        .order("created_at", { ascending: true });
 
-    setCategories(
-      ((categoriesResult.data || []) as Array<{ id: string; title_fr: string | null; kind: string | null }>).map((item) => ({
-        id: item.id,
-        titleFr: item.title_fr || "Categorie",
-        kind: item.kind || "resource",
-      })),
-    );
-    setResources((resourcesResult.data || []) as ResourceRow[]);
-    setFilesByResource(
-      ((filesResult.data || []) as ResourceFileRow[]).reduce<Record<string, ResourceFileRow[]>>((accumulator, file) => {
-        accumulator[file.resource_id] ||= [];
-        accumulator[file.resource_id].push(file);
-        return accumulator;
-      }, {}),
-    );
+      if (fallbackFilesResult.error) {
+        warnings.push(`Fichiers Outils: ${fallbackFilesResult.error.message}`);
+      } else {
+        nextFilesByResource = ((fallbackFilesResult.data || []) as ResourceFileRow[]).reduce<Record<string, ResourceFileRow[]>>(
+          (accumulator, file) => {
+            accumulator[file.resource_id] ||= [];
+            accumulator[file.resource_id].push(file);
+            return accumulator;
+          },
+          {},
+        );
+      }
+    } else {
+      nextFilesByResource = ((filesResult.data || []) as Array<ResourceFileRow & { file_url?: string | null }>).reduce<Record<string, ResourceFileRow[]>>(
+        (accumulator, file) => {
+          accumulator[file.resource_id] ||= [];
+          accumulator[file.resource_id].push({
+            ...file,
+            file_path: file.file_path || file.file_url || null,
+          });
+          return accumulator;
+        },
+        {},
+      );
+    }
+
+    setCategories(nextCategories);
+    setResources(nextResources);
+    setFilesByResource(nextFilesByResource);
+    setStatusMessage(warnings.length > 0 ? warnings.join(" | ") : "");
+    setLoading(false);
   };
 
   useEffect(() => {
     void loadData();
-  }, []);
+  }, [session?.access_token]);
 
   const resetDraft = () => {
     setDraft(defaultDraft);
@@ -389,6 +478,7 @@ export function AdminResourcesPanel() {
       </div>
 
       {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
+      {loading ? <p className="muted">Chargement des ressources...</p> : null}
 
       <div className="input-group admin-form-grid">
         <select
@@ -616,6 +706,7 @@ export function AdminResourcesPanel() {
       </div>
 
       <div className="admin-dynamic-stack">
+        {!loading && resources.length === 0 ? <p className="muted">Aucune ressource chargee pour le moment.</p> : null}
         {resources.map((resource) => (
           <div className="admin-inline-card" key={resource.id}>
             <div>
