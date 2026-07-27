@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { PasswordSettingsCard } from "@/components/password-settings-card";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { bookIdFromDownload } from "@/lib/purchase-access";
@@ -208,6 +209,8 @@ export default function AccountPage() {
           <p className="muted">Chargement…</p>
         ) : (
           <>
+            {user ? <PasswordSettingsCard userEmail={user.email} /> : null}
+
             <div className="account-tab-strip" style={{ marginBottom: 18 }}>
               {tabs.map((tab) => (
                 <button

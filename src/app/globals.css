@@ -1268,6 +1268,43 @@ select {
     0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
+.password-settings-card {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.password-settings-header {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.password-settings-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.password-settings-hint {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.password-settings-message {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.password-settings-message.success {
+  color: #0f766e;
+}
+
+.password-settings-message.error {
+  color: #be123c;
+}
+
 .actions-row {
   display: flex;
   flex-wrap: wrap;
