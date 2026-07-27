@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { LockKeyhole } from "lucide-react";
@@ -14,6 +15,27 @@ type CommentRecord = {
   content: string | null;
   author_name: string | null;
   created_at: string | null;
+};
+
+type LikedCommentRecord = {
+  likeId: string;
+  commentId: string;
+  content: string | null;
+  authorName: string | null;
+  createdAt: string | null;
+};
+
+type EvaluationRecord = {
+  id: string;
+  kind: "book" | "resource";
+  itemId: string;
+  slug: string;
+  title: string;
+  imageUrl: string;
+  authorName: string | null;
+  rating: number;
+  reviewText: string;
+  createdAt: string | null;
 };
 
 type DownloadRecord = {
@@ -39,12 +61,25 @@ export default function AccountPage() {
   const [comments, setComments] = useState<CommentRecord[]>([]);
   const [downloads, setDownloads] = useState<DownloadRecord[]>([]);
   const [donations, setDonations] = useState<DonationRecord[]>([]);
+  const [likedComments, setLikedComments] = useState<LikedCommentRecord[]>([]);
+  const [evaluations, setEvaluations] = useState<EvaluationRecord[]>([]);
   const [fetching, setFetching] = useState(true);
-  const [activeTab, setActiveTab] = useState<"comments" | "downloads" | "donations">("comments");
+  const [activeTab, setActiveTab] = useState<"comments" | "downloads" | "donations" | "likes" | "evaluations">("comments");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [editingAuthorName, setEditingAuthorName] = useState("");
   const [commentActionMessage, setCommentActionMessage] = useState("");
   const [showPasswordSection, setShowPasswordSection] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setComments([]);
+      setDownloads([]);
+      setDonations([]);
+      setLikedComments([]);
+      setEvaluations([]);
+    }
+  }, [user]);
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
@@ -57,22 +92,147 @@ export default function AccountPage() {
     const load = async () => {
       setFetching(true);
       const email = user.email || "";
-      const [{ data: commentData }, { data: downloadByUser }, { data: downloadByEmail }, { data: donationData }] = await Promise.all([
+      const [
+        { data: commentData },
+        { data: downloadByUser },
+        { data: downloadByEmail },
+        { data: donationData },
+        { data: likedRows },
+        { data: bookReviewRows },
+        { data: resourceReviewRows },
+      ] = await Promise.all([
         supabase.from("comments").select("id, content, author_name, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("downloads").select("id, download_kind, book_id, book_title, resource_id, resource_title, download_url, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
         email
           ? supabase.from("downloads").select("id, download_kind, book_id, book_title, resource_id, resource_title, download_url, created_at").eq("user_email", email).order("created_at", { ascending: false })
           : Promise.resolve({ data: [] }),
         supabase.from("donations").select("id, amount, note, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("comment_likes").select("id, comment_id").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("book_reviews").select("id, book_id, author_name, rating, review_text, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("resource_reviews").select("id, resource_id, author_name, rating, review_text, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
       ]);
 
       const mergedDownloads = [...(downloadByUser || []), ...(downloadByEmail || [])].filter(
         (item, index, array) => array.findIndex((entry) => entry.id === item.id) === index,
       ) as DownloadRecord[];
 
+      const likedCommentIds = Array.from(
+        new Set(((likedRows || []) as Array<{ id: string; comment_id: string | null }>).map((row) => row.comment_id).filter(Boolean) as string[]),
+      );
+      const likedRowsByCommentId = new Map(
+        ((likedRows || []) as Array<{ id: string; comment_id: string | null }>)
+          .filter((row) => row.comment_id)
+          .map((row) => [row.comment_id as string, row.id]),
+      );
+
+      const [{ data: likedCommentRows }, { data: bookRows }, { data: resourceRows }] = await Promise.all([
+        likedCommentIds.length > 0
+          ? supabase
+              .from("comments")
+              .select("id, content, author_name, created_at")
+              .in("id", likedCommentIds)
+              .order("created_at", { ascending: false })
+          : Promise.resolve({ data: [] }),
+        (bookReviewRows || []).length > 0
+          ? supabase
+              .from("books")
+              .select("id, slug, title_fr, cover_image")
+              .in("id", Array.from(new Set((bookReviewRows || []).map((row) => row.book_id).filter(Boolean))))
+          : Promise.resolve({ data: [] }),
+        (resourceReviewRows || []).length > 0
+          ? supabase
+              .from("resource_items")
+              .select("id, slug, title_fr, cover_image_url, qr_image_url")
+              .in("id", Array.from(new Set((resourceReviewRows || []).map((row) => row.resource_id).filter(Boolean))))
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      const likedCommentRecords = ((likedCommentRows || []) as Array<{
+        id: string;
+        content: string | null;
+        author_name: string | null;
+        created_at: string | null;
+      }>).map((row) => ({
+        likeId: likedRowsByCommentId.get(row.id) || row.id,
+        commentId: row.id,
+        content: row.content,
+        authorName: row.author_name,
+        createdAt: row.created_at,
+      }));
+
+      const bookMetaById = new Map(
+        ((bookRows || []) as Array<{ id: string; slug: string | null; title_fr: string | null; cover_image: string | null }>).map((row) => [
+          row.id,
+          row,
+        ]),
+      );
+
+      const resourceMetaById = new Map(
+        ((resourceRows || []) as Array<{
+          id: string;
+          slug: string | null;
+          title_fr: string | null;
+          cover_image_url: string | null;
+          qr_image_url: string | null;
+        }>).map((row) => [row.id, row]),
+      );
+
+      const mergedEvaluations: EvaluationRecord[] = [
+        ...((bookReviewRows || []) as Array<{
+          id: string;
+          book_id: string | null;
+          author_name: string | null;
+          rating: number | null;
+          review_text: string | null;
+          created_at: string | null;
+        }>).map((row) => {
+          const meta = row.book_id ? bookMetaById.get(row.book_id) : null;
+          return {
+            id: row.id,
+            kind: "book" as const,
+            itemId: row.book_id || "",
+            slug: meta?.slug || row.book_id || "",
+            title: meta?.title_fr || "Livre",
+            imageUrl: meta?.cover_image || "/images/logo.png",
+            authorName: row.author_name,
+            rating: Number(row.rating || 0),
+            reviewText: row.review_text || "",
+            createdAt: row.created_at,
+          };
+        }),
+        ...((resourceReviewRows || []) as Array<{
+          id: string;
+          resource_id: string | null;
+          author_name: string | null;
+          rating: number | null;
+          review_text: string | null;
+          created_at: string | null;
+        }>).map((row) => {
+          const meta = row.resource_id ? resourceMetaById.get(row.resource_id) : null;
+          return {
+            id: row.id,
+            kind: "resource" as const,
+            itemId: row.resource_id || "",
+            slug: meta?.slug || row.resource_id || "",
+            title: meta?.title_fr || "Outil",
+            imageUrl: meta?.cover_image_url || meta?.qr_image_url || "/images/logo.png",
+            authorName: row.author_name,
+            rating: Number(row.rating || 0),
+            reviewText: row.review_text || "",
+            createdAt: row.created_at,
+          };
+        }),
+      ].sort((left, right) => {
+        const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : 0;
+        const rightTime = right.createdAt ? new Date(right.createdAt).getTime() : 0;
+        return rightTime - leftTime;
+      });
+
       setComments((commentData || []) as CommentRecord[]);
       setDownloads(mergedDownloads);
       setDonations((donationData || []) as DonationRecord[]);
+      setLikedComments(likedCommentRecords);
+      setEvaluations(mergedEvaluations);
       setFetching(false);
     };
 
@@ -84,12 +244,14 @@ export default function AccountPage() {
   const startEditingComment = (comment: CommentRecord) => {
     setEditingCommentId(comment.id);
     setEditingContent(comment.content || "");
+    setEditingAuthorName(comment.author_name || "");
     setCommentActionMessage("");
   };
 
   const cancelEditingComment = () => {
     setEditingCommentId(null);
     setEditingContent("");
+    setEditingAuthorName("");
   };
 
   const saveComment = async (commentId: string) => {
@@ -101,7 +263,10 @@ export default function AccountPage() {
 
     const { error } = await supabase
       .from("comments")
-      .update({ content: editingContent.trim() })
+      .update({
+        content: editingContent.trim(),
+        author_name: editingAuthorName.trim() || null,
+      })
       .eq("id", commentId)
       .eq("user_id", user.id);
 
@@ -112,7 +277,13 @@ export default function AccountPage() {
 
     setComments((current) =>
       current.map((comment) =>
-        comment.id === commentId ? { ...comment, content: editingContent.trim() } : comment,
+        comment.id === commentId
+          ? {
+              ...comment,
+              content: editingContent.trim(),
+              author_name: editingAuthorName.trim() || null,
+            }
+          : comment,
       ),
     );
     cancelEditingComment();
@@ -184,8 +355,34 @@ export default function AccountPage() {
     window.open(result.url, "_blank", "noopener,noreferrer");
   };
 
+  const toggleLikedComment = async (commentId: string) => {
+    if (!session?.access_token) {
+      return;
+    }
+
+    const response = await fetch(`/api/messages/${commentId}/like`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      return;
+    }
+
+    setLikedComments((current) => current.filter((item) => item.commentId !== commentId));
+  };
+
+  const renderStars = (rating: number) => {
+    const safeRating = Math.max(0, Math.min(5, Math.round(rating)));
+    return "★".repeat(safeRating) + "☆".repeat(Math.max(0, 5 - safeRating));
+  };
+
   const tabs = [
     { key: "comments", label: "Commentaires", count: comments.length },
+    { key: "likes", label: "J'aime", count: likedComments.length },
+    { key: "evaluations", label: "Evaluations", count: evaluations.length },
     { key: "downloads", label: "Telechargements", count: downloads.length },
     { key: "donations", label: "Donations", count: donations.length },
   ] as const;
@@ -242,7 +439,7 @@ export default function AccountPage() {
                   key={tab.key}
                   className={activeTab === tab.key ? "account-tab active" : "account-tab"}
                   type="button"
-                  onClick={() => setActiveTab(tab.key as "comments" | "downloads" | "donations")}
+                  onClick={() => setActiveTab(tab.key as "comments" | "downloads" | "donations" | "likes" | "evaluations")}
                 >
                   <span>{tab.label}</span>
                   <strong>{tab.count}</strong>
@@ -267,12 +464,21 @@ export default function AccountPage() {
                             <div className="tiny" style={{ marginBottom: 4 }}>{comment.author_name}</div>
                           ) : null}
                           {editingCommentId === comment.id ? (
-                            <textarea
-                              className="textarea"
-                              value={editingContent}
-                              onChange={(event) => setEditingContent(event.target.value)}
-                              style={{ minHeight: 80 }}
-                            />
+                            <>
+                              <input
+                                className="input"
+                                value={editingAuthorName}
+                                onChange={(event) => setEditingAuthorName(event.target.value)}
+                                placeholder="Pseudo"
+                                style={{ marginBottom: 10 }}
+                              />
+                              <textarea
+                                className="textarea"
+                                value={editingContent}
+                                onChange={(event) => setEditingContent(event.target.value)}
+                                style={{ minHeight: 80 }}
+                              />
+                            </>
                           ) : (
                             <span>{comment.content || "Commentaire"}</span>
                           )}
@@ -305,6 +511,97 @@ export default function AccountPage() {
                     ))
                   )}
                   {commentActionMessage ? <p className="tiny">{commentActionMessage}</p> : null}
+                </div>
+              ) : null}
+
+              {activeTab === "likes" ? (
+                <div className="account-card">
+                  <div className="split-line">
+                    <strong>Commentaires aimés</strong>
+                    <span>{likedComments.length}</span>
+                  </div>
+                  {likedComments.length === 0 ? (
+                    <p className="muted">Aucun j'aime pour le moment. Revenez sur l'accueil pour soutenir les commentaires que vous aimez.</p>
+                  ) : (
+                    likedComments.map((item) => (
+                      <div key={item.likeId} className="split-line" style={{ marginTop: 8, alignItems: "flex-start" }}>
+                        <div style={{ flex: 1 }}>
+                          <div className="tiny" style={{ marginBottom: 4 }}>
+                            {item.authorName || "Lecteur"}
+                          </div>
+                          <span>{item.content || "Commentaire"}</span>
+                          <div className="tiny" style={{ marginTop: 6 }}>
+                            {item.createdAt ? new Date(item.createdAt).toLocaleDateString("fr-FR") : "—"}
+                          </div>
+                        </div>
+                        <div className="actions-row" style={{ marginTop: 0, flexShrink: 0 }}>
+                          <button className="pill-button" type="button" onClick={() => void toggleLikedComment(item.commentId)}>
+                            Retirer le j&apos;aime
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : null}
+
+              {activeTab === "evaluations" ? (
+                <div className="account-card">
+                  <div className="split-line">
+                    <strong>Vos evaluations</strong>
+                    <span>{evaluations.length}</span>
+                  </div>
+                  {evaluations.length === 0 ? (
+                    <p className="muted">Aucune evaluation publiee pour le moment.</p>
+                  ) : (
+                    evaluations.map((evaluation) => (
+                      <div key={`${evaluation.kind}-${evaluation.id}`} className="split-line" style={{ marginTop: 10, alignItems: "flex-start", gap: 12 }}>
+                        <div style={{ display: "flex", gap: 12, flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              position: "relative",
+                              width: 68,
+                              height: 68,
+                              borderRadius: 20,
+                              overflow: "hidden",
+                              flexShrink: 0,
+                              background: "rgba(255,255,255,0.58)",
+                            }}
+                          >
+                            <Image
+                              src={evaluation.imageUrl}
+                              alt={evaluation.title}
+                              fill
+                              sizes="68px"
+                              style={{ objectFit: "cover" }}
+                            />
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div className="split-line" style={{ gap: 10, alignItems: "center" }}>
+                              <strong style={{ minWidth: 0 }}>{evaluation.title}</strong>
+                              <span className="tiny">{evaluation.kind === "book" ? "Livre" : "Outil"}</span>
+                            </div>
+                            <div className="tiny" style={{ marginTop: 4 }}>
+                              {renderStars(evaluation.rating)}
+                              {evaluation.authorName ? `  •  ${evaluation.authorName}` : ""}
+                            </div>
+                            <p className="tiny" style={{ marginTop: 6, marginBottom: 0 }}>
+                              {evaluation.reviewText || "Evaluation sans texte."}
+                            </p>
+                            <div className="actions-row" style={{ marginTop: 8, marginBottom: 0 }}>
+                              <Link
+                                className="pill-button"
+                                href={evaluation.kind === "book" ? `/livres/${evaluation.slug}` : `/outils/${evaluation.slug}`}
+                              >
+                                Voir la fiche
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                        <span className="tiny">{evaluation.createdAt ? new Date(evaluation.createdAt).toLocaleDateString("fr-FR") : "—"}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               ) : null}
 
