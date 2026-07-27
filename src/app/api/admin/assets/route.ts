@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
 import { booksBucketName, normalizeBookPdfAsset } from "@/lib/book-assets";
+import { normalizeResourceAssetPath, resourceDownloadsBucketName } from "@/lib/resource-assets";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
 const githubToken = process.env.GITHUB_TOKEN;
@@ -52,6 +53,27 @@ async function ensureBooksBucket() {
     public: false,
     fileSizeLimit: 50 * 1024 * 1024,
     allowedMimeTypes: ["application/pdf"],
+  });
+
+  return { error: null, supabase };
+}
+
+async function ensureResourceDownloadsBucket() {
+  const supabase = getSupabaseServiceClient();
+
+  if (!supabase) {
+    return { error: "SUPABASE_SERVICE_ROLE_KEY manquant.", supabase: null };
+  }
+
+  await supabase.storage.createBucket(resourceDownloadsBucketName, {
+    public: true,
+    fileSizeLimit: 200 * 1024 * 1024,
+    allowedMimeTypes: [
+      "application/zip",
+      "application/x-zip-compressed",
+      "application/octet-stream",
+      "application/x-7z-compressed",
+    ],
   });
 
   return { error: null, supabase };
@@ -278,6 +300,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, assetPath: storagePath });
     }
 
+    if (kind === "resource-download") {
+      const { error, supabase } = await ensureResourceDownloadsBucket();
+
+      if (error || !supabase) {
+        return NextResponse.json({ ok: false, message: error || "Supabase indisponible." }, { status: 503 });
+      }
+
+      const storagePath = normalizeResourceAssetPath(fileName);
+
+      if (!storagePath) {
+        return NextResponse.json({ ok: false, message: "Nom du fichier ressource invalide." }, { status: 400 });
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from(resourceDownloadsBucketName)
+        .upload(storagePath, file, {
+          contentType: file.type || "application/zip",
+          upsert: true,
+        });
+
+      if (uploadError) {
+        return NextResponse.json({ ok: false, message: uploadError.message }, { status: 500 });
+      }
+
+      const { data: publicData } = supabase.storage.from(resourceDownloadsBucketName).getPublicUrl(storagePath);
+
+      return NextResponse.json({ ok: true, assetPath: publicData.publicUrl || storagePath });
+    }
+
     return NextResponse.json({ ok: false, message: "Type de ressource inconnu." }, { status: 400 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Operation impossible.";
@@ -320,6 +371,28 @@ export async function DELETE(request: Request) {
       }
 
       const { error: removeError } = await supabase.storage.from(booksBucketName).remove([storagePath]);
+
+      if (removeError) {
+        return NextResponse.json({ ok: false, message: removeError.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ ok: true });
+    }
+
+    if (kind === "resource-download") {
+      const { error, supabase } = await ensureResourceDownloadsBucket();
+
+      if (error || !supabase) {
+        return NextResponse.json({ ok: false, message: error || "Supabase indisponible." }, { status: 503 });
+      }
+
+      const storagePath = normalizeResourceAssetPath(assetPath);
+
+      if (!storagePath || /^https?:\/\//i.test(storagePath)) {
+        return NextResponse.json({ ok: false, message: "Chemin de ressource invalide." }, { status: 400 });
+      }
+
+      const { error: removeError } = await supabase.storage.from(resourceDownloadsBucketName).remove([storagePath]);
 
       if (removeError) {
         return NextResponse.json({ ok: false, message: removeError.message }, { status: 500 });

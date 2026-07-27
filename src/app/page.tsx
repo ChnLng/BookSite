@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
+import { HomeExpandedSections } from "@/components/home-expanded-sections";
 import { TopNav } from "@/components/top-nav";
 import { PromoBanner } from "@/components/promo-banner";
 import { useAuth } from "@/components/auth-provider";
@@ -638,6 +639,8 @@ export default function HomePage() {
           </div>
         </section>
       </section>
+
+      <HomeExpandedSections />
 
       <footer className="panel glass footer-rules" id="footer-rules">
         <div className="footer-inline">

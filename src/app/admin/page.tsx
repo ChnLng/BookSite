@@ -2,7 +2,10 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { AdminCategoryEnginePanel } from "@/components/admin-category-engine-panel";
 import { AdminGuard } from "@/components/admin-guard";
+import { AdminPartnerLinksPanel } from "@/components/admin-partner-links-panel";
+import { AdminResourcesPanel } from "@/components/admin-resources-panel";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { books as staticBooks, defaultRelatedBookIds } from "@/data/books";
@@ -113,6 +116,9 @@ type PdfStorageStatus = {
 
 const adminSections = [
   { key: "categories", label: "类目 Categories" },
+  { key: "engine", label: "引擎 Moteur" },
+  { key: "resources", label: "资源 Outils" },
+  { key: "partners", label: "友链 Liens" },
   { key: "books", label: "图书 Livres" },
   { key: "promo", label: "优惠码 Codes promo" },
   { key: "downloads", label: "下载 Downloads" },
@@ -545,6 +551,9 @@ function AdminPageContent() {
     () => ({
       books: books.length,
       categories: categories.length,
+      engine: categories.length,
+      resources: 0,
+      partners: 0,
       promo: promoCodes.length,
       downloads: downloads.length,
       donations: donations.length,
@@ -1269,6 +1278,12 @@ function AdminPageContent() {
             </div>
           ) : null}
           {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
+
+          {activeSection === "engine" ? <AdminCategoryEnginePanel /> : null}
+
+          {activeSection === "resources" ? <AdminResourcesPanel /> : null}
+
+          {activeSection === "partners" ? <AdminPartnerLinksPanel /> : null}
 
           {activeSection === "books" ? (
             <>
