@@ -42,9 +42,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
   }
 
-  // 1. 存入数据库
+  const finalEmail = email || user.email;
+
+  // 1. 存入数据库（同时匹配 email 和 user_email 字段）
   const { error } = await supabase.from("admin_messages").insert({
     user_id: user.id,
+    email: finalEmail,
     user_email: user.email,
     pseudo: pseudo || user.email.split("@")[0] || "Lecteur",
     content,
@@ -62,8 +65,8 @@ export async function POST(request: Request) {
       port: 587,
       secure: false, // STARTTLS
       auth: {
-        user: process.env.EMAIL_USER, // 你的发信邮箱 (visdar@outlook.fr)
-        pass: process.env.EMAIL_PASS, // 你的 Outlook 专用应用密码 (Mot de passe d'application)
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
@@ -71,11 +74,11 @@ export async function POST(request: Request) {
       from: process.env.EMAIL_USER,
       to: "visdar@outlook.fr",
       subject: `[BookSite] Nouveau message de ${pseudo || user.email}`,
-      text: `De: ${pseudo} (${user.email})\n\nMessage:\n${content}`,
+      text: `De: ${pseudo} (${finalEmail})\n\nMessage:\n${content}`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
           <h3 style="color: #6366f1;">Nouveau message reçu sur BookSite</h3>
-          <p><strong>De :</strong> ${pseudo} (${user.email})</p>
+          <p><strong>De :</strong> ${pseudo} (${finalEmail})</p>
           <hr style="border: none; border-top: 1px solid #eee;" />
           <p style="white-space: pre-wrap; font-size: 15px; color: #333;">${content}</p>
         </div>
@@ -83,7 +86,6 @@ export async function POST(request: Request) {
     });
   } catch (mailErr) {
     console.error("Erreur d'envoi d'email:", mailErr);
-    // 即使邮件发送因网络或配置延迟，数据库已经存好了，不影响整体成功提示
   }
 
   return NextResponse.json({
