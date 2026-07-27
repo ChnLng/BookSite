@@ -37,6 +37,8 @@ const iconMap = {
 type FloatingSectionLink = {
   id: string;
   label: string;
+  targetId: string;
+  resetToTop?: boolean;
 };
 
 function getHeaderOffset() {
@@ -198,52 +200,87 @@ export function HomeExpandedSections() {
   );
 
   const floatingLinks = useMemo(() => {
-    const links: FloatingSectionLink[] = [{ id: "scene", label: "图书专区" }];
+    const links: FloatingSectionLink[] = [{ id: "scene", label: "图书专区", targetId: "scene", resetToTop: true }];
 
     resourceCategories.forEach((category) => {
       links.push({
         id: `resource-${category.slug}`,
         label: category.titleFr || "工具天地",
+        targetId: `resource-${category.slug}`,
       });
     });
 
     if (resourceCategories.length === 0 && uncategorizedResources.length > 0) {
-      links.push({ id: "coin-ludique-outils", label: "工具天地" });
+      links.push({ id: "coin-ludique-outils", label: "工具天地", targetId: "coin-ludique-outils" });
     }
 
     customCategories.forEach((category) => {
       links.push({
         id: `category-${category.slug}`,
         label: category.titleFr,
+        targetId: `category-${category.slug}`,
       });
     });
 
     if (partnerLinks.length > 0) {
-      links.push({ id: "liens-partenaires", label: "友情链接" });
+      links.push({ id: "liens-partenaires", label: "友情链接", targetId: "liens-partenaires" });
     }
 
     return links;
   }, [customCategories, partnerLinks.length, resourceCategories, uncategorizedResources.length]);
+
+  const getAvailableSections = useCallback(
+    () =>
+      floatingLinks
+        .map((link) => ({
+          ...link,
+          element: link.resetToTop ? null : document.getElementById(link.targetId),
+        }))
+        .filter((item) => item.resetToTop || Boolean(item.element)),
+    [floatingLinks],
+  );
+
+  const getTargetScrollTop = useCallback((link: FloatingSectionLink) => {
+    if (typeof window === "undefined") {
+      return 0;
+    }
+
+    if (link.resetToTop) {
+      return 0;
+    }
+
+    const target = document.getElementById(link.targetId);
+
+    if (!target) {
+      return null;
+    }
+
+    return Math.max(0, window.scrollY + target.getBoundingClientRect().top - getHeaderOffset());
+  }, []);
 
   const updateActiveSection = useCallback(() => {
     if (typeof window === "undefined") {
       return;
     }
 
+    if (window.scrollY <= 8) {
+      setActiveSectionId("scene");
+      return;
+    }
+
     const anchorLine = getHeaderOffset() + 8;
-    const availableSections = floatingLinks
-      .map((link) => ({
-        id: link.id,
-        element: document.getElementById(link.id),
-      }))
-      .filter((item): item is { id: string; element: HTMLElement } => Boolean(item.element));
+    const availableSections = getAvailableSections();
 
     if (availableSections.length === 0) {
       return;
     }
 
-    const containing = availableSections.find(({ element }) => {
-      const rect = element.getBoundingClientRect();
+    const containing = availableSections.find((item) => {
+      if (item.resetToTop || !item.element) {
+        return false;
+      }
+
+      const rect = item.element.getBoundingClientRect();
       return rect.top <= anchorLine && rect.bottom > anchorLine;
     });
 
@@ -252,15 +289,21 @@ export function HomeExpandedSections() {
       return;
     }
 
-    const passedSections = availableSections.filter(({ element }) => element.getBoundingClientRect().top <= anchorLine);
+    const passedSections = availableSections.filter((item) => {
+      if (item.resetToTop || !item.element) {
+        return false;
+      }
+
+      return item.element.getBoundingClientRect().top <= anchorLine;
+    });
 
     if (passedSections.length > 0) {
       setActiveSectionId(passedSections[passedSections.length - 1].id);
       return;
     }
 
-    setActiveSectionId(availableSections[0].id);
-  }, [floatingLinks]);
+    setActiveSectionId("scene");
+  }, [getAvailableSections]);
 
   useEffect(() => {
     updateActiveSection();
@@ -289,29 +332,31 @@ export function HomeExpandedSections() {
   }, [updateActiveSection]);
 
   const handleAnchorClick = useCallback(
-    (targetId: string) => {
+    (link: FloatingSectionLink) => {
       if (typeof window === "undefined") {
         return;
       }
 
-      if (activeSectionId === targetId) {
+      if (link.resetToTop && window.scrollY <= 1) {
         return;
       }
 
-      const target = document.getElementById(targetId);
-
-      if (!target) {
+      if (!link.resetToTop && activeSectionId === link.id) {
         return;
       }
 
-      const top = window.scrollY + target.getBoundingClientRect().top - getHeaderOffset();
+      const top = getTargetScrollTop(link);
+
+      if (top == null) {
+        return;
+      }
 
       window.scrollTo({
-        top: Math.max(0, top),
+        top,
         behavior: "smooth",
       });
     },
-    [activeSectionId],
+    [activeSectionId, getTargetScrollTop],
   );
 
   return (
@@ -324,7 +369,7 @@ export function HomeExpandedSections() {
             className={activeSectionId === link.id ? "home-floating-nav-link active" : "home-floating-nav-link"}
             aria-label={link.label}
             aria-current={activeSectionId === link.id ? "true" : undefined}
-            onClick={() => handleAnchorClick(link.id)}
+            onClick={() => handleAnchorClick(link)}
           >
             <span className="home-floating-nav-dot" aria-hidden="true" />
             <span className="home-floating-nav-tooltip" role="tooltip">
