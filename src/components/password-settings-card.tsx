@@ -9,11 +9,12 @@ const minimumPasswordLength = 8;
 
 type PasswordSettingsCardProps = {
   userEmail?: string | null;
+  onSuccess?: () => void;
 };
 
 type FormSubmitEvent = Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0];
 
-export function PasswordSettingsCard({ userEmail }: PasswordSettingsCardProps) {
+export function PasswordSettingsCard({ userEmail, onSuccess }: PasswordSettingsCardProps) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
@@ -70,6 +71,7 @@ export function PasswordSettingsCard({ userEmail }: PasswordSettingsCardProps) {
       setStatusMessage("Mot de passe mis a jour avec succes !");
       setNewPassword("");
       setConfirmPassword("");
+      onSuccess?.();
     } finally {
       setSaving(false);
     }
@@ -77,15 +79,11 @@ export function PasswordSettingsCard({ userEmail }: PasswordSettingsCardProps) {
 
   return (
     <div className="account-card password-settings-card">
-      <div className="password-settings-header">
-        <div className="badge">
-          <LockKeyhole size={16} />
-          Modifier le mot de passe
-        </div>
-      </div>
-
       <div className="password-settings-copy">
-        <strong>Modifier le mot de passe</strong>
+        <strong className="password-settings-title">
+          <LockKeyhole size={16} />
+          <span>Modifier le mot de passe</span>
+        </strong>
         <p className="tiny">{helperText}</p>
       </div>
 

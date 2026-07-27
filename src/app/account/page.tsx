@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { LockKeyhole } from "lucide-react";
 import { PasswordSettingsCard } from "@/components/password-settings-card";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
@@ -43,6 +44,7 @@ export default function AccountPage() {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [commentActionMessage, setCommentActionMessage] = useState("");
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
@@ -198,9 +200,23 @@ export default function AccountPage() {
       />
 
       <section className="panel glass" style={{ marginTop: 22 }}>
-        <h1 className="section-title" style={{ fontFamily: "var(--font-heading), serif" }}>
-          Bonjour {greeting}
-        </h1>
+        <div className="account-header-row">
+          <h1 className="section-title" style={{ fontFamily: "var(--font-heading), serif", margin: 0 }}>
+            Bonjour {greeting}
+          </h1>
+          {user ? (
+            <button
+              className="pill-button account-password-toggle"
+              type="button"
+              onClick={() => setShowPasswordSection((current) => !current)}
+              aria-expanded={showPasswordSection}
+              aria-controls="account-password-section"
+            >
+              <LockKeyhole size={15} />
+              <span>Modifier le mot de passe</span>
+            </button>
+          ) : null}
+        </div>
         <p className="section-caption">
           Votre espace lecteur affiche vos commentaires, vos telechargements et vos donations dans un seul panneau.
         </p>
@@ -209,7 +225,16 @@ export default function AccountPage() {
           <p className="muted">Chargement…</p>
         ) : (
           <>
-            {user ? <PasswordSettingsCard userEmail={user.email} /> : null}
+            {user && showPasswordSection ? (
+              <div id="account-password-section" className="account-password-section">
+                <PasswordSettingsCard
+                  userEmail={user.email}
+                  onSuccess={() => {
+                    setShowPasswordSection(false);
+                  }}
+                />
+              </div>
+            ) : null}
 
             <div className="account-tab-strip" style={{ marginBottom: 18 }}>
               {tabs.map((tab) => (

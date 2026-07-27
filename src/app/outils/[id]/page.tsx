@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, ExternalLink, QrCode } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayResources, resolveDisplayResourceById, type DisplayResource } from "@/lib/resources-service";
@@ -720,24 +720,114 @@ export default function ResourceDetailPage() {
                 className="resource-detail-cover-image"
               />
             </div>
+          </article>
 
-            <div className="resource-qr-box">
-              {resource.qrImageUrl ? (
-                <Image
-                  src={resource.qrImageUrl}
-                  alt={`${resource.titleFr} QR`}
-                  width={120}
-                  height={120}
-                  className="home-resource-qr-image"
-                />
-              ) : (
-                <div className="coin-ludique-qr-placeholder">
-                  <QrCode size={28} />
-                  <span className="tiny">QR a venir</span>
+          <div className="book-review-card">
+            <div className="book-review-summary">
+              <div>
+                <strong>Avis des utilisateurs</strong>
+                {reviewSummary.totalReviews > 0 ? (
+                  <p className="tiny" style={{ marginTop: 6, marginBottom: 0 }}>
+                    {reviewSummary.averageRating.toFixed(1)} / 5 · {reviewSummary.totalReviews} avis
+                  </p>
+                ) : null}
+              </div>
+              <div className="book-review-average-stars" aria-label={`Note moyenne ${reviewSummary.averageRating.toFixed(1)} sur 5`}>
+                {renderFixedStars(roundedAverageRating, "book-review-average-star")}
+              </div>
+            </div>
+
+            <div className="input-group compact-form">
+              <label className="tiny" htmlFor="resource-review-author">
+                Votre pseudo ou prenom
+              </label>
+              <input
+                id="resource-review-author"
+                className="input compact-input"
+                value={reviewForm.authorName}
+                onChange={(event) =>
+                  setReviewForm((current) => ({
+                    ...current,
+                    authorName: event.target.value,
+                  }))
+                }
+                placeholder="Votre prenom ou pseudo"
+              />
+
+              <div>
+                <div className="tiny" style={{ marginBottom: 8 }}>
+                  Votre note
                 </div>
+                <div className="book-review-star-picker">
+                  {Array.from({ length: 5 }, (_, index) => {
+                    const value = index + 1;
+                    const active = value <= reviewForm.rating;
+
+                    return (
+                      <button
+                        key={value}
+                        className={active ? "book-review-star active" : "book-review-star"}
+                        type="button"
+                        onClick={() =>
+                          setReviewForm((current) => ({
+                            ...current,
+                            rating: value,
+                          }))
+                        }
+                        aria-label={`Noter ${value} sur 5`}
+                      >
+                        {renderStarButton(active)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <label className="tiny" htmlFor="resource-review-text">
+                Votre ressenti apres utilisation
+              </label>
+              <textarea
+                id="resource-review-text"
+                className="textarea compact-textarea"
+                value={reviewForm.reviewText}
+                onChange={(event) =>
+                  setReviewForm((current) => ({
+                    ...current,
+                    reviewText: event.target.value,
+                  }))
+                }
+                placeholder="Partagez votre experience en quelques lignes..."
+              />
+
+              <button className="cta-button" type="button" disabled={reviewSubmitting} onClick={() => void handleReviewSubmit()}>
+                {reviewSubmitting ? "Publication..." : "Publier votre avis"}
+              </button>
+              {reviewMessage ? <p className="tiny">{reviewMessage}</p> : null}
+            </div>
+
+            <div className="book-review-list">
+              {reviewsLoading ? (
+                <p className="muted">Chargement des avis...</p>
+              ) : reviews.length > 0 ? (
+                reviews.map((review) => (
+                  <article className="book-review-item" key={review.id}>
+                    <div className="book-review-item-header">
+                      <strong>{review.authorName}</strong>
+                      <span className="book-review-inline-stars">
+                        {renderFixedStars(review.rating, "book-review-inline-star")}
+                      </span>
+                    </div>
+                    <p className="muted" style={{ marginBottom: 10 }}>
+                      {review.reviewText}
+                    </p>
+                    <span className="tiny">{formatReviewDate(review.createdAt)}</span>
+                  </article>
+                ))
+              ) : (
+                <p className="muted">Aucun retour pour l&apos;instant. Votre experience peut lancer la premiere etoile.</p>
               )}
             </div>
-          </article>
+          </div>
         </aside>
 
         <section className="panel glass resource-detail-main">
@@ -858,113 +948,6 @@ export default function ResourceDetailPage() {
                 Connectez-vous puis validez le paiement pour debloquer ces fichiers.
               </p>
             ) : null}
-          </div>
-
-          <div className="book-review-card">
-            <div className="book-review-summary">
-              <div>
-                <strong>Avis des lecteurs</strong>
-                {reviewSummary.totalReviews > 0 ? (
-                  <p className="tiny" style={{ marginTop: 6, marginBottom: 0 }}>
-                    {reviewSummary.averageRating.toFixed(1)} / 5 · {reviewSummary.totalReviews} avis
-                  </p>
-                ) : null}
-              </div>
-              <div className="book-review-average-stars" aria-label={`Note moyenne ${reviewSummary.averageRating.toFixed(1)} sur 5`}>
-                {renderFixedStars(roundedAverageRating, "book-review-average-star")}
-              </div>
-            </div>
-
-            <div className="input-group compact-form">
-              <label className="tiny" htmlFor="resource-review-author">
-                Votre pseudo ou prenom
-              </label>
-              <input
-                id="resource-review-author"
-                className="input compact-input"
-                value={reviewForm.authorName}
-                onChange={(event) =>
-                  setReviewForm((current) => ({
-                    ...current,
-                    authorName: event.target.value,
-                  }))
-                }
-                placeholder="Votre prenom ou pseudo"
-              />
-
-              <div>
-                <div className="tiny" style={{ marginBottom: 8 }}>
-                  Votre note
-                </div>
-                <div className="book-review-star-picker">
-                  {Array.from({ length: 5 }, (_, index) => {
-                    const value = index + 1;
-                    const active = value <= reviewForm.rating;
-
-                    return (
-                      <button
-                        key={value}
-                        className={active ? "book-review-star active" : "book-review-star"}
-                        type="button"
-                        onClick={() =>
-                          setReviewForm((current) => ({
-                            ...current,
-                            rating: value,
-                          }))
-                        }
-                        aria-label={`Noter ${value} sur 5`}
-                      >
-                        {renderStarButton(active)}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <label className="tiny" htmlFor="resource-review-text">
-                Votre ressenti apres utilisation
-              </label>
-              <textarea
-                id="resource-review-text"
-                className="textarea compact-textarea"
-                value={reviewForm.reviewText}
-                onChange={(event) =>
-                  setReviewForm((current) => ({
-                    ...current,
-                    reviewText: event.target.value,
-                  }))
-                }
-                placeholder="Partagez votre experience en quelques lignes..."
-              />
-
-              <button className="cta-button" type="button" disabled={reviewSubmitting} onClick={() => void handleReviewSubmit()}>
-                {reviewSubmitting ? "Publication..." : "Publier votre avis"}
-              </button>
-              {reviewMessage ? <p className="tiny">{reviewMessage}</p> : null}
-            </div>
-
-            <div className="book-review-list">
-              {reviewsLoading ? (
-                <p className="muted">Chargement des avis...</p>
-              ) : reviews.length > 0 ? (
-                reviews.map((review) => (
-                  <article className="book-review-item" key={review.id}>
-                    <div className="book-review-item-header">
-                      <strong>{review.authorName}</strong>
-                      <span className="book-review-inline-stars">
-                        {renderFixedStars(review.rating, "book-review-inline-star")}
-                      </span>
-                    </div>
-                    <p className="muted" style={{ marginBottom: 10 }}>
-                      {review.reviewText}
-                    </p>
-                    <span className="tiny">{formatReviewDate(review.createdAt)}</span>
-                  </article>
-                ))
-              ) : (
-                <p className="muted">Aucun retour pour l&apos;instant. Votre experience peut lancer la premiere etoile.</p>
-              )}
-            </div>
           </div>
 
           {relatedResources.length > 0 ? (
