@@ -55,7 +55,8 @@ select {
 }
 
 .page-shell {
-  width: min(1280px, calc(100% - 32px));
+  width: min(1280px, calc(100vw - 32px));
+  max-width: 1280px;
   margin: 0 auto;
   padding: 24px 0 28px;
 }
@@ -407,10 +408,12 @@ select {
 .hero-scene,
 .homepage-responsive-grid {
   display: grid;
-  grid-template-columns: 0.72fr 1.68fr;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
   gap: 12px;
   margin-top: 12px;
   align-items: stretch;
+  width: 100%;
+  max-width: 100%;
 }
 
 .left-column-stack {
@@ -419,12 +422,18 @@ select {
   align-self: start;
   position: sticky;
   top: 108px;
+  min-width: 0;
+  width: 100%;
+  max-width: 320px;
 }
 
 .home-main-flow {
   display: grid;
   gap: 10px;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .donation-column,
@@ -1719,21 +1728,22 @@ select {
   .hero-scene,
   .homepage-responsive-grid {
     grid-template-columns: 1fr;
+    width: 100%;
   }
 
   .left-column-stack {
-    position: static;
-    order: 1;
+    display: none;
   }
 
   .home-main-flow {
-    order: 2;
+    order: 1;
   }
 
   .left-column-stack,
   .home-main-flow {
     width: 100%;
     min-width: 0;
+    max-width: 100%;
   }
 
   .carousel-card {
@@ -1771,10 +1781,11 @@ select {
 
   html[data-preferred-view="desktop"] .hero-scene,
   html[data-preferred-view="desktop"] .homepage-responsive-grid {
-    grid-template-columns: 0.72fr 1.68fr;
+    grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
   }
 
   html[data-preferred-view="desktop"] .left-column-stack {
+    display: grid;
     position: sticky;
   }
 

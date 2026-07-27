@@ -19,8 +19,11 @@ const body = Nunito({
 
 export const metadata: Metadata = {
   title: "Hub bilingue 🇨🇳 Chinois - Français 🇫🇷",
-  description:
-    "Moins de mémorisation, plus d'immersion. Votre arc-en-ciel intuitif vers la Chine.",
+  description: "Venez dans un univers tout doux de livres bilingues franco-chinois 🌸",
+  openGraph: {
+    title: "Hub bilingue 🇨🇳 Chinois - Français 🇫🇷",
+    description: "Venez dans un univers tout doux de livres bilingues franco-chinois 🌸",
+  },
   icons: {
     icon: "/images/logo.png",
     shortcut: "/images/logo.png",

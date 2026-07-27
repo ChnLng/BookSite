@@ -30,6 +30,7 @@ export function SiteShareStrip() {
         JSON.stringify({
           platform,
           at: Date.now(),
+          optimisticUnlock: true,
         }),
       );
       window.dispatchEvent(
@@ -37,6 +38,7 @@ export function SiteShareStrip() {
           detail: {
             platform,
             at: Date.now(),
+            optimisticUnlock: true,
           },
         }),
       );

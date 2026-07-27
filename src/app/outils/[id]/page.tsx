@@ -145,6 +145,7 @@ export default function ResourceDetailPage() {
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromoState | null>(null);
   const [shareUnlockPending, setShareUnlockPending] = useState(false);
   const [shareUnlockBusy, setShareUnlockBusy] = useState(false);
+  const [optimisticSharedUnlock, setOptimisticSharedUnlock] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentReady, setPaymentReady] = useState(false);
   const [paymentError, setPaymentError] = useState("");
@@ -167,6 +168,7 @@ export default function ResourceDetailPage() {
   );
   const zeroPriceUnlockMessage =
     "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
+  const effectiveHasAccess = accessState.hasAccess || optimisticSharedUnlock;
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -204,6 +206,8 @@ export default function ResourceDetailPage() {
       }
 
       setResource(resolvedResource);
+      setOptimisticSharedUnlock(false);
+      setShareUnlockPending(false);
       setRelatedResources(
         allResources.filter((item) => item.id !== resolvedResource?.id).slice(0, 3),
       );
@@ -313,6 +317,9 @@ export default function ResourceDetailPage() {
       requiresLogin: Boolean(result?.requiresLogin),
       isAdmin: Boolean(result?.isAdmin),
     });
+    if (result?.hasAccess) {
+      setOptimisticSharedUnlock(false);
+    }
     setAccessLoading(false);
   };
 
@@ -460,7 +467,10 @@ export default function ResourceDetailPage() {
         return;
       }
 
+      setOptimisticSharedUnlock(true);
+      setShareUnlockPending(false);
       setShareUnlockBusy(true);
+      setActionMessage("La ressource est maintenant debloquee.");
 
       try {
         const response = await authorizedFetch(`/api/resources/${resource.slug || resource.id}/claim`, {
@@ -480,7 +490,6 @@ export default function ResourceDetailPage() {
           return;
         }
 
-        setShareUnlockPending(false);
         setActionMessage(result.message || "La ressource est maintenant debloquee.");
         await refreshAccess();
       } finally {
@@ -504,6 +513,7 @@ export default function ResourceDetailPage() {
     setPromoMessage("");
     setPromoMessageKind("idle");
     setShareUnlockPending(false);
+    setOptimisticSharedUnlock(false);
     setActionMessage("");
 
     try {
@@ -774,10 +784,10 @@ export default function ResourceDetailPage() {
                 <button
                   type="button"
                   className="cta-button resource-buy-button"
-                  disabled={actionBusy || accessState.hasAccess}
+                    disabled={actionBusy || effectiveHasAccess}
                   onClick={() => void handleCheckout()}
                 >
-                  {accessState.hasAccess
+                    {effectiveHasAccess
                     ? "Acces deja debloque"
                     : actionBusy
                       ? "Ouverture..."
@@ -809,7 +819,7 @@ export default function ResourceDetailPage() {
           {accessLoading ? <p className="tiny">Verification de vos droits...</p> : null}
           {paymentError ? <p className="tiny promo-message error">{paymentError}</p> : null}
 
-          {promoUnlocksFreeAccess && !accessState.hasAccess ? (
+          {promoUnlocksFreeAccess && !effectiveHasAccess ? (
             <div className="share-unlock-box">
               <strong>Partage pour deverrouiller</strong>
               <p className="tiny">{zeroPriceUnlockMessage}</p>
@@ -831,9 +841,9 @@ export default function ResourceDetailPage() {
               {resource.downloads.map((download) => (
                 <button
                   key={download.id}
-                  className={accessState.hasAccess ? "coin-ludique-download-button" : "coin-ludique-download-button disabled"}
+                  className={effectiveHasAccess ? "coin-ludique-download-button" : "coin-ludique-download-button disabled"}
                   type="button"
-                  disabled={!accessState.hasAccess || actionBusy}
+                  disabled={!effectiveHasAccess || actionBusy}
                   onClick={() => void handleDownload(download.id)}
                 >
                   <span className="coin-ludique-platform">{download.platform}</span>
@@ -843,7 +853,7 @@ export default function ResourceDetailPage() {
               ))}
             </div>
 
-            {!accessState.hasAccess ? (
+            {!effectiveHasAccess ? (
               <p className="tiny" style={{ marginTop: 12 }}>
                 Connectez-vous puis validez le paiement pour debloquer ces fichiers.
               </p>

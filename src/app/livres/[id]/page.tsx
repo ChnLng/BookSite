@@ -143,6 +143,7 @@ export default function BookDetailPage() {
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromoState | null>(null);
   const [shareUnlockPending, setShareUnlockPending] = useState(false);
   const [shareUnlockBusy, setShareUnlockBusy] = useState(false);
+  const [optimisticSharedUnlock, setOptimisticSharedUnlock] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentReady, setPaymentReady] = useState(false);
   const [paymentError, setPaymentError] = useState("");
@@ -166,6 +167,7 @@ export default function BookDetailPage() {
   const promoSuccess = promoMessageKind === "success" ? promoMessage : "";
   const zeroPriceUnlockMessage =
     "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
+  const effectiveHasAccess = accessState.hasAccess || optimisticSharedUnlock;
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -221,6 +223,8 @@ export default function BookDetailPage() {
       }
 
       setBook(resolvedBook);
+      setOptimisticSharedUnlock(false);
+      setShareUnlockPending(false);
 
       if (!resolvedBook) {
         setRelatedBooks([]);
@@ -339,6 +343,9 @@ export default function BookDetailPage() {
       requiresLogin: Boolean(result?.requiresLogin),
       isAdmin: Boolean(result?.isAdmin),
     });
+    if (result?.hasAccess) {
+      setOptimisticSharedUnlock(false);
+    }
     setAccessLoading(false);
   };
 
@@ -476,8 +483,14 @@ export default function BookDetailPage() {
         return;
       }
 
+      setOptimisticSharedUnlock(true);
+      setShareUnlockPending(false);
       setShareUnlockBusy(true);
       setPaymentError("");
+      setPaymentSuccess({
+        accountUrl: "/account",
+        readUrl: `/read/${book.id}`,
+      });
 
       try {
         const response = await authorizedFetch(`/api/books/${book.id}/claim`, {
@@ -503,7 +516,6 @@ export default function BookDetailPage() {
           return;
         }
 
-        setShareUnlockPending(false);
         setPaymentSuccess({
           accountUrl: "/account",
           readUrl: result.readUrl || `/read/${book.id}`,
@@ -605,6 +617,7 @@ export default function BookDetailPage() {
     setPromoMessage("");
     setPromoMessageKind("idle");
     setShareUnlockPending(false);
+    setOptimisticSharedUnlock(false);
     setPaymentError("");
 
     try {
@@ -908,7 +921,7 @@ export default function BookDetailPage() {
                     {promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
 
                     <div className="book-buy-row">
-                      {accessState.hasAccess ? (
+                      {effectiveHasAccess ? (
                         <>
                           <Link className="cta-button book-buy-button" href={`/read/${book.id}`}>
                             Lire maintenant
@@ -942,7 +955,7 @@ export default function BookDetailPage() {
                   </div>
 
                   {promoSuccess ? <p className="tiny promo-message success">{promoSuccess}</p> : null}
-                  {promoUnlocksFreeAccess && !accessState.hasAccess ? (
+                    {promoUnlocksFreeAccess && !effectiveHasAccess ? (
                     <div className="share-unlock-box">
                       <strong>Partage pour deverrouiller</strong>
                       <p className="tiny">{zeroPriceUnlockMessage}</p>
