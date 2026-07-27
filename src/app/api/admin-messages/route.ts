@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth-request";
 import { getSupabaseRequestClient, getSupabaseServiceClient } from "@/lib/supabase-server";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   const user = await getUserFromRequest(request);
@@ -44,7 +46,7 @@ export async function POST(request: Request) {
 
   const finalEmail = email || user.email;
 
-  // 1. 存入数据库（同时匹配 email 和 user_email 字段）
+  // 1. 存入数据库
   const { error } = await supabase.from("admin_messages").insert({
     user_id: user.id,
     email: finalEmail,
@@ -58,23 +60,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
   }
 
-  // 2. 发送真实邮件到你的 Outlook
+  // 2. 通过 Resend 发送真实邮件到你的 Outlook
   try {
-    const transporter = nodemailer.createTransport({
-      host: "smtp-mail.outlook.com",
-      port: 587,
-      secure: false, // STARTTLS
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: "visdar@outlook.fr",
+    await resend.emails.send({
+      from: "BookSite <onboarding@resend.dev>",
+      to: ["visdar@outlook.fr"],
       subject: `[BookSite] Nouveau message de ${pseudo || user.email}`,
-      text: `De: ${pseudo} (${finalEmail})\n\nMessage:\n${content}`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
           <h3 style="color: #6366f1;">Nouveau message reçu sur BookSite</h3>
@@ -84,8 +75,8 @@ export async function POST(request: Request) {
         </div>
       `,
     });
-  } catch (mailErr) {
-    console.error("Erreur d'envoi d'email:", mailErr);
+  } catch (mailErr: any) {
+    console.error("Erreur Resend:", mailErr);
   }
 
   return NextResponse.json({
