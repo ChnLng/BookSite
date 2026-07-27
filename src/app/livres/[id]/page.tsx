@@ -155,7 +155,10 @@ export default function BookDetailPage() {
     [profile?.displayName, user?.email],
   );
   const roundedAverageRating = Math.round(reviewSummary.averageRating);
+  const basePrice = book?.priceEur ?? 0;
   const finalPrice = appliedPromo?.discountedPrice ?? book?.priceEur ?? 0;
+  const hasAppliedPromo = Boolean(appliedPromo);
+  const promoUnlocksFreeAccess = hasAppliedPromo && finalPrice <= 0;
   const zeroPriceUnlockMessage =
     "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
 
@@ -596,6 +599,8 @@ export default function BookDetailPage() {
     setPromoBusy(true);
     setPromoMessage("");
     setPromoMessageKind("idle");
+    setShareUnlockPending(false);
+    setPaymentError("");
 
     try {
       const response = await fetch("/api/promo-codes/validate", {
@@ -620,7 +625,7 @@ export default function BookDetailPage() {
       if (!response.ok || !result?.ok || !result.promo) {
         setAppliedPromo(null);
         setPromoMessageKind("error");
-        setPromoMessage(result?.message || "Code promo invalide.");
+        setPromoMessage(result?.message || "Code promo invalide, veuillez verifier et reessayer.");
         return;
       }
 
@@ -873,8 +878,8 @@ export default function BookDetailPage() {
                   <div className="split-line">
                     <span>Prix</span>
                     <div className="promo-price-stack">
-                      {appliedPromo ? <span className="promo-original-price">{book.priceEur.toFixed(2)} EUR</span> : null}
-                      <strong>{finalPrice.toFixed(2)} EUR</strong>
+                      {hasAppliedPromo ? <span className="promo-original-price">{basePrice.toFixed(2)} EUR</span> : null}
+                      <strong>{(hasAppliedPromo ? finalPrice : basePrice).toFixed(2)} EUR</strong>
                     </div>
                   </div>
                   {book.publishDate ? (
@@ -901,17 +906,18 @@ export default function BookDetailPage() {
                 <div className="promo-panel">
                   <div className="detail-promo-cta">
                     <div className="detail-promo-compact">
-                      <div className="detail-promo-meta">
-                        <span className="tiny">Optionnel</span>
-                        {appliedPromo ? <strong className="tiny">-{appliedPromo.discountPercent}%</strong> : null}
-                      </div>
                       <div className="detail-promo-inline">
-                        <input
-                          className="input detail-promo-input"
-                          value={promoCode}
-                          onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
-                          placeholder="Code promo"
-                        />
+                        <div className="detail-promo-field">
+                          <input
+                            className="input detail-promo-input"
+                            value={promoCode}
+                            onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
+                            placeholder="Code promo"
+                          />
+                          <span className="detail-promo-tooltip" role="tooltip">
+                            Optionnel. Ajoutez un code promo si vous en avez un.
+                          </span>
+                        </div>
                         <button
                           className="pill-button detail-promo-apply"
                           type="button"
@@ -935,7 +941,7 @@ export default function BookDetailPage() {
                         </>
                       ) : (
                         <button className="cta-button detail-buy-button" type="button" onClick={() => void handleBookCheckout()}>
-                          {finalPrice <= 0 ? "Obtenir gratuitement" : "Acheter ce livre"}
+                          {promoUnlocksFreeAccess ? "Obtenir gratuitement" : "Acheter ce livre"}
                         </button>
                       )}
 
@@ -967,7 +973,7 @@ export default function BookDetailPage() {
                       {promoMessage}
                     </p>
                   ) : null}
-                  {finalPrice <= 0 && !accessState.hasAccess ? (
+                  {promoUnlocksFreeAccess && !accessState.hasAccess ? (
                     <div className="share-unlock-box">
                       <strong>Partage pour deverrouiller</strong>
                       <p className="tiny">{zeroPriceUnlockMessage}</p>

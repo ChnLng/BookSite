@@ -46,7 +46,10 @@ export default function ResourceDetailPage() {
   const resourceId = Array.isArray(params?.id) ? params.id[0] : params?.id || "";
   const purchaseSucceeded = searchParams.get("success") === "1";
   const purchaseCanceled = searchParams.get("cancel") === "1";
+  const basePrice = resource?.priceEur ?? 0;
   const finalPrice = appliedPromo?.discountedPrice ?? resource?.priceEur ?? 0;
+  const hasAppliedPromo = Boolean(appliedPromo);
+  const promoUnlocksFreeAccess = hasAppliedPromo && finalPrice <= 0;
   const zeroPriceUnlockMessage =
     "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
 
@@ -138,7 +141,10 @@ export default function ResourceDetailPage() {
     }
   }, [purchaseCanceled, purchaseSucceeded]);
 
-  const priceLabel = useMemo(() => `${finalPrice.toFixed(2)} EUR`, [finalPrice]);
+  const priceLabel = useMemo(
+    () => `${(hasAppliedPromo ? finalPrice : basePrice).toFixed(2)} EUR`,
+    [basePrice, finalPrice, hasAppliedPromo],
+  );
 
   useEffect(() => {
     if (!shareUnlockPending || finalPrice > 0) {
@@ -193,6 +199,8 @@ export default function ResourceDetailPage() {
     setPromoBusy(true);
     setPromoMessage("");
     setPromoMessageKind("idle");
+    setShareUnlockPending(false);
+    setActionMessage("");
 
     try {
       const response = await fetch("/api/promo-codes/validate", {
@@ -217,7 +225,7 @@ export default function ResourceDetailPage() {
       if (!response.ok || !result?.ok || !result.promo) {
         setAppliedPromo(null);
         setPromoMessageKind("error");
-        setPromoMessage(result?.message || "Code promo invalide.");
+        setPromoMessage(result?.message || "Code promo invalide, veuillez verifier et reessayer.");
         return;
       }
 
@@ -366,11 +374,11 @@ export default function ResourceDetailPage() {
           <h1 className="book-detail-title" style={{ marginTop: 18 }}>{resource.titleFr}</h1>
           <div className="resource-meta-row">
             <div className="promo-price-tag-wrap">
-              {appliedPromo ? <span className="promo-original-price">{resource.priceEur.toFixed(2)} EUR</span> : null}
+              {hasAppliedPromo ? <span className="promo-original-price">{basePrice.toFixed(2)} EUR</span> : null}
               <span className="resource-price-tag">{priceLabel}</span>
             </div>
             <span className="tiny">
-              {finalPrice <= 0 ? "Acces gratuit apres partage" : "Paiement securise puis telechargement"}
+              {promoUnlocksFreeAccess ? "Acces gratuit apres partage" : "Paiement securise puis telechargement"}
             </span>
           </div>
 
@@ -378,17 +386,18 @@ export default function ResourceDetailPage() {
 
           <div className="detail-promo-cta">
             <div className="detail-promo-compact">
-              <div className="detail-promo-meta">
-                <span className="tiny">Optionnel</span>
-                {appliedPromo ? <strong className="tiny">-{appliedPromo.discountPercent}%</strong> : null}
-              </div>
               <div className="detail-promo-inline">
-                <input
-                  className="input detail-promo-input"
-                  value={promoCode}
-                  onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
-                  placeholder="Code promo"
-                />
+                <div className="detail-promo-field">
+                  <input
+                    className="input detail-promo-input"
+                    value={promoCode}
+                    onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
+                    placeholder="Code promo"
+                  />
+                  <span className="detail-promo-tooltip" role="tooltip">
+                    Optionnel. Ajoutez un code promo si vous en avez un.
+                  </span>
+                </div>
                 <button className="pill-button detail-promo-apply" type="button" disabled={promoBusy} onClick={() => void handleApplyPromo()}>
                   {promoBusy ? "Verification..." : "Appliquer"}
                 </button>
@@ -406,7 +415,7 @@ export default function ResourceDetailPage() {
                   ? "Acces deja debloque"
                   : actionBusy
                     ? "Ouverture..."
-                    : resource.priceEur <= 0
+                    : promoUnlocksFreeAccess
                       ? "Obtenir gratuitement"
                       : "Acheter cet outil"}
               </button>
@@ -428,7 +437,7 @@ export default function ResourceDetailPage() {
           {actionMessage ? <p className="tiny">{actionMessage}</p> : null}
           {accessLoading ? <p className="tiny">Verification de vos droits...</p> : null}
 
-          {finalPrice <= 0 && !accessState.hasAccess ? (
+          {promoUnlocksFreeAccess && !accessState.hasAccess ? (
             <div className="share-unlock-box">
               <strong>Partage pour deverrouiller</strong>
               <p className="tiny">{zeroPriceUnlockMessage}</p>

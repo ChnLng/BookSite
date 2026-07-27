@@ -1247,15 +1247,53 @@ select {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
 }
 
-.detail-promo-input {
+.detail-promo-field {
+  position: relative;
   min-width: 0;
   flex: 1 1 auto;
 }
 
+.detail-promo-input {
+  width: 100%;
+}
+
+.detail-promo-tooltip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  transform: translateY(6px);
+  max-width: min(240px, calc(100vw - 48px));
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--surface-border);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow-glass);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+}
+
+.detail-promo-field:hover .detail-promo-tooltip,
+.detail-promo-field:focus-within .detail-promo-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
 .detail-promo-apply {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6.75rem;
 }
 
 .detail-buy-group {
