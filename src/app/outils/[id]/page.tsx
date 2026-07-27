@@ -17,8 +17,11 @@ type AccessState = {
 
 type AppliedPromoState = {
   code: string;
+  discountType: string;
+  discountValue: number;
   discountPercent: number;
   discountedPrice: number;
+  isFreeShare: boolean;
 };
 
 export default function ResourceDetailPage() {
@@ -50,6 +53,8 @@ export default function ResourceDetailPage() {
   const finalPrice = appliedPromo?.discountedPrice ?? resource?.priceEur ?? 0;
   const hasAppliedPromo = Boolean(appliedPromo);
   const promoUnlocksFreeAccess = hasAppliedPromo && finalPrice <= 0;
+  const promoError = promoMessageKind === "error" ? promoMessage : "";
+  const promoSuccess = promoMessageKind === "success" ? promoMessage : "";
   const zeroPriceUnlockMessage =
     "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
 
@@ -232,7 +237,11 @@ export default function ResourceDetailPage() {
       setAppliedPromo(result.promo);
       setPromoCode(result.promo.code);
       setPromoMessageKind("success");
-      setPromoMessage(`Code ${result.promo.code} applique. Nouveau prix: ${result.promo.discountedPrice.toFixed(2)} EUR.`);
+      setPromoMessage(
+        result.promo.isFreeShare
+          ? `Code ${result.promo.code} applique. Le partage peut maintenant deverrouiller cette ressource gratuitement.`
+          : `Code ${result.promo.code} applique. Nouveau prix: ${result.promo.discountedPrice.toFixed(2)} EUR.`,
+      );
     } finally {
       setPromoBusy(false);
     }
@@ -384,30 +393,32 @@ export default function ResourceDetailPage() {
 
           <p className="section-caption" style={{ marginTop: 18 }}>{resource.summaryFr}</p>
 
-          <div className="detail-promo-cta">
-            <div className="detail-promo-compact">
-              <div className="detail-promo-inline">
-                <div className="detail-promo-field">
-                  <input
-                    className="input detail-promo-input"
-                    value={promoCode}
-                    onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
-                    placeholder="Code promo"
-                  />
-                  <span className="detail-promo-tooltip" role="tooltip">
-                    Optionnel. Ajoutez un code promo si vous en avez un.
-                  </span>
-                </div>
-                <button className="pill-button detail-promo-apply" type="button" disabled={promoBusy} onClick={() => void handleApplyPromo()}>
-                  {promoBusy ? "Verification..." : "Appliquer"}
-                </button>
-              </div>
+          <div className="mt-6 flex flex-col gap-4">
+            <div className="flex max-w-md items-center gap-2">
+              <input
+                type="text"
+                className="input min-w-0 flex-1"
+                value={promoCode}
+                onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
+                placeholder="Code promo"
+                title="Optionnel"
+              />
+              <button
+                type="button"
+                className="pill-button shrink-0 px-5"
+                disabled={promoBusy}
+                onClick={() => void handleApplyPromo()}
+              >
+                {promoBusy ? "..." : "Appliquer"}
+              </button>
             </div>
 
-            <div className="detail-buy-group">
+            {promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
+
+            <div className="flex flex-wrap items-center gap-3">
               <button
-                className="cta-button detail-buy-button"
                 type="button"
+                className="cta-button min-w-[14rem] flex-1"
                 disabled={actionBusy || accessState.hasAccess}
                 onClick={() => void handleCheckout()}
               >
@@ -416,23 +427,25 @@ export default function ResourceDetailPage() {
                   : actionBusy
                     ? "Ouverture..."
                     : promoUnlocksFreeAccess
-                      ? "Obtenir gratuitement"
+                      ? "Partager pour deverrouiller"
                       : "Acheter cet outil"}
               </button>
+
               {resource.externalUrl ? (
-                <a className="cta-button secondary detail-secondary-button" href={resource.externalUrl} target="_blank" rel="noreferrer">
+                <a
+                  href={resource.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pill-button shrink-0 flex items-center gap-2"
+                >
                   <ExternalLink size={16} />
-                  Voir aussi le lien externe
+                  <span>Voir aussi le lien externe</span>
                 </a>
               ) : null}
             </div>
           </div>
 
-          {promoMessage ? (
-            <p className={promoMessageKind === "success" ? "tiny promo-message success" : "tiny promo-message error"}>
-              {promoMessage}
-            </p>
-          ) : null}
+          {promoSuccess ? <p className="tiny promo-message success">{promoSuccess}</p> : null}
 
           {actionMessage ? <p className="tiny">{actionMessage}</p> : null}
           {accessLoading ? <p className="tiny">Verification de vos droits...</p> : null}

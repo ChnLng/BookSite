@@ -41,8 +41,11 @@ type AccessState = {
 
 type AppliedPromoState = {
   code: string;
+  discountType: string;
+  discountValue: number;
   discountPercent: number;
   discountedPrice: number;
+  isFreeShare: boolean;
 };
 
 type PayPalButtonsInstance = {
@@ -159,6 +162,8 @@ export default function BookDetailPage() {
   const finalPrice = appliedPromo?.discountedPrice ?? book?.priceEur ?? 0;
   const hasAppliedPromo = Boolean(appliedPromo);
   const promoUnlocksFreeAccess = hasAppliedPromo && finalPrice <= 0;
+  const promoError = promoMessageKind === "error" ? promoMessage : "";
+  const promoSuccess = promoMessageKind === "success" ? promoMessage : "";
   const zeroPriceUnlockMessage =
     "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
 
@@ -632,7 +637,11 @@ export default function BookDetailPage() {
       setAppliedPromo(result.promo);
       setPromoCode(result.promo.code);
       setPromoMessageKind("success");
-      setPromoMessage(`Code ${result.promo.code} applique. Nouveau prix: ${result.promo.discountedPrice.toFixed(2)} EUR.`);
+      setPromoMessage(
+        result.promo.isFreeShare
+          ? `Code ${result.promo.code} applique. Le partage peut maintenant deverrouiller ce livre gratuitement.`
+          : `Code ${result.promo.code} applique. Nouveau prix: ${result.promo.discountedPrice.toFixed(2)} EUR.`,
+      );
     } finally {
       setPromoBusy(false);
     }
@@ -904,75 +913,63 @@ export default function BookDetailPage() {
                 ) : null}
 
                 <div className="promo-panel">
-                  <div className="detail-promo-cta">
-                    <div className="detail-promo-compact">
-                      <div className="detail-promo-inline">
-                        <div className="detail-promo-field">
-                          <input
-                            className="input detail-promo-input"
-                            value={promoCode}
-                            onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
-                            placeholder="Code promo"
-                          />
-                          <span className="detail-promo-tooltip" role="tooltip">
-                            Optionnel. Ajoutez un code promo si vous en avez un.
-                          </span>
-                        </div>
-                        <button
-                          className="pill-button detail-promo-apply"
-                          type="button"
-                          disabled={promoBusy}
-                          onClick={() => void handleApplyPromo()}
-                        >
-                          {promoBusy ? "Verification..." : "Appliquer"}
-                        </button>
-                      </div>
+                  <div className="mt-6 flex flex-col gap-4">
+                    <div className="flex max-w-md items-center gap-2">
+                      <input
+                        type="text"
+                        className="input min-w-0 flex-1"
+                        value={promoCode}
+                        onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
+                        placeholder="Code promo"
+                        title="Optionnel"
+                      />
+                      <button
+                        type="button"
+                        className="pill-button shrink-0 px-5"
+                        disabled={promoBusy}
+                        onClick={() => void handleApplyPromo()}
+                      >
+                        {promoBusy ? "..." : "Appliquer"}
+                      </button>
                     </div>
 
-                    <div className="detail-buy-group">
+                    {promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
+
+                    <div className="flex flex-wrap items-center gap-3">
                       {accessState.hasAccess ? (
                         <>
-                          <Link className="cta-button detail-buy-button" href={`/read/${book.id}`}>
+                          <Link className="cta-button min-w-[14rem] flex-1" href={`/read/${book.id}`}>
                             Lire maintenant
                           </Link>
-                          <button className="cta-button secondary detail-secondary-button" type="button" onClick={() => void handleBookDownload()}>
+                          <button className="cta-button secondary min-w-[14rem] flex-1" type="button" onClick={() => void handleBookDownload()}>
                             Telecharger le PDF
                           </button>
                         </>
                       ) : (
-                        <button className="cta-button detail-buy-button" type="button" onClick={() => void handleBookCheckout()}>
-                          {promoUnlocksFreeAccess ? "Obtenir gratuitement" : "Acheter ce livre"}
+                        <button className="cta-button min-w-[14rem] flex-1" type="button" onClick={() => void handleBookCheckout()}>
+                          {promoUnlocksFreeAccess ? "Partager pour deverrouiller" : "Acheter ce livre"}
                         </button>
                       )}
 
-                      <div className="book-tooltip">
-                        {book.amazonPaperbackUrl ? (
-                          <a
-                            className="pill-button detail-secondary-button"
-                            href={book.amazonPaperbackUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            title="Ce bouton ouvre la page Amazon de ce livre broche."
-                          >
-                            Amazon broche
-                          </a>
-                        ) : (
-                          <button className="pill-button detail-secondary-button" type="button" disabled>
-                            Amazon broche
-                          </button>
-                        )}
-                        <span className="book-tooltip-bubble">
-                          Cliquez ici pour ouvrir la page Amazon correspondante.
-                        </span>
-                      </div>
+                      {book.amazonPaperbackUrl ? (
+                        <a
+                          href={book.amazonPaperbackUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="pill-button shrink-0 flex items-center gap-2"
+                          title="Ce bouton ouvre la page Amazon correspondante."
+                        >
+                          <span>Amazon broche</span>
+                        </a>
+                      ) : (
+                        <button className="pill-button shrink-0 flex items-center gap-2" type="button" disabled>
+                          <span>Amazon broche</span>
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  {promoMessage ? (
-                    <p className={promoMessageKind === "success" ? "tiny promo-message success" : "tiny promo-message error"}>
-                      {promoMessage}
-                    </p>
-                  ) : null}
+                  {promoSuccess ? <p className="tiny promo-message success">{promoSuccess}</p> : null}
                   {promoUnlocksFreeAccess && !accessState.hasAccess ? (
                     <div className="share-unlock-box">
                       <strong>Partage pour deverrouiller</strong>
