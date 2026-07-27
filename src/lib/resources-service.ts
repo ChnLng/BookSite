@@ -48,6 +48,9 @@ export type DisplayResource = {
 };
 
 const platformOrder = ["通用", "Mac", "Windows", "Linux", "手机"] as const;
+const RESOURCE_CACHE_TTL_MS = 60_000;
+let resourceListCache: { expiresAt: number; data: DisplayResource[] } | null = null;
+let resourceListInFlight: Promise<DisplayResource[]> | null = null;
 
 const sampleResources: DisplayResource[] = [
   {
@@ -162,7 +165,11 @@ function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) 
     .sort((left, right) => left.sortOrder - right.sortOrder || left.titleFr.localeCompare(right.titleFr));
 }
 
-export async function loadDisplayResources() {
+function findDisplayResourceByRef(resources: DisplayResource[], idOrSlug: string) {
+  return resources.find((resource) => resource.id === idOrSlug || resource.slug === idOrSlug) || null;
+}
+
+async function fetchDisplayResources() {
   const supabase = getSupabaseBrowserClient();
 
   if (!supabase) {
@@ -191,7 +198,75 @@ export async function loadDisplayResources() {
   return mapped.length > 0 ? mapped : sampleResources;
 }
 
+export async function loadDisplayResources() {
+  const now = Date.now();
+
+  if (resourceListCache && resourceListCache.expiresAt > now) {
+    return resourceListCache.data;
+  }
+
+  if (resourceListInFlight) {
+    return resourceListInFlight;
+  }
+
+  resourceListInFlight = fetchDisplayResources()
+    .then((data) => {
+      resourceListCache = {
+        data,
+        expiresAt: Date.now() + RESOURCE_CACHE_TTL_MS,
+      };
+      return data;
+    })
+    .finally(() => {
+      resourceListInFlight = null;
+    });
+
+  return resourceListInFlight;
+}
+
 export async function resolveDisplayResourceById(idOrSlug: string) {
   const resources = await loadDisplayResources();
-  return resources.find((resource) => resource.id === idOrSlug || resource.slug === idOrSlug) || null;
+  const cachedMatch = findDisplayResourceByRef(resources, idOrSlug);
+
+  if (cachedMatch) {
+    return cachedMatch;
+  }
+
+  const supabase = getSupabaseBrowserClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const [resourceResult, fileResult] = await Promise.all([
+    supabase
+      .from("resource_items")
+      .select("id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur")
+      .or(`slug.eq.${idOrSlug},id.eq.${idOrSlug}`)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("resource_item_files")
+      .select("id, resource_id, platform, label_fr, file_url, file_path, external_url, sort_order")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+  ]);
+
+  if (!resourceResult.data) {
+    return null;
+  }
+
+  const mapped = mapResources(
+    [resourceResult.data as ResourceItemRow],
+    (fileResult.data || []) as ResourceItemFileRow[],
+  )[0] || null;
+
+  if (mapped && resourceListCache && resourceListCache.expiresAt > Date.now()) {
+    resourceListCache = {
+      ...resourceListCache,
+      data: [...resourceListCache.data.filter((resource) => resource.id !== mapped.id), mapped],
+    };
+  }
+
+  return mapped;
 }

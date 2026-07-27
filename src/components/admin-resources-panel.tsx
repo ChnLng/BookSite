@@ -2,20 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type CategoryOption = {
   id: string;
   titleFr: string;
   kind: string;
-};
-
-type LegacyCategoryRow = {
-  id: string;
-  title_fr?: string | null;
-  title_zh?: string | null;
-  name?: string | null;
-  kind?: string | null;
 };
 
 type ResourceVariantDraft = {
@@ -99,7 +90,7 @@ function slugify(value: string) {
 }
 
 export function AdminResourcesPanel() {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [filesByResource, setFilesByResource] = useState<Record<string, ResourceFileRow[]>>({});
@@ -144,11 +135,7 @@ export function AdminResourcesPanel() {
   };
 
   const loadData = async () => {
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      setStatusMessage("Supabase indisponible dans le navigateur.");
-      setLoading(false);
+    if (authLoading) {
       return;
     }
 
@@ -159,115 +146,53 @@ export function AdminResourcesPanel() {
 
     setLoading(true);
 
-    const warnings: string[] = [];
+    try {
+      const response = await authorizedFetch("/api/admin/resources", { cache: "no-store" });
+      const result = (await response.json()) as {
+        ok?: boolean;
+        message?: string;
+        warnings?: string[];
+        categories?: CategoryOption[];
+        resources?: ResourceRow[];
+        files?: Array<ResourceFileRow & { file_url?: string | null }>;
+      };
 
-    const categoriesResult = await supabase
-      .from("categories")
-      .select("id, title_fr, title_zh, kind")
-      .in("kind", ["resource", "custom"])
-      .order("created_at", { ascending: true });
-
-    let nextCategories: CategoryOption[] = [];
-    if (categoriesResult.error) {
-      const fallbackCategoriesResult = await supabase
-        .from("categories")
-        .select("id, title_fr, title_zh, name")
-        .order("created_at", { ascending: true });
-
-      if (fallbackCategoriesResult.error) {
-        warnings.push(`Categories: ${fallbackCategoriesResult.error.message}`);
-      } else {
-        nextCategories = ((fallbackCategoriesResult.data || []) as LegacyCategoryRow[]).map((item) => ({
-          id: item.id,
-          titleFr: item.title_fr || item.title_zh || item.name || "Categorie",
-          kind: "resource",
-        }));
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.message || "Chargement des outils impossible.");
+        setCategories([]);
+        setResources([]);
+        setFilesByResource({});
+        return;
       }
-    } else {
-      nextCategories = ((categoriesResult.data || []) as LegacyCategoryRow[]).map((item) => ({
-        id: item.id,
-        titleFr: item.title_fr || item.title_zh || item.name || "Categorie",
-        kind: item.kind || "resource",
-      }));
+
+      const nextCategories = result.categories || [];
+      const nextResources = result.resources || [];
+      const nextFilesByResource = (result.files || []).reduce<Record<string, ResourceFileRow[]>>((accumulator, file) => {
+        accumulator[file.resource_id] ||= [];
+        accumulator[file.resource_id].push({
+          ...file,
+          file_path: file.file_path || file.file_url || null,
+        });
+        return accumulator;
+      }, {});
+
+      setCategories(nextCategories);
+      setResources(nextResources);
+      setFilesByResource(nextFilesByResource);
+      setStatusMessage(result.warnings?.length ? result.warnings.join(" | ") : "");
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Chargement des outils impossible.");
+      setCategories([]);
+      setResources([]);
+      setFilesByResource({});
+    } finally {
+      setLoading(false);
     }
-
-    const resourcesResult = await supabase
-      .from("resource_items")
-      .select("id, category_id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
-
-    let nextResources: ResourceRow[] = [];
-    if (resourcesResult.error) {
-      const fallbackResourcesResult = await supabase
-        .from("resource_items")
-        .select("id, category_id, slug, title_fr, summary_fr, qr_image_url, external_url, visible, sort_order")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: true });
-
-      if (fallbackResourcesResult.error) {
-        warnings.push(`Outils: ${fallbackResourcesResult.error.message}`);
-      } else {
-        nextResources = ((fallbackResourcesResult.data || []) as ResourceRow[]).map((item) => ({
-          ...item,
-          cover_image_url: item.qr_image_url || null,
-          price_eur: 0,
-        }));
-      }
-    } else {
-      nextResources = (resourcesResult.data || []) as ResourceRow[];
-    }
-
-    const filesResult = await supabase
-      .from("resource_item_files")
-      .select("id, resource_id, platform, label_fr, file_path, file_url, external_url, sort_order")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
-
-    let nextFilesByResource: Record<string, ResourceFileRow[]> = {};
-    if (filesResult.error) {
-      const fallbackFilesResult = await supabase
-        .from("resource_item_files")
-        .select("id, resource_id, platform, label_fr, file_path, external_url, sort_order")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: true });
-
-      if (fallbackFilesResult.error) {
-        warnings.push(`Fichiers Outils: ${fallbackFilesResult.error.message}`);
-      } else {
-        nextFilesByResource = ((fallbackFilesResult.data || []) as ResourceFileRow[]).reduce<Record<string, ResourceFileRow[]>>(
-          (accumulator, file) => {
-            accumulator[file.resource_id] ||= [];
-            accumulator[file.resource_id].push(file);
-            return accumulator;
-          },
-          {},
-        );
-      }
-    } else {
-      nextFilesByResource = ((filesResult.data || []) as Array<ResourceFileRow & { file_url?: string | null }>).reduce<Record<string, ResourceFileRow[]>>(
-        (accumulator, file) => {
-          accumulator[file.resource_id] ||= [];
-          accumulator[file.resource_id].push({
-            ...file,
-            file_path: file.file_path || file.file_url || null,
-          });
-          return accumulator;
-        },
-        {},
-      );
-    }
-
-    setCategories(nextCategories);
-    setResources(nextResources);
-    setFilesByResource(nextFilesByResource);
-    setStatusMessage(warnings.length > 0 ? warnings.join(" | ") : "");
-    setLoading(false);
   };
 
   useEffect(() => {
     void loadData();
-  }, [session?.access_token]);
+  }, [authLoading, session?.access_token]);
 
   const resetDraft = () => {
     setDraft(defaultDraft);
@@ -304,12 +229,6 @@ export function AdminResourcesPanel() {
   };
 
   const saveResource = async () => {
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      return;
-    }
-
     const normalizedSlug = slugify(draft.slug || draft.titleFr);
 
     if (!normalizedSlug || !draft.titleFr.trim()) {
@@ -320,55 +239,24 @@ export function AdminResourcesPanel() {
     setBusyKey("save-resource");
 
     try {
-      const payload = {
-        category_id: draft.categoryId || null,
-        slug: normalizedSlug,
-        title_fr: draft.titleFr.trim(),
-        summary_fr: draft.summaryFr.trim() || null,
-        cover_image_url: draft.coverImageUrl.trim() || null,
-        qr_image_url: draft.qrImageUrl.trim() || null,
-        external_url: draft.externalUrl.trim() || null,
-        price_eur: Number.parseFloat(draft.priceEur || "0") || 0,
-        visible: draft.visible,
-        sort_order: Number(draft.sortOrder || 0),
-      };
+      const response = await authorizedFetch("/api/admin/resources", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          payload: {
+            ...draft,
+            id: editingId || undefined,
+            slug: normalizedSlug,
+          },
+        }),
+      });
+      const result = (await response.json()) as { ok?: boolean; message?: string };
 
-      let resourceId = editingId || "";
-
-      if (editingId) {
-        const { error } = await supabase.from("resource_items").update(payload).eq("id", editingId);
-        if (error) {
-          setStatusMessage(error.message);
-          return;
-        }
-      } else {
-        const { data, error } = await supabase.from("resource_items").insert(payload).select("id").single();
-        if (error || !data?.id) {
-          setStatusMessage(error?.message || "Creation de ressource impossible.");
-          return;
-        }
-        resourceId = data.id as string;
-      }
-
-      await supabase.from("resource_item_files").delete().eq("resource_id", resourceId);
-
-      const rows = draft.downloads
-        .filter((entry) => entry.labelFr.trim() && (entry.filePath.trim() || entry.externalUrl.trim()))
-        .map((entry, index) => ({
-          resource_id: resourceId,
-          platform: entry.platform,
-          label_fr: entry.labelFr.trim(),
-          file_path: entry.filePath.trim() || null,
-          external_url: entry.externalUrl.trim() || null,
-          sort_order: Number(entry.sortOrder || index * 10),
-        }));
-
-      if (rows.length > 0) {
-        const { error } = await supabase.from("resource_item_files").insert(rows);
-        if (error) {
-          setStatusMessage(error.message);
-          return;
-        }
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.message || "Creation de ressource impossible.");
+        return;
       }
 
       setStatusMessage("Ressource ludique enregistree.");
@@ -380,20 +268,20 @@ export function AdminResourcesPanel() {
   };
 
   const deleteResource = async (resourceId: string) => {
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      return;
-    }
-
     setBusyKey(`delete-resource-${resourceId}`);
 
     try {
-      await supabase.from("resource_item_files").delete().eq("resource_id", resourceId);
-      const { error } = await supabase.from("resource_items").delete().eq("id", resourceId);
+      const response = await authorizedFetch("/api/admin/resources", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: resourceId }),
+      });
+      const result = (await response.json()) as { ok?: boolean; message?: string };
 
-      if (error) {
-        setStatusMessage(error.message);
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.message || "Suppression impossible.");
         return;
       }
 
@@ -703,6 +591,15 @@ export function AdminResourcesPanel() {
         <button className="cta-button" type="button" disabled={busyKey === "save-resource"} onClick={() => void saveResource()}>
           {busyKey === "save-resource" ? "Enregistrement..." : editingId ? "Mettre a jour la ressource" : "Ajouter la ressource"}
         </button>
+      </div>
+
+      <div className="split-line" style={{ marginTop: 18 }}>
+        <div>
+          <h4 style={{ margin: 0 }}>Liste des outils existants</h4>
+          <p className="tiny" style={{ marginTop: 6 }}>
+            Les donnees chargees depuis Supabase apparaissent ici avec les boutons Modifier / Supprimer.
+          </p>
+        </div>
       </div>
 
       <div className="admin-dynamic-stack">

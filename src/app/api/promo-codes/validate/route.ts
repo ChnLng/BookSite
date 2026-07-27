@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from("promo_codes")
-    .select("*")
+    .select("id, code, discount_type, discount_value, expires_at, is_active, discount_percent, valid_from, valid_until, active")
     .ilike("code", normalizedCode)
     .maybeSingle();
 

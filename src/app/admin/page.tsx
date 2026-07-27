@@ -341,7 +341,7 @@ function downloadEntryKey(download: DownloadRow) {
 }
 
 function AdminPageContent() {
-  const { profile, session } = useAuth();
+  const { profile, session, loading: authLoading } = useAuth();
   const [books, setBooks] = useState<BookRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
@@ -491,19 +491,33 @@ function AdminPageContent() {
     }
 
     let nextResourceCount = 0;
-    const resourcesCountQuery = await supabase.from("resource_items").select("id");
-    if (resourcesCountQuery.error) {
-      warnings.push(`资源 Outils 读取失败: ${resourcesCountQuery.error.message}`);
-    } else {
-      nextResourceCount = ((resourcesCountQuery.data || []) as ResourceCountRow[]).length;
+    if (session?.access_token) {
+      try {
+        const response = await authorizedAdminFetch("/api/admin/resources", { cache: "no-store" });
+        const result = (await response.json()) as { ok?: boolean; message?: string; resources?: ResourceCountRow[] };
+        if (!response.ok || !result.ok) {
+          warnings.push(`资源 Outils 读取失败: ${result.message || "Chargement impossible."}`);
+        } else {
+          nextResourceCount = (result.resources || []).length;
+        }
+      } catch (error) {
+        warnings.push(`资源 Outils 读取失败: ${error instanceof Error ? error.message : "Chargement impossible."}`);
+      }
     }
 
     let nextPartnerCount = 0;
-    const partnerCountQuery = await supabase.from("partner_links").select("id");
-    if (partnerCountQuery.error) {
-      warnings.push(`友链 Liens 读取失败: ${partnerCountQuery.error.message}`);
-    } else {
-      nextPartnerCount = ((partnerCountQuery.data || []) as PartnerCountRow[]).length;
+    if (session?.access_token) {
+      try {
+        const response = await authorizedAdminFetch("/api/admin/partner-links", { cache: "no-store" });
+        const result = (await response.json()) as { ok?: boolean; message?: string; links?: PartnerCountRow[] };
+        if (!response.ok || !result.ok) {
+          warnings.push(`友链 Liens 读取失败: ${result.message || "Chargement impossible."}`);
+        } else {
+          nextPartnerCount = (result.links || []).length;
+        }
+      } catch (error) {
+        warnings.push(`友链 Liens 读取失败: ${error instanceof Error ? error.message : "Chargement impossible."}`);
+      }
     }
 
     let nextDonations: DonationRow[] = [];
@@ -535,8 +549,11 @@ function AdminPageContent() {
   };
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     void reload();
-  }, [session?.access_token]);
+  }, [authLoading, session?.access_token]);
 
   useEffect(() => {
     if (!session?.access_token || books.length === 0) {

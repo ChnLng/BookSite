@@ -33,6 +33,10 @@ export type DisplayBook = Book & {
 export const BOOK_PUBLIC_SELECT =
   "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, related_book_ids, created_at";
 
+const BOOK_CACHE_TTL_MS = 60_000;
+const bookListCache = new Map<boolean, { expiresAt: number; data: DisplayBook[] }>();
+const bookListInFlight = new Map<boolean, Promise<DisplayBook[]>>();
+
 function normalizeRelatedBookIds(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value
@@ -86,7 +90,11 @@ export function mapBookRow(row: BookRow, fallback?: Book): DisplayBook {
   };
 }
 
-export async function loadDisplayBooks(includeHidden = false): Promise<DisplayBook[]> {
+function findDisplayBookByRef(books: DisplayBook[], bookId: string) {
+  return books.find((book) => book.id === bookId || book.dbId === bookId) || null;
+}
+
+async function fetchDisplayBooks(includeHidden = false): Promise<DisplayBook[]> {
   const supabase = getSupabaseBrowserClient();
 
   if (!hasSupabaseConfig || !supabase) {
@@ -111,10 +119,47 @@ export async function loadDisplayBooks(includeHidden = false): Promise<DisplayBo
   });
 }
 
+export async function loadDisplayBooks(includeHidden = false): Promise<DisplayBook[]> {
+  const now = Date.now();
+  const cached = bookListCache.get(includeHidden);
+
+  if (cached && cached.expiresAt > now) {
+    return cached.data;
+  }
+
+  const inFlight = bookListInFlight.get(includeHidden);
+
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const request = fetchDisplayBooks(includeHidden)
+    .then((data) => {
+      bookListCache.set(includeHidden, {
+        data,
+        expiresAt: Date.now() + BOOK_CACHE_TTL_MS,
+      });
+      return data;
+    })
+    .finally(() => {
+      bookListInFlight.delete(includeHidden);
+    });
+
+  bookListInFlight.set(includeHidden, request);
+  return request;
+}
+
 export async function resolveDisplayBookById(
   bookId: string,
   includeHidden = false,
 ): Promise<DisplayBook | null> {
+  const cachedBooks = await loadDisplayBooks(includeHidden);
+  const cachedMatch = findDisplayBookByRef(cachedBooks, bookId);
+
+  if (cachedMatch) {
+    return cachedMatch;
+  }
+
   const supabase = getSupabaseBrowserClient();
 
   if (hasSupabaseConfig && supabase) {
@@ -133,7 +178,17 @@ export async function resolveDisplayBookById(
     if (data) {
       const row = data as BookRow;
       const fallback = staticBooks.find((book) => book.id === (row.slug || row.id));
-      return mapBookRow(row, fallback);
+      const mapped = mapBookRow(row, fallback);
+      const current = bookListCache.get(includeHidden);
+
+      if (current && current.expiresAt > Date.now()) {
+        bookListCache.set(includeHidden, {
+          ...current,
+          data: [...current.data.filter((book) => book.id !== mapped.id && book.dbId !== mapped.dbId), mapped],
+        });
+      }
+
+      return mapped;
     }
   }
 

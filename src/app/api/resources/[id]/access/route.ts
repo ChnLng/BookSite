@@ -15,17 +15,18 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
   }
 
-  const { data: resource } = await supabase
-    .from("resource_items")
-    .select("id, slug, title_fr, visible")
-    .or(`slug.eq.${id},id.eq.${id}`)
-    .maybeSingle();
+  const [{ data: resource }, user] = await Promise.all([
+    supabase
+      .from("resource_items")
+      .select("id, slug, visible")
+      .or(`slug.eq.${id},id.eq.${id}`)
+      .maybeSingle(),
+    getUserFromRequest(request),
+  ]);
 
   if (!resource || resource.visible === false) {
     return NextResponse.json({ ok: false, message: "Ressource introuvable." }, { status: 404 });
   }
-
-  const user = await getUserFromRequest(request);
 
   if (!user) {
     return NextResponse.json({ ok: true, hasAccess: false, requiresLogin: true });

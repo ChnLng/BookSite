@@ -462,7 +462,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="page-shell luxury-shell">
+    <main className="page-shell luxury-shell homepage-shell w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <TopNav
         className="topbar-luxury"
         subtitle="Bibliotheque visuelle bilingue"
@@ -473,7 +473,7 @@ export default function HomePage() {
         isHomePage={true}
       />
 
-      <section className="homepage-responsive-grid">
+      <section className="homepage-responsive-grid homepage-main-grid">
         <aside className="left-column-stack">
           <aside className="panel glass donation-column donation-column-compact" id="donation">
             <div className="section-heading">

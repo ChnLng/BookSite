@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type PartnerLinkRow = {
   id: string;
@@ -31,7 +30,7 @@ const defaultDraft: PartnerDraft = {
 };
 
 export function AdminPartnerLinksPanel() {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const [links, setLinks] = useState<PartnerLinkRow[]>([]);
   const [draft, setDraft] = useState<PartnerDraft>(defaultDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -73,11 +72,7 @@ export function AdminPartnerLinksPanel() {
   };
 
   const loadData = async () => {
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      setStatusMessage("Supabase indisponible dans le navigateur.");
-      setLoading(false);
+    if (authLoading) {
       return;
     }
 
@@ -88,26 +83,29 @@ export function AdminPartnerLinksPanel() {
 
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from("partner_links")
-      .select("id, title_fr, icon_url, target_url, sort_order, visible")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
+    try {
+      const response = await authorizedFetch("/api/admin/partner-links", { cache: "no-store" });
+      const result = (await response.json()) as { ok?: boolean; message?: string; links?: PartnerLinkRow[] };
 
-    if (error) {
-      setStatusMessage(error.message);
-      setLinks([]);
-    } else {
-      setLinks((data || []) as PartnerLinkRow[]);
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.message || "Chargement des liens impossible.");
+        setLinks([]);
+        return;
+      }
+
+      setLinks(result.links || []);
       setStatusMessage("");
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Chargement des liens impossible.");
+      setLinks([]);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   useEffect(() => {
     void loadData();
-  }, [session?.access_token]);
+  }, [authLoading, session?.access_token]);
 
   const resetDraft = () => {
     setDraft(defaultDraft);
@@ -115,12 +113,6 @@ export function AdminPartnerLinksPanel() {
   };
 
   const saveLink = async () => {
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      return;
-    }
-
     if (!draft.titleFr.trim() || !draft.targetUrl.trim() || !draft.iconUrl.trim()) {
       setStatusMessage("Remplissez le titre, l'icone et l'URL cible.");
       return;
@@ -129,26 +121,23 @@ export function AdminPartnerLinksPanel() {
     setBusyKey("save-partner");
 
     try {
-      const payload = {
-        title_fr: draft.titleFr.trim(),
-        icon_url: draft.iconUrl.trim(),
-        target_url: draft.targetUrl.trim(),
-        sort_order: Number(draft.sortOrder || 0),
-        visible: draft.visible,
-      };
+      const response = await authorizedFetch("/api/admin/partner-links", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          payload: {
+            ...draft,
+            id: editingId || undefined,
+          },
+        }),
+      });
+      const result = (await response.json()) as { ok?: boolean; message?: string };
 
-      if (editingId) {
-        const { error } = await supabase.from("partner_links").update(payload).eq("id", editingId);
-        if (error) {
-          setStatusMessage(error.message);
-          return;
-        }
-      } else {
-        const { error } = await supabase.from("partner_links").insert(payload);
-        if (error) {
-          setStatusMessage(error.message);
-          return;
-        }
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.message || "Enregistrement impossible.");
+        return;
       }
 
       setStatusMessage("Lien partenaire enregistre.");
@@ -172,18 +161,20 @@ export function AdminPartnerLinksPanel() {
   };
 
   const deleteLink = async (linkId: string) => {
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      return;
-    }
-
     setBusyKey(`delete-link-${linkId}`);
 
     try {
-      const { error } = await supabase.from("partner_links").delete().eq("id", linkId);
-      if (error) {
-        setStatusMessage(error.message);
+      const response = await authorizedFetch("/api/admin/partner-links", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: linkId }),
+      });
+      const result = (await response.json()) as { ok?: boolean; message?: string };
+
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.message || "Suppression impossible.");
         return;
       }
 
@@ -198,12 +189,6 @@ export function AdminPartnerLinksPanel() {
   };
 
   const moveLink = async (linkId: string, direction: "left" | "right") => {
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      return;
-    }
-
     const currentIndex = links.findIndex((link) => link.id === linkId);
     const targetIndex = direction === "left" ? currentIndex - 1 : currentIndex + 1;
 
@@ -216,13 +201,22 @@ export function AdminPartnerLinksPanel() {
     setBusyKey(`move-link-${linkId}-${direction}`);
 
     try {
-      const [{ error: currentError }, { error: targetError }] = await Promise.all([
-        supabase.from("partner_links").update({ sort_order: targetLink.sort_order || 0 }).eq("id", currentLink.id),
-        supabase.from("partner_links").update({ sort_order: currentLink.sort_order || 0 }).eq("id", targetLink.id),
-      ]);
+      const response = await authorizedFetch("/api/admin/partner-links", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currentId: currentLink.id,
+          targetId: targetLink.id,
+          currentSortOrder: currentLink.sort_order || 0,
+          targetSortOrder: targetLink.sort_order || 0,
+        }),
+      });
+      const result = (await response.json()) as { ok?: boolean; message?: string };
 
-      if (currentError || targetError) {
-        setStatusMessage(currentError?.message || targetError?.message || "Tri impossible.");
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.message || "Tri impossible.");
         return;
       }
 
@@ -311,6 +305,15 @@ export function AdminPartnerLinksPanel() {
         <button className="cta-button" type="button" disabled={busyKey === "save-partner"} onClick={() => void saveLink()}>
           {busyKey === "save-partner" ? "Enregistrement..." : editingId ? "Mettre a jour le lien" : "Ajouter le lien"}
         </button>
+      </div>
+
+      <div className="split-line" style={{ marginTop: 18 }}>
+        <div>
+          <h4 style={{ margin: 0 }}>Liste des liens existants</h4>
+          <p className="tiny" style={{ marginTop: 6 }}>
+            Les liens deja presents dans la base sont rendus ci-dessous avec Modifier / Supprimer.
+          </p>
+        </div>
       </div>
 
       <div className="admin-dynamic-stack">

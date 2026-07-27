@@ -45,25 +45,18 @@ async function matchDownload(
 ) {
   const { userId, email, bookId } = params;
   const pdfPath = expectedPdfPath(bookId);
+  const [byUserIdResult, byEmailResult] = await Promise.all([
+    supabase.from("downloads").select("id, book_id, download_url").eq("user_id", userId),
+    email
+      ? supabase.from("downloads").select("id, book_id, download_url").eq("user_email", email)
+      : Promise.resolve({ data: [] as Array<{ id?: string; book_id?: string | null; download_url?: string | null }> }),
+  ]);
 
-  const { data: byUserId } = await supabase
-    .from("downloads")
-    .select("id, book_id, download_url")
-    .eq("user_id", userId);
-
-  if (byUserId?.some((row) => downloadMatchesBook(row, bookId, pdfPath))) {
+  if (byUserIdResult.data?.some((row) => downloadMatchesBook(row, bookId, pdfPath))) {
     return true;
   }
 
-  if (!email) {
-    return false;
-  }
-
-  const { data: byEmail } = await supabase
-    .from("downloads")
-    .select("id, book_id, download_url")
-    .eq("user_email", email);
-
+  const byEmail = byEmailResult.data || [];
   return Boolean(byEmail?.some((row) => downloadMatchesBook(row, bookId, pdfPath)));
 }
 
@@ -101,24 +94,17 @@ export async function hasPurchasedResource(
   params: ResourcePurchaseCheckParams,
 ): Promise<boolean> {
   const { userId, email, resourceId } = params;
+  const [byUserIdResult, byEmailResult] = await Promise.all([
+    supabase.from("downloads").select("id, resource_id, download_kind").eq("user_id", userId),
+    email
+      ? supabase.from("downloads").select("id, resource_id, download_kind").eq("user_email", email)
+      : Promise.resolve({ data: [] as Array<{ id?: string; resource_id?: string | null; download_kind?: string | null }> }),
+  ]);
 
-  const { data: byUserId } = await supabase
-    .from("downloads")
-    .select("id, resource_id, download_kind")
-    .eq("user_id", userId);
-
-  if (byUserId?.some((row) => resourceDownloadMatches(row, resourceId))) {
+  if (byUserIdResult.data?.some((row) => resourceDownloadMatches(row, resourceId))) {
     return true;
   }
 
-  if (!email) {
-    return false;
-  }
-
-  const { data: byEmail } = await supabase
-    .from("downloads")
-    .select("id, resource_id, download_kind")
-    .eq("user_email", email);
-
+  const byEmail = byEmailResult.data || [];
   return Boolean(byEmail?.some((row) => resourceDownloadMatches(row, resourceId)));
 }

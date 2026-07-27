@@ -3,11 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
-import { loadDisplayBooks, resolveDisplayBookById, type DisplayBook } from "@/lib/books-service";
+import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
 
 type ReviewRecord = {
   id: string;
@@ -169,7 +169,7 @@ export default function BookDetailPage() {
     "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
   const effectiveHasAccess = accessState.hasAccess || optimisticSharedUnlock;
 
-  const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+  const authorizedFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
       throw new Error("Connexion requise.");
     }
@@ -181,7 +181,48 @@ export default function BookDetailPage() {
       ...init,
       headers,
     });
-  };
+  }, [session?.access_token]);
+
+  const fetchReviewData = useCallback(async (targetBookId: string) => {
+    try {
+      const response = await fetch(`/api/books/${targetBookId}/reviews`, {
+        cache: "no-store",
+      });
+      const result = (await response.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            summary?: ReviewSummary;
+            reviews?: ReviewRecord[];
+          }
+        | null;
+
+      if (!response.ok || !result?.ok) {
+        return {
+          reviews: [] as ReviewRecord[],
+          summary: {
+            averageRating: 0,
+            totalReviews: 0,
+          },
+        };
+      }
+
+      return {
+        reviews: result.reviews || [],
+        summary: result.summary || {
+          averageRating: 0,
+          totalReviews: 0,
+        },
+      };
+    } catch {
+      return {
+        reviews: [] as ReviewRecord[],
+        summary: {
+          averageRating: 0,
+          totalReviews: 0,
+        },
+      };
+    }
+  }, []);
 
   useEffect(() => {
     setReviewForm((current) => {
@@ -205,6 +246,9 @@ export default function BookDetailPage() {
       setLoading(false);
       setBook(null);
       setRelatedBooks([]);
+      setReviews([]);
+      setReviewSummary({ averageRating: 0, totalReviews: 0 });
+      setReviewsLoading(false);
       return;
     }
 
@@ -212,11 +256,12 @@ export default function BookDetailPage() {
 
     const loadBookPage = async () => {
       setLoading(true);
+      setReviewsLoading(true);
 
-      const [resolvedBook, catalogueBooks] = await Promise.all([
-        resolveDisplayBookById(bookId),
-        loadDisplayBooks(),
-      ]);
+      const cataloguePromise = loadDisplayBooks();
+      const reviewsPromise = fetchReviewData(bookId);
+      const catalogueBooks = await cataloguePromise;
+      const resolvedBook = catalogueBooks.find((candidate) => candidate.id === bookId || candidate.dbId === bookId) || null;
 
       if (cancelled) {
         return;
@@ -244,6 +289,16 @@ export default function BookDetailPage() {
 
       setRelatedBooks(nextRelatedBooks);
       setLoading(false);
+
+      const reviewData = await reviewsPromise;
+
+      if (cancelled) {
+        return;
+      }
+
+      setReviews(reviewData.reviews);
+      setReviewSummary(reviewData.summary);
+      setReviewsLoading(false);
     };
 
     void loadBookPage();
@@ -251,63 +306,7 @@ export default function BookDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [bookId]);
-
-  useEffect(() => {
-    if (!bookId) {
-      setReviews([]);
-      setReviewSummary({ averageRating: 0, totalReviews: 0 });
-      setReviewsLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadReviews = async () => {
-      setReviewsLoading(true);
-
-      try {
-        const response = await fetch(`/api/books/${bookId}/reviews`, {
-          cache: "no-store",
-        });
-        const result = (await response.json().catch(() => null)) as
-          | {
-              ok?: boolean;
-              summary?: ReviewSummary;
-              reviews?: ReviewRecord[];
-            }
-          | null;
-
-        if (cancelled) {
-          return;
-        }
-
-        if (!response.ok || !result?.ok) {
-          setReviews([]);
-          setReviewSummary({ averageRating: 0, totalReviews: 0 });
-          return;
-        }
-
-        setReviews(result.reviews || []);
-        setReviewSummary(
-          result.summary || {
-            averageRating: 0,
-            totalReviews: 0,
-          },
-        );
-      } finally {
-        if (!cancelled) {
-          setReviewsLoading(false);
-        }
-      }
-    };
-
-    void loadReviews();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [bookId]);
+  }, [bookId, fetchReviewData]);
 
   useEffect(() => {
     if (!book || !openBuyImmediately || autoOpenedPayment) {
@@ -320,7 +319,7 @@ export default function BookDetailPage() {
     setAutoOpenedPayment(true);
   }, [autoOpenedPayment, book, finalPrice, openBuyImmediately]);
 
-  const refreshAccess = async () => {
+  const refreshAccess = useCallback(async () => {
     if (!bookId || !session?.access_token) {
       setAccessState({
         hasAccess: false,
@@ -331,27 +330,36 @@ export default function BookDetailPage() {
     }
 
     setAccessLoading(true);
-    const response = await authorizedFetch(`/api/books/${bookId}/access`, {
-      cache: "no-store",
-    });
-    const result = (await response.json().catch(() => null)) as
-      | { ok?: boolean; hasAccess?: boolean; requiresLogin?: boolean; isAdmin?: boolean }
-      | null;
 
-    setAccessState({
-      hasAccess: Boolean(result?.hasAccess),
-      requiresLogin: Boolean(result?.requiresLogin),
-      isAdmin: Boolean(result?.isAdmin),
-    });
-    if (result?.hasAccess) {
-      setOptimisticSharedUnlock(false);
+    try {
+      const response = await authorizedFetch(`/api/books/${bookId}/access`, {
+        cache: "no-store",
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { ok?: boolean; hasAccess?: boolean; requiresLogin?: boolean; isAdmin?: boolean }
+        | null;
+
+      setAccessState({
+        hasAccess: Boolean(result?.hasAccess),
+        requiresLogin: Boolean(result?.requiresLogin),
+        isAdmin: Boolean(result?.isAdmin),
+      });
+      if (result?.hasAccess) {
+        setOptimisticSharedUnlock(false);
+      }
+    } catch {
+      setAccessState({
+        hasAccess: false,
+        requiresLogin: true,
+      });
+    } finally {
+      setAccessLoading(false);
     }
-    setAccessLoading(false);
-  };
+  }, [authorizedFetch, bookId, session?.access_token]);
 
   useEffect(() => {
     void refreshAccess();
-  }, [bookId, session?.access_token]);
+  }, [refreshAccess]);
 
   useEffect(() => {
     if (!showPayment) {
@@ -533,34 +541,15 @@ export default function BookDetailPage() {
     };
   }, [authorizedFetch, book, finalPrice, refreshAccess, session?.access_token, shareUnlockBusy, shareUnlockPending]);
 
-  const refreshReviews = async () => {
+  const refreshReviews = useCallback(async () => {
     if (!bookId) {
       return;
     }
 
-    const response = await fetch(`/api/books/${bookId}/reviews`, {
-      cache: "no-store",
-    });
-    const result = (await response.json().catch(() => null)) as
-      | {
-          ok?: boolean;
-          summary?: ReviewSummary;
-          reviews?: ReviewRecord[];
-        }
-      | null;
-
-    if (!response.ok || !result?.ok) {
-      return;
-    }
-
-    setReviews(result.reviews || []);
-    setReviewSummary(
-      result.summary || {
-        averageRating: 0,
-        totalReviews: 0,
-      },
-    );
-  };
+    const reviewData = await fetchReviewData(bookId);
+    setReviews(reviewData.reviews);
+    setReviewSummary(reviewData.summary);
+  }, [bookId, fetchReviewData]);
 
   const handleReviewSubmit = async () => {
     if (!book) {
