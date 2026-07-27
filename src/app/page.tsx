@@ -10,6 +10,7 @@ import {
   MessageCircleHeart,
   ShieldCheck,
   Sparkles,
+  BookOpenText,
   Ticket,
   X,
 } from "lucide-react";
@@ -475,10 +476,12 @@ export default function HomePage() {
       <section className="homepage-responsive-grid">
         <aside className="left-column-stack">
           <aside className="panel glass donation-column donation-column-compact" id="donation">
-            <span className="badge">
-              <Sparkles size={16} />
-              Donation
-            </span>
+            <div className="section-heading">
+              <span className="section-heading-icon" aria-hidden="true">
+                <Sparkles size={17} />
+              </span>
+              <h2 className="section-heading-text">Donation</h2>
+            </div>
             <div className="paypal-donation-shell">
               <div className="paypal-donation-card">
                 <div id="paypal-container-D3LVZA49QZ4VE" />
@@ -494,10 +497,12 @@ export default function HomePage() {
           />
 
           <aside className="panel glass comment-column" id="commentaires">
-            <span className="badge">
-              <MessageCircleHeart size={16} />
-              Votre avis nous intéresse ...
-            </span>
+            <div className="section-heading">
+              <span className="section-heading-icon" aria-hidden="true">
+                <MessageCircleHeart size={17} />
+              </span>
+              <h2 className="section-heading-text">Commentaire</h2>
+            </div>
             <div className="comment-list">
               {comments.map((item) => (
                 <article className="comment-card" key={item.id}>
@@ -573,12 +578,11 @@ export default function HomePage() {
 
         <div className="home-main-flow">
           <section className="panel glass carousel-stage" id="scene">
-            <div className="badge mobile-break-badge">
-              <span>Albums illustrés bilingues</span>
-              <span className="mobile-flag-break" aria-hidden="true">
-                <br />
+            <div className="section-heading">
+              <span className="section-heading-icon" aria-hidden="true">
+                <BookOpenText size={17} />
               </span>
-              <span> 🇨🇳 chinois-français 🇫🇷</span>
+              <h2 className="section-heading-text">Albums illustrés bilingues 🇨🇳 chinois-français 🇫🇷</h2>
             </div>
 
             <div className="marquee-shell">
@@ -648,9 +652,11 @@ export default function HomePage() {
 
       <footer className="panel glass footer-rules" id="footer-rules">
         <div className="footer-inline">
-          <div className="badge">
-            <Ticket size={16} />
-            Informations
+          <div className="section-heading">
+            <span className="section-heading-icon" aria-hidden="true">
+              <Ticket size={17} />
+            </span>
+            <h2 className="section-heading-text">Informations</h2>
           </div>
           <div className="footer-links">
             {infoLinks.map((item) => (

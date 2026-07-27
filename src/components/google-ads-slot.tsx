@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { Sparkles } from "lucide-react";
 
 declare global {
   interface Window {
@@ -119,7 +120,12 @@ export function GoogleAdsSlot({
 
   return (
     <aside className={className || "panel glass ad-slot-panel"}>
-      <div className="badge">{label}</div>
+      <div className="section-heading">
+        <span className="section-heading-icon" aria-hidden="true">
+          <Sparkles size={17} />
+        </span>
+        <h2 className="section-heading-text">{label}</h2>
+      </div>
       <div className="ad-slot-shell">
         <ins
           key={`${pathname}-${slot}`}

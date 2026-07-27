@@ -376,65 +376,69 @@ export default function ResourceDetailPage() {
 
           <p className="section-caption" style={{ marginTop: 18 }}>{resource.summaryFr}</p>
 
-          <div className="actions-row resource-detail-actions">
-            <button
-              className="cta-button"
-              type="button"
-              disabled={actionBusy || accessState.hasAccess}
-              onClick={() => void handleCheckout()}
-            >
-              {accessState.hasAccess
-                ? "Acces deja debloque"
-                : actionBusy
-                  ? "Ouverture..."
-                  : resource.priceEur <= 0
-                    ? "Obtenir gratuitement"
-                    : "Acheter cet outil"}
-            </button>
-            {resource.externalUrl ? (
-              <a className="cta-button secondary" href={resource.externalUrl} target="_blank" rel="noreferrer">
-                <ExternalLink size={16} />
-                Voir aussi le lien externe
-              </a>
-            ) : null}
-          </div>
-
-          {actionMessage ? <p className="tiny" style={{ marginTop: 14 }}>{actionMessage}</p> : null}
-          {accessLoading ? <p className="tiny" style={{ marginTop: 6 }}>Verification de vos droits...</p> : null}
-
-          <div className="promo-panel">
-            <div className="split-line" style={{ paddingTop: 0 }}>
-              <span>Code promo</span>
-              {appliedPromo ? <strong>-{appliedPromo.discountPercent}%</strong> : <span className="tiny">Optionnel</span>}
-            </div>
-            <div className="promo-input-row">
-              <input
-                className="input"
-                value={promoCode}
-                onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
-                placeholder="Code promo"
-              />
-              <button className="pill-button" type="button" disabled={promoBusy} onClick={() => void handleApplyPromo()}>
-                {promoBusy ? "Verification..." : "Appliquer"}
-              </button>
-            </div>
-            {promoMessage ? (
-              <p className={promoMessageKind === "success" ? "tiny promo-message success" : "tiny promo-message error"}>
-                {promoMessage}
-              </p>
-            ) : null}
-            {finalPrice <= 0 && !accessState.hasAccess ? (
-              <div className="share-unlock-box">
-                <strong>Partage pour deverrouiller</strong>
-                <p className="tiny">{zeroPriceUnlockMessage}</p>
-                {shareUnlockPending ? (
-                  <p className="tiny">
-                    Cliquez maintenant sur l'un des boutons de partage en haut de la page. Les telechargements se deverrouilleront aussitot.
-                  </p>
-                ) : null}
+          <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
+            <div className="flex w-full flex-col gap-2 lg:w-[16rem] lg:min-w-[16rem]">
+              <div className="flex items-center justify-between">
+                <span className="tiny">Optionnel</span>
+                {appliedPromo ? <strong className="tiny">-{appliedPromo.discountPercent}%</strong> : null}
               </div>
-            ) : null}
+              <div className="flex items-center gap-2">
+                <input
+                  className="input min-w-0 flex-1"
+                  value={promoCode}
+                  onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
+                  placeholder="Code promo"
+                />
+                <button className="pill-button shrink-0" type="button" disabled={promoBusy} onClick={() => void handleApplyPromo()}>
+                  {promoBusy ? "Verification..." : "Appliquer"}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex w-full flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center lg:justify-end">
+              <button
+                className="cta-button w-full lg:min-w-[16rem] lg:w-[16rem]"
+                type="button"
+                disabled={actionBusy || accessState.hasAccess}
+                onClick={() => void handleCheckout()}
+              >
+                {accessState.hasAccess
+                  ? "Acces deja debloque"
+                  : actionBusy
+                    ? "Ouverture..."
+                    : resource.priceEur <= 0
+                      ? "Obtenir gratuitement"
+                      : "Acheter cet outil"}
+              </button>
+              {resource.externalUrl ? (
+                <a className="cta-button secondary w-full lg:w-auto" href={resource.externalUrl} target="_blank" rel="noreferrer">
+                  <ExternalLink size={16} />
+                  Voir aussi le lien externe
+                </a>
+              ) : null}
+            </div>
           </div>
+
+          {promoMessage ? (
+            <p className={promoMessageKind === "success" ? "tiny promo-message success" : "tiny promo-message error"}>
+              {promoMessage}
+            </p>
+          ) : null}
+
+          {actionMessage ? <p className="tiny">{actionMessage}</p> : null}
+          {accessLoading ? <p className="tiny">Verification de vos droits...</p> : null}
+
+          {finalPrice <= 0 && !accessState.hasAccess ? (
+            <div className="share-unlock-box">
+              <strong>Partage pour deverrouiller</strong>
+              <p className="tiny">{zeroPriceUnlockMessage}</p>
+              {shareUnlockPending ? (
+                <p className="tiny">
+                  Cliquez maintenant sur l'un des boutons de partage en haut de la page. Les telechargements se deverrouilleront aussitot.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="resource-download-panel">
             <div className="split-line">

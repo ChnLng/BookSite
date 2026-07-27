@@ -33,20 +33,16 @@ export function CoinLudiqueSection() {
 
   return (
     <section className="panel glass home-section-panel" id="coin-ludique-outils">
-      <div className="coin-ludique-header">
-        <div>
-          <div className="badge">
-            <Gamepad2 size={16} />
-            Coin ludique & Outils
-          </div>
-          <h2 className="section-title" style={{ marginTop: 18 }}>
-            Coin ludique & Outils
-          </h2>
-          <p className="section-caption">
-            Des mini-jeux et outils numeriques presents comme les livres: visuels doux, cartes claires, prix lisible et acces direct a leur fiche detail.
-          </p>
-        </div>
+      <div className="section-heading">
+        <span className="section-heading-icon" aria-hidden="true">
+          <Gamepad2 size={17} />
+        </span>
+        <h2 className="section-heading-text">Coin ludique & Outils</h2>
       </div>
+
+      <p className="section-caption">
+        Des mini-jeux et outils numeriques presents comme les livres: visuels doux, cartes claires, prix lisible et acces direct a leur fiche detail.
+      </p>
 
       <div className="marquee-shell resource-marquee-shell">
         <div className="marquee-inner resource-marquee-inner">

@@ -69,16 +69,11 @@ export function PartnerLinksSection() {
 
   return (
     <section className="panel glass home-section-panel" id="liens-partenaires">
-      <div className="coin-ludique-header">
-        <div>
-          <div className="badge">
-            <Link2 size={16} />
-            Liens partenaires
-          </div>
-          <h2 className="section-title" style={{ marginTop: 18 }}>
-            Liens partenaires
-          </h2>
-        </div>
+      <div className="section-heading">
+        <span className="section-heading-icon" aria-hidden="true">
+          <Link2 size={17} />
+        </span>
+        <h2 className="section-heading-text">Liens partenaires</h2>
       </div>
 
       <div className="partner-links-grid">
