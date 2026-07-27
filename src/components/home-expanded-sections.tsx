@@ -12,6 +12,7 @@ import {
   Sparkles,
   Wrench,
 } from "lucide-react";
+import { PartnerLinksSection } from "@/components/partner-links-section";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import {
   loadExpandedHomeData,
@@ -494,34 +495,7 @@ export function HomeExpandedSections() {
         );
       })}
 
-      {partnerLinks.length > 0 ? (
-        <section className="panel glass home-section-panel" id="liens-partenaires">
-          <div className="badge">
-            <Link2 size={16} />
-            Liens partenaires
-          </div>
-          <div className="partner-links-grid" style={{ marginTop: 20 }}>
-            {partnerLinks.map((link) => (
-              <a
-                key={link.id}
-                href={link.targetUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="partner-link-icon"
-                title={link.titleFr}
-              >
-                <Image
-                  src={link.iconUrl}
-                  alt={link.titleFr}
-                  width={48}
-                  height={48}
-                  className="partner-link-image"
-                />
-              </a>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <PartnerLinksSection />
     </>
   );
 }
