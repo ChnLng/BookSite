@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Link2 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
-type PartnerLink = {
+export type PartnerLinkItem = {
   id: string;
   titleFr: string;
   iconUrl: string;
@@ -13,7 +13,7 @@ type PartnerLink = {
   sortOrder: number;
 };
 
-const fallbackLinks: PartnerLink[] = [
+const fallbackLinks: PartnerLinkItem[] = [
   {
     id: "visdar-home",
     titleFr: "Visd AR",
@@ -25,10 +25,25 @@ const fallbackLinks: PartnerLink[] = [
 
 const tooltipText = "Ce lien s'ouvrira dans une nouvelle fenetre vers un site tiers.";
 
-export function PartnerLinksSection() {
-  const [links, setLinks] = useState<PartnerLink[]>(fallbackLinks);
+type PartnerLinksSectionProps = {
+  links?: PartnerLinkItem[];
+  sectionId?: string;
+  title?: string;
+};
+
+export function PartnerLinksSection({
+  links: providedLinks,
+  sectionId = "liens-partenaires",
+  title = "Liens partenaires",
+}: PartnerLinksSectionProps) {
+  const [links, setLinks] = useState<PartnerLinkItem[]>(providedLinks && providedLinks.length > 0 ? providedLinks : fallbackLinks);
 
   useEffect(() => {
+    if (providedLinks && providedLinks.length > 0) {
+      setLinks(providedLinks);
+      return;
+    }
+
     let cancelled = false;
 
     const loadLinks = async () => {
@@ -65,15 +80,15 @@ export function PartnerLinksSection() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [providedLinks]);
 
   return (
-    <section className="panel glass home-section-panel" id="liens-partenaires">
+    <section className="panel glass home-section-panel" id={sectionId}>
       <div className="section-heading">
         <span className="section-heading-icon" aria-hidden="true">
           <Link2 size={17} />
         </span>
-        <h2 className="section-heading-text">Liens partenaires</h2>
+        <h2 className="section-heading-text">{title}</h2>
       </div>
 
       <div className="partner-links-grid">

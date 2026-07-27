@@ -41,6 +41,28 @@ type FloatingSectionLink = {
   resetToTop?: boolean;
 };
 
+type RenderedSection =
+  | {
+      id: string;
+      label: string;
+      kind: "resource";
+      category: HomeCategory | null;
+      resources: ResourceItem[];
+    }
+  | {
+      id: string;
+      label: string;
+      kind: "custom";
+      category: HomeCategory;
+      categoryRules: CategoryFieldRule[];
+      categoryEntries: CategoryEntry[];
+    }
+  | {
+      id: string;
+      label: string;
+      kind: "partner";
+    };
+
 function getHeaderOffset() {
   if (typeof document === "undefined") {
     return 120;
@@ -182,12 +204,12 @@ export function HomeExpandedSections() {
     };
   }, []);
 
-  const customCategories = useMemo(
-    () => categories.filter((category) => category.kind === "custom" && category.homepageVisible),
-    [categories],
-  );
   const resourceCategories = useMemo(
     () => categories.filter((category) => category.kind === "resource" && category.homepageVisible),
+    [categories],
+  );
+  const customCategories = useMemo(
+    () => categories.filter((category) => category.kind === "custom" && category.homepageVisible),
     [categories],
   );
   const uncategorizedResources = useMemo(
@@ -199,35 +221,71 @@ export function HomeExpandedSections() {
     [resourceCategories, resources],
   );
 
-  const floatingLinks = useMemo(() => {
-    const links: FloatingSectionLink[] = [{ id: "scene", label: "图书专区", targetId: "scene", resetToTop: true }];
+  const renderedSections = useMemo<RenderedSection[]>(() => {
+    const sections: RenderedSection[] = [];
 
     resourceCategories.forEach((category) => {
-      links.push({
+      const categoryResources = resources.filter((resource) => resource.categoryId === category.id);
+      sections.push({
         id: `resource-${category.slug}`,
-        label: category.titleFr || "工具天地",
-        targetId: `resource-${category.slug}`,
+        label: category.titleFr || "Outils",
+        kind: "resource",
+        category,
+        resources: categoryResources,
       });
     });
 
     if (resourceCategories.length === 0 && uncategorizedResources.length > 0) {
-      links.push({ id: "coin-ludique-outils", label: "工具天地", targetId: "coin-ludique-outils" });
+      sections.push({
+        id: "coin-ludique-outils",
+        label: "Coin ludique",
+        kind: "resource",
+        category: null,
+        resources: uncategorizedResources,
+      });
     }
 
     customCategories.forEach((category) => {
-      links.push({
+      sections.push({
         id: `category-${category.slug}`,
-        label: category.titleFr,
-        targetId: `category-${category.slug}`,
+        label: category.titleFr || "Section",
+        kind: "custom",
+        category,
+        categoryRules: fieldRules
+          .filter((rule) => rule.categoryId === category.id && rule.showInCard)
+          .sort((left, right) => left.sortOrder - right.sortOrder),
+        categoryEntries: entries
+          .filter((entry) => entry.categoryId === category.id && entry.visible)
+          .sort((left, right) => left.sortOrder - right.sortOrder),
       });
     });
 
     if (partnerLinks.length > 0) {
-      links.push({ id: "liens-partenaires", label: "友情链接", targetId: "liens-partenaires" });
+      sections.push({
+        id: "liens-partenaires",
+        label: "Liens partenaires",
+        kind: "partner",
+      });
     }
 
-    return links;
-  }, [customCategories, partnerLinks.length, resourceCategories, uncategorizedResources.length]);
+    return sections;
+  }, [customCategories, entries, fieldRules, partnerLinks.length, resourceCategories, resources, uncategorizedResources]);
+
+  const floatingLinks = useMemo<FloatingSectionLink[]>(() => {
+    return [
+      {
+        id: "scene",
+        label: "Albums illustres bilingues",
+        targetId: "scene",
+        resetToTop: true,
+      },
+      ...renderedSections.map((section) => ({
+        id: section.id,
+        label: section.label,
+        targetId: section.id,
+      })),
+    ];
+  }, [renderedSections]);
 
   const getAvailableSections = useCallback(
     () =>
@@ -379,168 +437,115 @@ export function HomeExpandedSections() {
         ))}
       </aside>
 
-      {resourceCategories.map((category) => {
-        const categoryResources = resources.filter((resource) => resource.categoryId === category.id);
-
-        return (
-          <section className="panel glass home-section-panel" id={`resource-${category.slug}`} key={category.id}>
-            <div className="split-line">
-              <div>
-                <div className="badge">
-                  <Gamepad2 size={16} />
-                  {category.titleFr}
-                </div>
-                <h2 className="section-title" style={{ marginTop: 18 }}>
-                  {category.titleFr}
-                </h2>
-                <p className="section-caption">
-                  {category.introFr ||
-                    "Jeux a telecharger, mini outils bienveillants et ressources multi-plateformes pour prolonger l'experience du site."}
-                </p>
+      {renderedSections.map((section) => {
+        if (section.kind === "resource") {
+          return (
+            <section className="panel glass home-section-panel" id={section.id} key={section.id}>
+              <div className="section-heading">
+                <span className="section-heading-icon" aria-hidden="true">
+                  <Gamepad2 size={17} />
+                </span>
+                <h2 className="section-heading-text">{section.label}</h2>
               </div>
-            </div>
-
-            {categoryResources.length === 0 ? (
-              <p className="tiny">Cette categorie est prete. Ajoutez maintenant ses premiers outils dans l&apos;admin.</p>
-            ) : (
-              <div className="home-resource-carousel" role="list">
-                {categoryResources.map((resource) => (
-                  <Link className="home-resource-carousel-card" href={`/outils/${resource.slug || resource.id}`} key={resource.id} role="listitem">
-                    <div className="home-resource-carousel-image">
-                      <Image
-                        src={resource.qrImageUrl || "/images/logo.png"}
-                        alt={resource.titleFr}
-                        fill
-                        sizes="280px"
-                        className="carousel-cover-image"
-                      />
-                    </div>
-                    <div className="home-resource-carousel-copy">
-                      <strong>{resource.titleFr}</strong>
-                      <p className="tiny">{resource.summaryFr || "Ouvrez la fiche pour voir les details et les options de telechargement."}</p>
-                      <span className="home-resource-carousel-meta">
-                        {resource.downloads.length > 0 ? `${resource.downloads.length} version(s)` : "Voir la fiche"}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
-        );
-      })}
-
-      {resourceCategories.length === 0 && uncategorizedResources.length > 0 ? (
-        <section className="panel glass home-section-panel" id="coin-ludique-outils">
-          <div className="split-line">
-            <div>
-              <div className="badge">
-                <Gamepad2 size={16} />
-                Coin ludique & Outils
-              </div>
-              <h2 className="section-title" style={{ marginTop: 18 }}>
-                Coin ludique & Outils
-              </h2>
               <p className="section-caption">
-                Jeux a telecharger, mini outils bienveillants et ressources multi-plateformes pour prolonger l&apos;experience du site.
+                {section.category?.introFr ||
+                  "Jeux a telecharger, mini outils bienveillants et ressources multi-plateformes pour prolonger l'experience du site."}
               </p>
-            </div>
-          </div>
-          <div className="home-resource-carousel" role="list">
-            {uncategorizedResources.map((resource) => (
-              <Link className="home-resource-carousel-card" href={`/outils/${resource.slug || resource.id}`} key={resource.id} role="listitem">
-                <div className="home-resource-carousel-image">
-                  <Image
-                    src={resource.qrImageUrl || "/images/logo.png"}
-                    alt={resource.titleFr}
-                    fill
-                    sizes="280px"
-                    className="carousel-cover-image"
-                  />
-                </div>
-                <div className="home-resource-carousel-copy">
-                  <strong>{resource.titleFr}</strong>
-                  <p className="tiny">{resource.summaryFr || "Ouvrez la fiche pour voir les details et les options de telechargement."}</p>
-                  <span className="home-resource-carousel-meta">
-                    {resource.downloads.length > 0 ? `${resource.downloads.length} version(s)` : "Voir la fiche"}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
 
-      {customCategories.map((category) => {
-        const categoryRules = fieldRules
-          .filter((rule) => rule.categoryId === category.id && rule.showInCard)
-          .sort((left, right) => left.sortOrder - right.sortOrder);
-        const categoryEntries = entries
-          .filter((entry) => entry.categoryId === category.id && entry.visible)
-          .sort((left, right) => left.sortOrder - right.sortOrder);
-        const CategoryIcon = resolveCategoryIcon(category.iconName);
-
-        return (
-          <section className="panel glass home-section-panel" id={`category-${category.slug}`} key={category.id}>
-            <div className="badge">
-              <CategoryIcon size={16} />
-              {category.titleFr}
-            </div>
-            <h2 className="section-title" style={{ marginTop: 18 }}>
-              {category.titleFr}
-            </h2>
-            <p className="section-caption">
-              {category.introFr || "Une nouvelle categorie modulable, pilotee depuis l'administration."}
-            </p>
-
-            {categoryEntries.length === 0 ? (
-              <p className="tiny">Cette categorie est prete. Ajoutez maintenant ses premiers contenus dans l&apos;admin.</p>
-            ) : (
-              <div className="home-custom-grid">
-                {categoryEntries.map((entry) => (
-                  <article className="home-custom-card" key={entry.id}>
-                    {entry.coverImageUrl ? (
-                      <div className="home-custom-cover">
+              {section.resources.length === 0 ? (
+                <p className="tiny">Cette categorie est prete. Ajoutez maintenant ses premiers outils dans l&apos;admin.</p>
+              ) : (
+                <div className="home-resource-carousel" role="list">
+                  {section.resources.map((resource) => (
+                    <Link className="home-resource-carousel-card" href={`/outils/${resource.slug || resource.id}`} key={resource.id} role="listitem">
+                      <div className="home-resource-carousel-image">
                         <Image
-                          src={entry.coverImageUrl}
-                          alt={entry.titleFr}
+                          src={resource.qrImageUrl || "/images/logo.png"}
+                          alt={resource.titleFr}
                           fill
-                          sizes="320px"
-                          className="home-custom-cover-image"
+                          sizes="280px"
+                          className="carousel-cover-image"
                         />
                       </div>
-                    ) : null}
-                    <div className="home-custom-copy">
-                      <strong>{entry.titleFr}</strong>
-                      {entry.subtitleFr ? <p className="tiny">{entry.subtitleFr}</p> : null}
-                      {entry.summaryFr ? <p className="muted">{entry.summaryFr}</p> : null}
-                      {categoryRules.length > 0 ? (
-                        <ul className="home-custom-meta">
-                          {categoryRules.map((rule) => renderEntryField(rule, entry))}
-                        </ul>
-                      ) : null}
-                      <div className="actions-row">
-                        {entry.externalUrl ? (
-                          <a className="cta-button secondary" href={entry.externalUrl} target="_blank" rel="noreferrer">
-                            Ouvrir
-                          </a>
-                        ) : null}
-                        {entry.fileUrl ? (
-                          <a className="pill-button" href={entry.fileUrl} target="_blank" rel="noreferrer">
-                            Telecharger
-                          </a>
-                        ) : null}
+                      <div className="home-resource-carousel-copy">
+                        <strong>{resource.titleFr}</strong>
+                        <p className="tiny">{resource.summaryFr || "Ouvrez la fiche pour voir les details et les options de telechargement."}</p>
+                        <span className="home-resource-carousel-meta">
+                          {resource.downloads.length > 0 ? `${resource.downloads.length} version(s)` : "Voir la fiche"}
+                        </span>
                       </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
-        );
-      })}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        }
 
-      <PartnerLinksSection />
+        if (section.kind === "custom") {
+          const CategoryIcon = resolveCategoryIcon(section.category.iconName);
+
+          return (
+            <section className="panel glass home-section-panel" id={section.id} key={section.id}>
+              <div className="section-heading">
+                <span className="section-heading-icon" aria-hidden="true">
+                  <CategoryIcon size={17} />
+                </span>
+                <h2 className="section-heading-text">{section.label}</h2>
+              </div>
+              <p className="section-caption">
+                {section.category.introFr || "Une nouvelle categorie modulable, pilotee depuis l'administration."}
+              </p>
+
+              {section.categoryEntries.length === 0 ? (
+                <p className="tiny">Cette categorie est prete. Ajoutez maintenant ses premiers contenus dans l&apos;admin.</p>
+              ) : (
+                <div className="home-custom-grid">
+                  {section.categoryEntries.map((entry) => (
+                    <article className="home-custom-card" key={entry.id}>
+                      {entry.coverImageUrl ? (
+                        <div className="home-custom-cover">
+                          <Image
+                            src={entry.coverImageUrl}
+                            alt={entry.titleFr}
+                            fill
+                            sizes="320px"
+                            className="home-custom-cover-image"
+                          />
+                        </div>
+                      ) : null}
+                      <div className="home-custom-copy">
+                        <strong>{entry.titleFr}</strong>
+                        {entry.subtitleFr ? <p className="tiny">{entry.subtitleFr}</p> : null}
+                        {entry.summaryFr ? <p className="muted">{entry.summaryFr}</p> : null}
+                        {section.categoryRules.length > 0 ? (
+                          <ul className="home-custom-meta">
+                            {section.categoryRules.map((rule) => renderEntryField(rule, entry))}
+                          </ul>
+                        ) : null}
+                        <div className="actions-row">
+                          {entry.externalUrl ? (
+                            <a className="cta-button secondary" href={entry.externalUrl} target="_blank" rel="noreferrer">
+                              Ouvrir
+                            </a>
+                          ) : null}
+                          {entry.fileUrl ? (
+                            <a className="pill-button" href={entry.fileUrl} target="_blank" rel="noreferrer">
+                              Telecharger
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        }
+
+        return <PartnerLinksSection key={section.id} sectionId={section.id} title={section.label} />;
+      })}
     </>
   );
 }
