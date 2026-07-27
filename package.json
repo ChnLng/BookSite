@@ -19,6 +19,7 @@
     "postcss": "^8.5.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "resend": "^4.0.0",
     "stripe": "^18.5.0",
     "tailwindcss": "^4.0.0"
   },
