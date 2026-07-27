@@ -394,14 +394,19 @@ export default function ResourceDetailPage() {
           <p className="section-caption" style={{ marginTop: 18 }}>{resource.summaryFr}</p>
 
           <div className="mt-6 flex flex-col gap-4">
-            <div className="flex max-w-md items-center gap-2">
+            <div className="flex flex-nowrap items-center gap-2">
               <input
                 type="text"
-                className="input min-w-0 flex-1"
+                className="input shrink-0"
                 value={promoCode}
-                onChange={(event) => setPromoCode(event.target.value.toUpperCase())}
+                onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
                 placeholder="Code promo"
                 title="Optionnel"
+                maxLength={8}
+                autoComplete="off"
+                spellCheck={false}
+                name="promo-code-input"
+                style={{ width: "12rem", maxWidth: "200px" }}
               />
               <button
                 type="button"

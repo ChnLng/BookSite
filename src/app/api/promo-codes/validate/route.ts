@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("promo_codes")
     .select("*")
-    .eq("code", normalizedCode)
+    .ilike("code", normalizedCode)
     .maybeSingle();
 
   if (error || !data) {
