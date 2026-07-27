@@ -794,6 +794,11 @@ select {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  color: #c45a11;
+  background: rgba(255, 237, 213, 0.82);
+  border: 1px solid rgba(251, 146, 60, 0.35);
+  border-radius: 14px;
+  padding: 10px 12px;
 }
 
 .comment-delivery-switch {
@@ -2301,6 +2306,7 @@ select {
 
 .home-resource-carousel {
   display: flex;
+  flex-wrap: nowrap;
   gap: 16px;
   overflow-x: auto;
   padding: 8px 2px 4px;
@@ -2311,6 +2317,7 @@ select {
 
 .home-resource-carousel-card {
   flex: 0 0 min(280px, calc(100vw - 96px));
+  min-width: 260px;
   display: grid;
   gap: 12px;
   padding: 14px;

@@ -339,16 +339,25 @@ export function HomeExpandedSections() {
 
     const anchorLine = getHeaderOffset() + 8;
     const availableSections = getAvailableSections();
+    const measurableSections = availableSections.filter(
+      (item): item is (typeof availableSections)[number] & { element: HTMLElement } => !item.resetToTop && Boolean(item.element),
+    );
 
     if (availableSections.length === 0) {
       return;
     }
 
-    const containing = availableSections.find((item) => {
-      if (item.resetToTop || !item.element) {
-        return false;
-      }
+    if (measurableSections.length > 0) {
+      const scrollBottom = window.scrollY + window.innerHeight;
+      const documentBottom = document.documentElement.scrollHeight;
 
+      if (documentBottom - scrollBottom <= 48) {
+        setActiveSectionId(measurableSections[measurableSections.length - 1].id);
+        return;
+      }
+    }
+
+    const containing = measurableSections.find((item) => {
       const rect = item.element.getBoundingClientRect();
       return rect.top <= anchorLine && rect.bottom > anchorLine;
     });
@@ -358,13 +367,7 @@ export function HomeExpandedSections() {
       return;
     }
 
-    const passedSections = availableSections.filter((item) => {
-      if (item.resetToTop || !item.element) {
-        return false;
-      }
-
-      return item.element.getBoundingClientRect().top <= anchorLine;
-    });
+    const passedSections = measurableSections.filter((item) => item.element.getBoundingClientRect().top <= anchorLine);
 
     if (passedSections.length > 0) {
       setActiveSectionId(passedSections[passedSections.length - 1].id);

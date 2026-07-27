@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Heart,
   LoaderCircle,
@@ -71,8 +71,10 @@ const defaultCarouselBooks: DisplayBook[] = staticBooks.map((book) => {
 });
 
 export default function HomePage() {
-  const emailLoginHintText = "Un petit mot pour l'administrateur ? Connectez-vous pour l'envoyer !";
+  const emailLoginHintText = "Veuillez vous connecter pour envoyer un email à l'administrateur.";
   const siteCommentSuccessText = "Message bien enregistré ! Il est bien au chaud dans votre espace « Ma page ».";
+  const commentLikeLoginHintText = "Connectez-vous pour ajouter un petit coeur à ce commentaire.";
+  const adminEmail = "visdar@outlook.fr";
   const [authOpen, setAuthOpen] = useState(false);
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -93,7 +95,8 @@ export default function HomePage() {
   const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>(defaultCarouselBooks);
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
-  const { user, profile, session, signInWithPassword, signUpWithPassword } = useAuth();
+  const { user, session, signInWithPassword, signUpWithPassword } = useAuth();
+  const defaultCommentName = useMemo(() => user?.email?.split("@")[0] || "", [user?.email]);
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
 
@@ -120,34 +123,34 @@ export default function HomePage() {
     });
   }, []);
 
-  useEffect(() => {
+  const loadComments = useCallback(async () => {
     if (!visitorToken) {
       return;
     }
 
-    const loadComments = async () => {
-      try {
-        const response = await fetch("/api/messages", {
-          headers: {
-            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-            "x-visitor-token": visitorToken,
-          },
-        });
+    try {
+      const response = await fetch("/api/messages", {
+        headers: {
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          "x-visitor-token": visitorToken,
+        },
+      });
 
-        const result = await response.json();
+      const result = await response.json();
 
-        if (!response.ok || !Array.isArray(result.comments)) {
-          return;
-        }
-
-        setComments(result.comments as CommentItem[]);
-      } catch {
-        // keep existing sample comments if the API is unavailable
+      if (!response.ok || !Array.isArray(result.comments)) {
+        return;
       }
-    };
 
-    void loadComments();
+      setComments(result.comments as CommentItem[]);
+    } catch {
+      // keep existing sample comments if the API is unavailable
+    }
   }, [session?.access_token, visitorToken]);
+
+  useEffect(() => {
+    void loadComments();
+  }, [loadComments]);
 
   useEffect(() => {
     const loadPromo = async () => {
@@ -267,10 +270,10 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (user && !commentName) {
-      setCommentName(profile?.displayName || user.user_metadata?.full_name || user.email?.split("@")[0] || "");
+    if (defaultCommentName && !commentName) {
+      setCommentName(defaultCommentName);
     }
-  }, [user, profile, commentName]);
+  }, [commentName, defaultCommentName]);
 
   const handleOAuth = async (provider: "google" | "github") => {
     const supabase = getSupabaseBrowserClient();
@@ -370,15 +373,32 @@ export default function HomePage() {
   };
 
   const submitComment = async (mode: "site" | "email") => {
-    if (!commentName.trim() || !commentContent.trim()) {
-      setCommentMessage("Nom et commentaire sont requis.");
-      return;
-    }
-
     setCommentDeliveryMode(mode);
 
     if (mode === "email" && (!user || !session?.access_token)) {
       setCommentMessage(emailLoginHintText);
+      return;
+    }
+
+    if (mode === "email") {
+      const mailtoBody = [
+        `Bonjour,`,
+        "",
+        `Email du compte : ${user?.email || ""}`,
+        `Pseudo : ${commentName.trim() || defaultCommentName || "Lecteur"}`,
+        "",
+        commentContent.trim(),
+      ].join("\n");
+
+      window.location.href = `mailto:${adminEmail}?subject=${encodeURIComponent(
+        "Message pour l'administrateur Visd AR",
+      )}&body=${encodeURIComponent(mailtoBody)}`;
+      setCommentMessage("");
+      return;
+    }
+
+    if (!commentName.trim() || !commentContent.trim()) {
+      setCommentMessage("Nom et commentaire sont requis.");
       return;
     }
 
@@ -425,15 +445,41 @@ export default function HomePage() {
   };
 
   const toggleCommentLike = async (commentId: string) => {
+    if (!user || !session?.access_token) {
+      setCommentMessage(commentLikeLoginHintText);
+      return;
+    }
+
     if (!visitorToken) {
       return;
     }
+
+    const previousComment = comments.find((comment) => comment.id === commentId);
+
+    if (!previousComment) {
+      return;
+    }
+
+    const nextLikedState = !previousComment.likedByViewer;
+    const nextLikeCount = Math.max(0, previousComment.likeCount + (nextLikedState ? 1 : -1));
+
+    setComments((current) =>
+      current.map((comment) =>
+        comment.id === commentId
+          ? {
+              ...comment,
+              likeCount: nextLikeCount,
+              likedByViewer: nextLikedState,
+            }
+          : comment,
+      ),
+    );
 
     try {
       const response = await fetch(`/api/messages/${commentId}/like`, {
         method: "POST",
         headers: {
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          Authorization: `Bearer ${session.access_token}`,
           "x-visitor-token": visitorToken,
         },
       });
@@ -441,6 +487,17 @@ export default function HomePage() {
       const result = await response.json();
 
       if (!response.ok) {
+        setComments((current) =>
+          current.map((comment) =>
+            comment.id === commentId
+              ? {
+                  ...comment,
+                  likeCount: previousComment.likeCount,
+                  likedByViewer: previousComment.likedByViewer,
+                }
+              : comment,
+          ),
+        );
         return;
       }
 
@@ -455,8 +512,19 @@ export default function HomePage() {
             : comment,
         ),
       );
+      await loadComments();
     } catch {
-      // keep current UI if the like request fails
+      setComments((current) =>
+        current.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                likeCount: previousComment.likeCount,
+                likedByViewer: previousComment.likedByViewer,
+              }
+            : comment,
+        ),
+      );
     }
   };
 
