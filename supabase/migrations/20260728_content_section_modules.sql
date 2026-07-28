@@ -65,4 +65,30 @@ cross join (values
 ) as item(admin_label, source_key, content_type, module_type, display_position, sort_order)
 on conflict (section_id, source_key) do nothing;
 
+with section_row as (select id from public.content_sections where section_key = 'coin-ludique')
+insert into public.content_section_items
+  (section_id, admin_label, source_key, content_type, module_type, display_position, show_on_user_page, sort_order)
+select section_row.id, item.admin_label, item.source_key, item.content_type, null, item.display_position, true, item.sort_order
+from section_row
+cross join (values
+  ('商品封面／二维码', 'cover_image', 'image', 'left-1', 10),
+  ('商品标题', 'title', 'string', 'right-top-1', 20),
+  ('商品简介', 'summary', 'text', 'right-top-2', 30),
+  ('可下载文件', 'downloads', 'file', 'right-middle-1', 40),
+  ('站外链接', 'external_url', 'file', 'right-bottom-1', 50)
+) as item(admin_label, source_key, content_type, display_position, sort_order)
+on conflict (section_id, source_key) do nothing;
+
+with section_row as (select id from public.content_sections where section_key = 'liens-partenaires')
+insert into public.content_section_items
+  (section_id, admin_label, source_key, content_type, module_type, display_position, show_on_user_page, sort_order)
+select section_row.id, item.admin_label, item.source_key, item.content_type, null, item.display_position, true, item.sort_order
+from section_row
+cross join (values
+  ('链接图标', 'icon', 'image', 'left-1', 10),
+  ('链接名称', 'title', 'string', 'right-top-1', 20),
+  ('站外地址', 'external_url', 'file', 'right-top-2', 30)
+) as item(admin_label, source_key, content_type, display_position, sort_order)
+on conflict (section_id, source_key) do nothing;
+
 notify pgrst, 'reload schema';
