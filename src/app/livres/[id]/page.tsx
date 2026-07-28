@@ -9,6 +9,14 @@ import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+
+type SectionLayoutItem = {
+  source_key: string;
+  display_position: string;
+  show_on_user_page: boolean;
+  sort_order: number;
+};
 
 type ReviewRecord = {
   id: string;
@@ -150,6 +158,7 @@ export default function BookDetailPage() {
   const [paymentError, setPaymentError] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(null);
   const [autoOpenedPayment, setAutoOpenedPayment] = useState(false);
+  const [layoutItems, setLayoutItems] = useState<SectionLayoutItem[]>([]);
   const paypalContainerRef = useRef<HTMLDivElement | null>(null);
 
   const bookId = Array.isArray(params?.id) ? params.id[0] : params?.id || "";
@@ -169,6 +178,27 @@ export default function BookDetailPage() {
   const zeroPriceUnlockMessage =
     "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
   const effectiveHasAccess = accessState.hasAccess || optimisticSharedUnlock;
+  const layoutByKey = useMemo(() => new Map(layoutItems.map((item) => [item.source_key, item])), [layoutItems]);
+  const moduleStyle = (key: string, fallbackOrder: number) => {
+    const item = layoutByKey.get(key);
+    return { order: item?.sort_order ?? fallbackOrder, display: item && !item.show_on_user_page ? "none" : undefined };
+  };
+
+  useEffect(() => {
+    const loadLayout = async () => {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return;
+      const { data: section } = await supabase.from("content_sections").select("id").eq("section_key", "albums").maybeSingle();
+      if (!section?.id) return;
+      const { data } = await supabase
+        .from("content_section_items")
+        .select("source_key, display_position, show_on_user_page, sort_order")
+        .eq("section_id", section.id)
+        .order("sort_order");
+      setLayoutItems((data || []) as SectionLayoutItem[]);
+    };
+    void loadLayout();
+  }, []);
 
   const authorizedFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -757,7 +787,7 @@ export default function BookDetailPage() {
           ) : (
             <div className="book-detail-hero">
               <div className="book-detail-cover-column">
-                <div className="book-detail-cover-shell">
+                <div className="book-detail-cover-shell" style={moduleStyle("cover_image", 10)}>
                   <div className="book-detail-cover-frame">
                     <Image
                       src={book.coverImage}
@@ -769,7 +799,7 @@ export default function BookDetailPage() {
                   </div>
                 </div>
 
-                <div className="book-review-card">
+                <div className="book-review-card" style={moduleStyle("reviews", 20)}>
                   <div className="book-review-summary">
                     <div>
                       <strong>Avis des lecteurs</strong>
@@ -878,13 +908,13 @@ export default function BookDetailPage() {
               </div>
 
               <div className="book-detail-copy">
-                <div className="badge">Collection : Album illustré apaisant en chinois facile</div>
-                <h1 className="section-title" style={{ marginTop: 18 }}>
+                <div className="badge" style={moduleStyle("collection", 10)}>Collection : Album illustré apaisant en chinois facile</div>
+                <h1 className="section-title" style={{ marginTop: 18, ...moduleStyle("title", 20) }}>
                   {book.titleFr}
                 </h1>
-                <p className="tiny">{book.titleZh}</p>
+                <p className="tiny" style={moduleStyle("title", 20)}>{book.titleZh}</p>
 
-                <div className="promo-panel book-detail-cta-panel">
+                <div className="promo-panel book-detail-cta-panel" style={moduleStyle("commerce", 30)}>
                   <div className="book-detail-cta-stack">
                     <div className="book-promo-row">
                       <input
@@ -961,7 +991,7 @@ export default function BookDetailPage() {
                   {paymentError ? <p className="tiny promo-message error">{paymentError}</p> : null}
                 </div>
 
-                <div className="book-detail-facts">
+                <div className="book-detail-facts" style={moduleStyle("commerce", 30)}>
                   <div className="split-line">
                     <span>Prix</span>
                     <div className="promo-price-stack">
@@ -983,11 +1013,11 @@ export default function BookDetailPage() {
                   ) : null}
                 </div>
 
-                <p className="muted">{book.synopsisFr}</p>
-                {book.synopsisZh ? <p className="muted">{book.synopsisZh}</p> : null}
+                <p className="muted" style={moduleStyle("synopsis", 40)}>{book.synopsisFr}</p>
+                {book.synopsisZh ? <p className="muted" style={moduleStyle("synopsis", 40)}>{book.synopsisZh}</p> : null}
 
                 {book.teachingPointFr ? (
-                  <div className="book-detail-note">
+                  <div className="book-detail-note" style={moduleStyle("teaching_point", 50)}>
                     <strong>Point fort</strong>
                     <p className="muted">{book.teachingPointFr}</p>
                   </div>

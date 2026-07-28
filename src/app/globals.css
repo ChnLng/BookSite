@@ -2427,6 +2427,44 @@ select {
   gap: 12px;
 }
 
+.admin-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.admin-category-tab {
+  flex: 1 1 220px;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.admin-category-tab.active {
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--accent-primary);
+  box-shadow: var(--shadow-glass);
+}
+
+.admin-layout-item-row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr 1fr 0.9fr auto auto;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 1100px) {
+  .admin-layout-item-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .home-resource-downloads {
   margin-top: 16px;
 }

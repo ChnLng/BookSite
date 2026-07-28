@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { AdminCategoryEnginePanel } from "@/components/admin-category-engine-panel";
+import { AdminContentSectionsPanel } from "@/components/admin-content-sections-panel";
 import { AdminGuard } from "@/components/admin-guard";
 import { AdminPartnerLinksPanel } from "@/components/admin-partner-links-panel";
 import { AdminResourcesPanel } from "@/components/admin-resources-panel";
@@ -127,7 +127,6 @@ type PdfStorageStatus = {
 
 const adminSections = [
   { key: "categories", label: "类目 Categories" },
-  { key: "engine", label: "引擎 Moteur" },
   { key: "books", label: "图书 Livres" },
   { key: "resources", label: "资源 Outils" },
   { key: "partners", label: "友链 Liens" },
@@ -341,7 +340,7 @@ function downloadEntryKey(download: DownloadRow) {
 }
 
 function AdminPageContent() {
-  const { profile, session, loading: authLoading } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const [books, setBooks] = useState<BookRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
@@ -622,13 +621,10 @@ function AdminPageContent() {
     };
   }, [books, session?.access_token]);
 
-  const title = useMemo(() => profile?.displayName || profile?.email || "Admin", [profile]);
-
   const sectionCounts = useMemo(
     () => ({
       books: books.length,
       categories: categories.length,
-      engine: categories.length,
       resources: resourceCount,
       partners: partnerCount,
       promo: promoCodes.length,
@@ -1364,12 +1360,6 @@ function AdminPageContent() {
         </aside>
 
         <section className="panel glass">
-          <h1 className="section-title" style={{ fontFamily: "var(--font-heading), serif" }}>
-            管理后台 Admin bilingue
-          </h1>
-          <p className="section-caption">
-            Bienvenue {title} - 后台现在可管理书籍、PDF、封面、类目、优惠码、下载记录与主页飘屏。
-          </p>
           {loadWarnings.length > 0 ? (
             <div className="section-block" style={{ marginTop: 12 }}>
               {loadWarnings.map((warning) => (
@@ -1379,7 +1369,7 @@ function AdminPageContent() {
           ) : null}
           {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
 
-          {activeSection === "engine" ? <AdminCategoryEnginePanel /> : null}
+          {activeSection === "categories" ? <AdminContentSectionsPanel /> : null}
 
           {activeSection === "resources" ? <AdminResourcesPanel /> : null}
 
@@ -1956,7 +1946,7 @@ function AdminPageContent() {
             </>
           ) : null}
 
-          {activeSection === "categories" ? (
+          {false ? (
             <>
               <div className="section-block">
                 <h3>Créer une catégorie 新增类目</h3>

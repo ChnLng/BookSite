@@ -53,6 +53,7 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
   const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>(defaultCarouselBooks);
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
+  const [albumsSectionOrder, setAlbumsSectionOrder] = useState(10);
   const { signInWithPassword, signUpWithPassword } = useAuth();
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
@@ -61,6 +62,17 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
     void loadDisplayBooks().then((books) => {
       setDisplayBooks(books.length > 0 ? books : defaultCarouselBooks);
     });
+  }, []);
+
+  useEffect(() => {
+    const loadSectionOrder = async () => {
+      const { getSupabaseBrowserClient } = await import("@/lib/supabase-browser");
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return;
+      const { data } = await supabase.from("content_sections").select("sort_order").eq("section_key", "albums").maybeSingle();
+      if (data) setAlbumsSectionOrder(Number(data.sort_order || 10));
+    };
+    void loadSectionOrder();
   }, []);
 
   useEffect(() => {
@@ -204,7 +216,7 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
         </div>
 
         <div className="home-main-flow">
-          <section className="panel glass carousel-stage" id="scene">
+          <section className="panel glass carousel-stage" id="scene" style={{ order: albumsSectionOrder }}>
             <div className="section-heading">
               <span className="section-heading-icon" aria-hidden="true">
                 <BookOpenText size={17} />

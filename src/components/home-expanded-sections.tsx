@@ -48,6 +48,7 @@ type RenderedSection =
       kind: "resource";
       category: HomeCategory | null;
       resources: ResourceItem[];
+      order: number;
     }
   | {
       id: string;
@@ -56,11 +57,13 @@ type RenderedSection =
       category: HomeCategory;
       categoryRules: CategoryFieldRule[];
       categoryEntries: CategoryEntry[];
+      order: number;
     }
   | {
       id: string;
       label: string;
       kind: "partner";
+      order: number;
     };
 
 function getHeaderOffset() {
@@ -152,6 +155,7 @@ export function HomeExpandedSections() {
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [partnerLinks, setPartnerLinks] = useState<PartnerLink[]>([]);
   const [activeSectionId, setActiveSectionId] = useState<string>("scene");
+  const [sectionSettings, setSectionSettings] = useState<Record<string, { title: string; order: number }>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -204,6 +208,17 @@ export function HomeExpandedSections() {
     };
   }, []);
 
+  useEffect(() => {
+    const loadSettings = async () => {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return;
+      const { data } = await supabase.from("content_sections").select("section_key, title, sort_order").eq("visible", true);
+      if (!data) return;
+      setSectionSettings(Object.fromEntries(data.map((row) => [String(row.section_key), { title: String(row.title), order: Number(row.sort_order || 0) }])));
+    };
+    void loadSettings();
+  }, []);
+
   const resourceCategories = useMemo(
     () => categories.filter((category) => category.kind === "resource" && category.homepageVisible),
     [categories],
@@ -232,23 +247,26 @@ export function HomeExpandedSections() {
         kind: "resource",
         category,
         resources: categoryResources,
+        order: sectionSettings["coin-ludique"]?.order ?? 20,
       });
     });
 
     if (resourceCategories.length === 0 && uncategorizedResources.length > 0) {
       sections.push({
         id: "coin-ludique-outils",
-        label: "Coin ludique",
+        label: sectionSettings["coin-ludique"]?.title || "Coin ludique",
         kind: "resource",
         category: null,
         resources: uncategorizedResources,
+        order: sectionSettings["coin-ludique"]?.order ?? 20,
       });
     }
 
     sections.push({
       id: "liens-partenaires",
-      label: "Liens partenaires",
+      label: sectionSettings["liens-partenaires"]?.title || "Liens partenaires",
       kind: "partner",
+      order: sectionSettings["liens-partenaires"]?.order ?? 30,
     });
 
     customCategories.forEach((category) => {
@@ -263,11 +281,12 @@ export function HomeExpandedSections() {
         categoryEntries: entries
           .filter((entry) => entry.categoryId === category.id && entry.visible)
           .sort((left, right) => left.sortOrder - right.sortOrder),
+        order: category.homepageSortOrder || 25,
       });
     });
 
-    return sections;
-  }, [customCategories, entries, fieldRules, resourceCategories, resources, uncategorizedResources]);
+    return sections.sort((left, right) => left.order - right.order);
+  }, [customCategories, entries, fieldRules, resourceCategories, resources, sectionSettings, uncategorizedResources]);
 
   const floatingLinks = useMemo<FloatingSectionLink[]>(() => {
     return [
@@ -441,7 +460,7 @@ export function HomeExpandedSections() {
       {renderedSections.map((section) => {
         if (section.kind === "resource") {
           return (
-            <section className="panel glass home-section-panel" id={section.id} key={section.id}>
+            <section className="panel glass home-section-panel" id={section.id} key={section.id} style={{ order: section.order }}>
               <div className="section-heading">
                 <span className="section-heading-icon" aria-hidden="true">
                   <Gamepad2 size={17} />
@@ -503,7 +522,7 @@ export function HomeExpandedSections() {
           const CategoryIcon = resolveCategoryIcon(section.category.iconName);
 
           return (
-            <section className="panel glass home-section-panel" id={section.id} key={section.id}>
+            <section className="panel glass home-section-panel" id={section.id} key={section.id} style={{ order: section.order }}>
               <div className="section-heading">
                 <span className="section-heading-icon" aria-hidden="true">
                   <CategoryIcon size={17} />
@@ -561,7 +580,7 @@ export function HomeExpandedSections() {
           );
         }
 
-        return <PartnerLinksSection key={section.id} sectionId={section.id} title={section.label} />;
+        return <div key={section.id} style={{ order: section.order }}><PartnerLinksSection sectionId={section.id} title={section.label} /></div>;
       })}
     </>
   );
