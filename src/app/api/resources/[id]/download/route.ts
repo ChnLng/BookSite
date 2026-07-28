@@ -73,6 +73,23 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Fichier introuvable." }, { status: 404 });
   }
 
+  if (!admin) {
+    const { data: purchase } = await supabase
+      .from("downloads")
+      .select("id, download_count")
+      .eq("user_id", user.id)
+      .eq("resource_id", resource.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (purchase?.id) {
+      await supabase.from("downloads").update({
+        download_count: Number(purchase.download_count || 0) + 1,
+        last_downloaded_at: new Date().toISOString(),
+      }).eq("id", purchase.id);
+    }
+  }
+
   if (resolvedFileRow.external_url) {
     return NextResponse.json({ ok: true, url: resolvedFileRow.external_url });
   }

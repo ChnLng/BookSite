@@ -66,6 +66,8 @@ export async function POST(request: Request, context: RouteContext) {
         resource_id: resource.id,
         resource_title: resource.title_fr || resource.slug || resource.id,
         download_url: null,
+        amount_paid: 0,
+        currency: "EUR",
       });
     }
   }

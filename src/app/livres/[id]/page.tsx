@@ -492,6 +492,7 @@ export default function BookDetailPage() {
             orderId: order?.id || data?.orderID,
             payerEmail,
             payerName,
+            amountPaid: finalPrice,
           }),
         });
 

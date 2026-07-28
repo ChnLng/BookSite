@@ -64,6 +64,8 @@ export async function POST(request: Request) {
           book_title: bookTitle || bookId,
           download_url: pdfFile,
           stripe_session_id: session.id,
+          amount_paid: Number(session.amount_total || 0) / 100,
+          currency: String(session.currency || "eur").toUpperCase(),
         });
       }
     }
@@ -94,6 +96,8 @@ export async function POST(request: Request) {
           resource_file_id: resourceFileId || null,
           download_url: defaultDownloadUrl || null,
           stripe_session_id: session.id,
+          amount_paid: Number(metadata.finalPrice || session.amount_total || 0) / (metadata.finalPrice ? 1 : 100),
+          currency: String(session.currency || "eur").toUpperCase(),
         });
       }
     }

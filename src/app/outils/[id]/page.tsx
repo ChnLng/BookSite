@@ -412,6 +412,7 @@ export default function ResourceDetailPage() {
             resourceId: resource.slug || resource.id,
             orderId: order?.id || data?.orderID,
             payerEmail,
+            amountPaid: finalPrice,
           }),
         });
 

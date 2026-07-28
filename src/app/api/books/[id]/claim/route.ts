@@ -70,6 +70,8 @@ export async function POST(request: Request, context: RouteContext) {
         book_id: resolvedId,
         book_title: resolvedTitle,
         download_url: resolvedPdf,
+        amount_paid: 0,
+        currency: "EUR",
       });
     }
   }

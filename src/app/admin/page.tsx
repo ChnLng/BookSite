@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { AdminContentSectionsPanel } from "@/components/admin-content-sections-panel";
+import { AdminDownloadReport } from "@/components/admin-download-report";
 import { AdminGuard } from "@/components/admin-guard";
 import { AdminPartnerLinksPanel } from "@/components/admin-partner-links-panel";
 import { AdminResourcesPanel } from "@/components/admin-resources-panel";
@@ -2473,39 +2474,7 @@ function AdminPageContent() {
           ) : null}
 
           {activeSection === "downloads" ? (
-            <div className="section-block">
-              <h3>Historique de téléchargements 下载记录</h3>
-              <div className="admin-list" style={{ marginBottom: 16 }}>
-                {downloadTotals.length === 0 ? (
-                  <p className="muted">Aucun produit telecharge pour le moment.</p>
-                ) : (
-                  downloadTotals.map((entry) => (
-                    <div className="split-line" key={`${entry.kind}-${entry.label}`}>
-                      <span>{entry.label}</span>
-                      <span className="tiny">
-                        {entry.kind === "resource" ? "Outil" : entry.kind === "book" ? "Livre" : entry.kind} · {entry.total} telechargement(s)
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
-              {downloads.length === 0 ? (
-                <p className="muted">Aucun téléchargement enregistré.</p>
-              ) : (
-                downloads.map((download) => (
-                  <div className="split-line" key={download.id}>
-                    <span>{downloadEntryTitle(download)}</span>
-                    <span className="tiny">
-                      {downloadEntryKind(download) === "resource" ? "Outil" : downloadEntryKind(download) === "book" ? "Livre" : downloadEntryKind(download)}
-                    </span>
-                    <span className="tiny">{download.user_email || "—"}</span>
-                    <span className="tiny">
-                      {download.created_at ? new Date(download.created_at).toLocaleString("fr-FR") : "—"}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
+            <AdminDownloadReport />
           ) : null}
 
           {activeSection === "donations" ? (

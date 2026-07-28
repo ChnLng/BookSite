@@ -123,6 +123,23 @@ export async function GET(request: Request, context: RouteContext) {
     }
   }
 
+  if (!admin && serviceClient) {
+    const { data: purchase } = await serviceClient
+      .from("downloads")
+      .select("id, download_count")
+      .eq("user_id", user.id)
+      .or(`book_id.eq.${id},book_id.eq.${book.id}`)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (purchase?.id) {
+      await serviceClient.from("downloads").update({
+        download_count: Number(purchase.download_count || 0) + 1,
+        last_downloaded_at: new Date().toISOString(),
+      }).eq("id", purchase.id);
+    }
+  }
+
   const normalizedPdf = normalizeBookPdfAsset(book.pdfFile);
 
   if (!normalizedPdf) {
