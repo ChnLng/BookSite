@@ -585,8 +585,6 @@ select {
   -webkit-backdrop-filter: var(--backdrop-blur);
 }
 
-.donation-amount-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; margin: 7px 0 12px; }
-.donation-amount-row .input { min-width: 0; }
 
 .donation-chip {
   border: 1px solid var(--surface-border);
