@@ -1384,7 +1384,10 @@ function AdminPageContent() {
                 key={section.key}
                 className={activeSection === section.key ? "admin-sidebar-item active" : "admin-sidebar-item"}
                 type="button"
-                onClick={() => setActiveSection(section.key)}
+                onClick={() => {
+                  setActiveSection(section.key);
+                  setStatusMessage("");
+                }}
               >
                 <span className="admin-sidebar-item-line" />
                 <span>{section.label}</span>

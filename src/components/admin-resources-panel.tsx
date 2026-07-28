@@ -100,6 +100,7 @@ export function AdminResourcesPanel() {
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"create" | "edit">("create");
+  const [lastDeleted, setLastDeleted] = useState<{ id: string; title: string; wasVisible: boolean } | null>(null);
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -275,6 +276,8 @@ export function AdminResourcesPanel() {
   };
 
   const deleteResource = async (resourceId: string) => {
+    const resource = resources.find((entry) => entry.id === resourceId);
+    if (!resource) return;
     setBusyKey(`delete-resource-${resourceId}`);
 
     try {
@@ -293,6 +296,7 @@ export function AdminResourcesPanel() {
       }
 
       setStatusMessage("Ressource supprimee.");
+      setLastDeleted({ id: resource.id, title: resource.title_fr || "Outil", wasVisible: resource.visible !== false });
       if (editingId === resourceId) {
         resetDraft();
       }
@@ -300,6 +304,49 @@ export function AdminResourcesPanel() {
     } finally {
       setBusyKey(null);
     }
+  };
+
+  const patchResource = async (payload: Record<string, unknown>, successMessage: string) => {
+    const response = await authorizedFetch("/api/admin/resources", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const result = (await response.json()) as { ok?: boolean; message?: string };
+    if (!response.ok || !result.ok) throw new Error(result.message || "Operation impossible.");
+    setStatusMessage(successMessage);
+    await loadData();
+  };
+
+  const toggleResourceVisibility = async (resource: ResourceRow) => {
+    setBusyKey(`visibility-resource-${resource.id}`);
+    try {
+      await patchResource({ action: "visibility", id: resource.id, visible: resource.visible === false }, resource.visible === false ? "Outil publie." : "Outil masque.");
+    } catch (error) { setStatusMessage(error instanceof Error ? error.message : "Operation impossible."); }
+    finally { setBusyKey(null); }
+  };
+
+  const moveResource = async (resourceId: string, direction: "up" | "down") => {
+    const currentIndex = resources.findIndex((entry) => entry.id === resourceId);
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= resources.length) return;
+    const current = resources[currentIndex];
+    const target = resources[targetIndex];
+    setBusyKey(`move-resource-${resourceId}`);
+    try {
+      await patchResource({ action: "move", id: current.id, targetId: target.id, currentSortOrder: current.sort_order ?? currentIndex, targetSortOrder: target.sort_order ?? targetIndex }, "Ordre des outils mis a jour.");
+    } catch (error) { setStatusMessage(error instanceof Error ? error.message : "Tri impossible."); }
+    finally { setBusyKey(null); }
+  };
+
+  const restoreResource = async () => {
+    if (!lastDeleted) return;
+    setBusyKey(`restore-resource-${lastDeleted.id}`);
+    try {
+      await patchResource({ action: "restore", id: lastDeleted.id, visible: lastDeleted.wasVisible }, `Outil restaure : ${lastDeleted.title}`);
+      setLastDeleted(null);
+    } catch (error) { setStatusMessage(error instanceof Error ? error.message : "Restauration impossible."); }
+    finally { setBusyKey(null); }
   };
 
   const uploadQrImage = async (file: File) => {
@@ -622,6 +669,12 @@ export function AdminResourcesPanel() {
       </> : null}
 
       {activeTab === "edit" ? <>
+      {lastDeleted ? (
+        <div className="admin-restore-notice">
+          <span>刚刚删除：{lastDeleted.title}</span>
+          <button className="cta-button" type="button" onClick={() => void restoreResource()}>Restaurer 恢复</button>
+        </div>
+      ) : null}
       <div className="split-line" style={{ marginTop: 18 }}>
         <div>
           <h4 style={{ margin: 0 }}>Liste des outils existants</h4>
@@ -642,8 +695,13 @@ export function AdminResourcesPanel() {
               </p>
             </div>
             <div className="actions-row">
+              <button className="pill-button" type="button" disabled={resources.findIndex((entry) => entry.id === resource.id) === 0} onClick={() => void moveResource(resource.id, "up")}>↑</button>
+              <button className="pill-button" type="button" disabled={resources.findIndex((entry) => entry.id === resource.id) === resources.length - 1} onClick={() => void moveResource(resource.id, "down")}>↓</button>
               <button className="pill-button" type="button" onClick={() => beginEdit(resource)}>
                 Modifier
+              </button>
+              <button className="pill-button" type="button" onClick={() => void toggleResourceVisibility(resource)}>
+                {resource.visible === false ? "Publier" : "Masquer"}
               </button>
               <button
                 className="pill-button"

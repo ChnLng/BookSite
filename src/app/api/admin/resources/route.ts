@@ -119,6 +119,7 @@ export async function GET(request: Request) {
   const resourcesResult = await supabase
     .from("resource_items")
     .select("id, category_id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
+    .is("deleted_at", null)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
@@ -279,17 +280,49 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: false, message: "Ressource manquante." }, { status: 400 });
   }
 
-  const { error: deleteFilesError } = await supabase.from("resource_item_files").delete().eq("resource_id", resourceId);
-
-  if (deleteFilesError) {
-    return NextResponse.json({ ok: false, message: deleteFilesError.message }, { status: 500 });
-  }
-
-  const { error } = await supabase.from("resource_items").delete().eq("id", resourceId);
+  const { error } = await supabase
+    .from("resource_items")
+    .update({ deleted_at: new Date().toISOString(), visible: false })
+    .eq("id", resourceId);
 
   if (error) {
     return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });
+}
+
+export async function PATCH(request: Request) {
+  const auth = await requireAdmin(request);
+  if (auth.error) return auth.error;
+  const supabase = getAdminSupabase(request);
+  if (!supabase) return NextResponse.json({ ok: false, message: "Client Supabase admin indisponible." }, { status: 503 });
+
+  const payload = (await request.json().catch(() => null)) as {
+    action?: "visibility" | "move" | "restore";
+    id?: string;
+    visible?: boolean;
+    targetId?: string;
+    currentSortOrder?: number;
+    targetSortOrder?: number;
+  } | null;
+  if (!payload?.action || !payload.id) {
+    return NextResponse.json({ ok: false, message: "Action outil invalide." }, { status: 400 });
+  }
+
+  if (payload.action === "restore") {
+    const { error } = await supabase.from("resource_items").update({ deleted_at: null, visible: payload.visible !== false }).eq("id", payload.id);
+    return error ? NextResponse.json({ ok: false, message: error.message }, { status: 500 }) : NextResponse.json({ ok: true });
+  }
+  if (payload.action === "visibility") {
+    const { error } = await supabase.from("resource_items").update({ visible: Boolean(payload.visible) }).eq("id", payload.id);
+    return error ? NextResponse.json({ ok: false, message: error.message }, { status: 500 }) : NextResponse.json({ ok: true });
+  }
+  if (!payload.targetId) return NextResponse.json({ ok: false, message: "Outil cible manquant." }, { status: 400 });
+  const [{ error: currentError }, { error: targetError }] = await Promise.all([
+    supabase.from("resource_items").update({ sort_order: payload.targetSortOrder ?? 0 }).eq("id", payload.id),
+    supabase.from("resource_items").update({ sort_order: payload.currentSortOrder ?? 0 }).eq("id", payload.targetId),
+  ]);
+  const error = currentError || targetError;
+  return error ? NextResponse.json({ ok: false, message: error.message }, { status: 500 }) : NextResponse.json({ ok: true });
 }

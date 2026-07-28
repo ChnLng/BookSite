@@ -49,6 +49,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("partner_links")
     .select("id, title_fr, icon_url, target_url, sort_order, visible")
+    .is("deleted_at", null)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
@@ -121,12 +122,25 @@ export async function PATCH(request: Request) {
 
   const payload = (await request.json().catch(() => null)) as
     | {
+        action?: "move" | "visibility" | "restore";
+        id?: string;
+        visible?: boolean;
         currentId?: string;
         targetId?: string;
         currentSortOrder?: number;
         targetSortOrder?: number;
       }
     | null;
+
+  if (payload?.action === "visibility" || payload?.action === "restore") {
+    const id = (payload.id || "").trim();
+    if (!id) return NextResponse.json({ ok: false, message: "Lien manquant." }, { status: 400 });
+    const update = payload.action === "restore"
+      ? { deleted_at: null, visible: payload.visible !== false }
+      : { visible: Boolean(payload.visible) };
+    const { error } = await supabase.from("partner_links").update(update).eq("id", id);
+    return error ? NextResponse.json({ ok: false, message: error.message }, { status: 500 }) : NextResponse.json({ ok: true });
+  }
 
   const currentId = (payload?.currentId || "").trim();
   const targetId = (payload?.targetId || "").trim();
@@ -170,7 +184,10 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: false, message: "Lien manquant." }, { status: 400 });
   }
 
-  const { error } = await supabase.from("partner_links").delete().eq("id", linkId);
+  const { error } = await supabase
+    .from("partner_links")
+    .update({ deleted_at: new Date().toISOString(), visible: false })
+    .eq("id", linkId);
 
   if (error) {
     return NextResponse.json({ ok: false, message: error.message }, { status: 500 });

@@ -38,6 +38,7 @@ export function AdminPartnerLinksPanel() {
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"create" | "edit">("create");
+  const [lastDeleted, setLastDeleted] = useState<{ id: string; title: string; wasVisible: boolean } | null>(null);
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -168,6 +169,8 @@ export function AdminPartnerLinksPanel() {
   };
 
   const deleteLink = async (linkId: string) => {
+    const link = links.find((entry) => entry.id === linkId);
+    if (!link) return;
     setBusyKey(`delete-link-${linkId}`);
 
     try {
@@ -186,6 +189,7 @@ export function AdminPartnerLinksPanel() {
       }
 
       setStatusMessage("Lien partenaire supprime.");
+      setLastDeleted({ id: link.id, title: link.title_fr || "Lien", wasVisible: link.visible !== false });
       if (editingId === linkId) {
         resetDraft();
       }
@@ -193,6 +197,40 @@ export function AdminPartnerLinksPanel() {
     } finally {
       setBusyKey(null);
     }
+  };
+
+  const toggleLinkVisibility = async (link: PartnerLinkRow) => {
+    setBusyKey(`visibility-link-${link.id}`);
+    try {
+      const response = await authorizedFetch("/api/admin/partner-links", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "visibility", id: link.id, visible: link.visible === false }),
+      });
+      const result = (await response.json()) as { ok?: boolean; message?: string };
+      if (!response.ok || !result.ok) throw new Error(result.message || "Operation impossible.");
+      setStatusMessage(link.visible === false ? "Lien publie." : "Lien masque.");
+      await loadData();
+    } catch (error) { setStatusMessage(error instanceof Error ? error.message : "Operation impossible."); }
+    finally { setBusyKey(null); }
+  };
+
+  const restoreLink = async () => {
+    if (!lastDeleted) return;
+    setBusyKey(`restore-link-${lastDeleted.id}`);
+    try {
+      const response = await authorizedFetch("/api/admin/partner-links", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "restore", id: lastDeleted.id, visible: lastDeleted.wasVisible }),
+      });
+      const result = (await response.json()) as { ok?: boolean; message?: string };
+      if (!response.ok || !result.ok) throw new Error(result.message || "Restauration impossible.");
+      setStatusMessage(`Lien restaure : ${lastDeleted.title}`);
+      setLastDeleted(null);
+      await loadData();
+    } catch (error) { setStatusMessage(error instanceof Error ? error.message : "Restauration impossible."); }
+    finally { setBusyKey(null); }
   };
 
   const moveLink = async (linkId: string, direction: "left" | "right") => {
@@ -336,6 +374,12 @@ export function AdminPartnerLinksPanel() {
       </> : null}
 
       {activeTab === "edit" ? <>
+      {lastDeleted ? (
+        <div className="admin-restore-notice">
+          <span>刚刚删除：{lastDeleted.title}</span>
+          <button className="cta-button" type="button" onClick={() => void restoreLink()}>Restaurer 恢复</button>
+        </div>
+      ) : null}
       <div className="split-line" style={{ marginTop: 18 }}>
         <div>
           <h4 style={{ margin: 0 }}>Liste des liens existants</h4>
@@ -362,6 +406,9 @@ export function AdminPartnerLinksPanel() {
               </button>
               <button className="pill-button" type="button" onClick={() => editLink(link)}>
                 Modifier
+              </button>
+              <button className="pill-button" type="button" onClick={() => void toggleLinkVisibility(link)}>
+                {link.visible === false ? "Publier" : "Masquer"}
               </button>
               <button
                 className="pill-button"
