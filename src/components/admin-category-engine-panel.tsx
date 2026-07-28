@@ -28,6 +28,8 @@ type RuleDraft = {
   showInCard: boolean;
   placeholderFr: string;
   acceptedFileTypes: string;
+  uploadType: string;
+  displayPosition: string;
   sortOrder: string;
 };
 
@@ -78,16 +80,59 @@ const defaultRuleDraft = (overrides: Partial<RuleDraft> = {}): RuleDraft => ({
   showInCard: true,
   placeholderFr: "",
   acceptedFileTypes: "",
+  uploadType: "string",
+  displayPosition: "left-top-1",
   sortOrder: "10",
   ...overrides,
 });
 
 const initialRuleDrafts = (): RuleDraft[] => [
-  defaultRuleDraft({ fieldKey: "nom", labelFr: "Nom", fieldType: "text", sortOrder: "10" }),
-  defaultRuleDraft({ fieldKey: "image", labelFr: "Image", fieldType: "image", acceptedFileTypes: ".jpg, .jpeg, .png, .webp", sortOrder: "20" }),
-  defaultRuleDraft({ fieldKey: "modele", labelFr: "Modèle 3D", fieldType: "file", acceptedFileTypes: ".fbx, .gltf, .glb", sortOrder: "30" }),
-  defaultRuleDraft({ fieldKey: "document", labelFr: "Document", fieldType: "file", acceptedFileTypes: ".doc, .docx, .xls, .xlsx, .pdf", sortOrder: "40" }),
+  defaultRuleDraft({ fieldKey: "nom", labelFr: "Nom", fieldType: "text", uploadType: "string", displayPosition: "left-top-1", sortOrder: "10" }),
+  defaultRuleDraft({ fieldKey: "image", labelFr: "Image", fieldType: "image", uploadType: "image", acceptedFileTypes: ".jpg, .jpeg, .png, .webp", displayPosition: "left-top-2", sortOrder: "20" }),
+  defaultRuleDraft({ fieldKey: "document", labelFr: "Document", fieldType: "file", uploadType: "pdf", acceptedFileTypes: ".pdf", displayPosition: "right-top-1", sortOrder: "30" }),
+  defaultRuleDraft({ fieldKey: "modele", labelFr: "Modèle 3D", fieldType: "file", uploadType: "obj", acceptedFileTypes: ".obj", displayPosition: "right-top-2", sortOrder: "40" }),
 ];
+
+const uploadTypeOptions = [
+  ["string", "字符串 Texte"], ["image", "图片 JPG / PNG / WEBP"], ["pdf", "PDF"],
+  ["word", "Word DOC / DOCX"], ["excel", "Excel XLS / XLSX"], ["obj", "模型 OBJ"],
+  ["fbx", "模型 FBX"], ["gltf", "模型 GLTF / GLB"], ["file", "其他文件"],
+  ["url", "网址 URL"], ["number", "数字 Nombre"], ["boolean", "是 / 否"],
+] as const;
+
+const positionOptions = [
+  "left-top-1", "left-top-2", "left-top-3", "left-middle-1", "left-bottom-1",
+  "right-top-1", "right-top-2", "right-top-3", "right-middle-1", "right-bottom-1",
+] as const;
+
+function uploadTypeConfig(uploadType: string) {
+  if (uploadType === "image") return { fieldType: "image" as const, extensions: ".jpg, .jpeg, .png, .webp" };
+  if (uploadType === "pdf") return { fieldType: "file" as const, extensions: ".pdf" };
+  if (uploadType === "word") return { fieldType: "file" as const, extensions: ".doc, .docx" };
+  if (uploadType === "excel") return { fieldType: "file" as const, extensions: ".xls, .xlsx" };
+  if (uploadType === "obj") return { fieldType: "file" as const, extensions: ".obj" };
+  if (uploadType === "fbx") return { fieldType: "file" as const, extensions: ".fbx" };
+  if (uploadType === "gltf") return { fieldType: "file" as const, extensions: ".gltf, .glb" };
+  if (uploadType === "url") return { fieldType: "url" as const, extensions: "" };
+  if (uploadType === "number") return { fieldType: "number" as const, extensions: "" };
+  if (uploadType === "boolean") return { fieldType: "boolean" as const, extensions: "" };
+  if (uploadType === "file") return { fieldType: "file" as const, extensions: "" };
+  return { fieldType: "text" as const, extensions: "" };
+}
+
+function inferUploadType(fieldType: RuleDraft["fieldType"], extensions: string[]) {
+  const joined = extensions.join(",");
+  if (fieldType === "image") return "image";
+  if (joined.includes(".pdf")) return "pdf";
+  if (joined.includes(".doc")) return "word";
+  if (joined.includes(".xls")) return "excel";
+  if (joined.includes(".obj")) return "obj";
+  if (joined.includes(".fbx")) return "fbx";
+  if (joined.includes(".gltf") || joined.includes(".glb")) return "gltf";
+  if (fieldType === "url" || fieldType === "number" || fieldType === "boolean") return fieldType;
+  if (fieldType === "file") return "file";
+  return "string";
+}
 
 const defaultEntryDraft: EntryDraft = {
   titleFr: "",
@@ -111,7 +156,7 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-export function AdminCategoryEnginePanel() {
+export function AdminCategoryEnginePanel({ requestedCategoryId = "" }: { requestedCategoryId?: string }) {
   const [activeTab, setActiveTab] = useState<"new" | "existing">("new");
   const [categories, setCategories] = useState<HomeCategory[]>([]);
   const [rulesByCategory, setRulesByCategory] = useState<Record<string, RuleDraft[]>>({});
@@ -141,7 +186,7 @@ export function AdminCategoryEnginePanel() {
         .order("created_at", { ascending: true }),
       supabase
         .from("category_field_rules")
-        .select("id, category_id, field_key, label_fr, field_type, required, show_in_card, placeholder_fr, accepted_file_types, sort_order")
+        .select("id, category_id, field_key, label_fr, field_type, required, show_in_card, placeholder_fr, accepted_file_types, display_position, sort_order")
         .order("sort_order", { ascending: true }),
       supabase
         .from("category_entries")
@@ -168,15 +213,19 @@ export function AdminCategoryEnginePanel() {
       (accumulator, row) => {
         const categoryId = String(row.category_id);
         accumulator[categoryId] ||= [];
+        const acceptedFileTypes = Array.isArray(row.accepted_file_types) ? (row.accepted_file_types as string[]) : [];
+        const fieldType = String(row.field_type || "text") as RuleDraft["fieldType"];
         accumulator[categoryId].push({
           id: String(row.id),
           fieldKey: String(row.field_key || ""),
           labelFr: String(row.label_fr || ""),
-          fieldType: (String(row.field_type || "text") as RuleDraft["fieldType"]),
+          fieldType,
           required: Boolean(row.required),
           showInCard: Boolean(row.show_in_card),
           placeholderFr: String(row.placeholder_fr || ""),
-          acceptedFileTypes: Array.isArray(row.accepted_file_types) ? (row.accepted_file_types as string[]).join(", ") : "",
+          acceptedFileTypes: acceptedFileTypes.join(", "),
+          uploadType: inferUploadType(fieldType, acceptedFileTypes),
+          displayPosition: String(row.display_position || "left-top-1"),
           sortOrder: String(row.sort_order || 0),
         });
         return accumulator;
@@ -193,17 +242,25 @@ export function AdminCategoryEnginePanel() {
       {},
     );
 
-    setCategories(nextCategories);
+    const homepageCategories = nextCategories.filter((category) => category.homepageVisible);
+    setCategories(homepageCategories);
     setRulesByCategory(nextRulesByCategory);
     setEntriesByCategory(nextEntriesByCategory);
-    if (!selectedCategoryId && nextCategories.length > 0) {
-      setSelectedCategoryId(nextCategories[0].id);
+    if (!selectedCategoryId && homepageCategories.length > 0) {
+      setSelectedCategoryId(homepageCategories[0].id);
     }
   };
 
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    if (requestedCategoryId) {
+      setActiveTab("existing");
+      setSelectedCategoryId(requestedCategoryId);
+    }
+  }, [requestedCategoryId]);
 
   const selectedCategory = useMemo(
     () => categories.find((category) => category.id === selectedCategoryId) || null,
@@ -254,6 +311,7 @@ export function AdminCategoryEnginePanel() {
     setBusyKey("save-category-engine");
 
     try {
+      const isNewCategory = !categoryDraft.id;
       if (categoryDraft.homepagePinned) {
         let clearPinnedQuery = supabase.from("categories").update({ homepage_pinned: false });
         if (categoryDraft.id) clearPinnedQuery = clearPinnedQuery.neq("id", categoryDraft.id);
@@ -311,6 +369,7 @@ export function AdminCategoryEnginePanel() {
           show_in_card: rule.showInCard,
           placeholder_fr: rule.placeholderFr.trim() || null,
           accepted_file_types: rule.acceptedFileTypes.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean),
+          display_position: rule.displayPosition,
           sort_order: Number(rule.sortOrder || index * 10),
         }));
 
@@ -324,6 +383,7 @@ export function AdminCategoryEnginePanel() {
 
       setStatusMessage("Categorie et regles enregistrees.");
       await loadData();
+      if (isNewCategory) setActiveTab("existing");
     } finally {
       setBusyKey(null);
     }
@@ -493,6 +553,38 @@ export function AdminCategoryEnginePanel() {
     }
   };
 
+  const uploadEntryField = async (rule: RuleDraft, file: File) => {
+    const supabase = getSupabaseBrowserClient();
+    const categoryId = categoryDraft.id || selectedCategoryId;
+    if (!supabase || !categoryId) return;
+
+    const extension = file.name.includes(".") ? `.${file.name.split(".").pop()?.toLowerCase()}` : "";
+    const allowed = rule.acceptedFileTypes.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean);
+    if (allowed.length > 0 && !allowed.includes(extension)) {
+      setStatusMessage(`Type refusé pour ${rule.labelFr}. Formats acceptés : ${allowed.join(", ")}`);
+      return;
+    }
+
+    setBusyKey(`upload-field-${rule.fieldKey}`);
+    try {
+      const safeName = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "-");
+      const path = `${categoryId}/${Date.now()}-${safeName}`;
+      const { error } = await supabase.storage.from("category-assets").upload(path, file, { upsert: false });
+      if (error) {
+        setStatusMessage(error.message);
+        return;
+      }
+      const { data } = supabase.storage.from("category-assets").getPublicUrl(path);
+      setEntryDraft((current) => ({
+        ...current,
+        payload: { ...current.payload, [rule.fieldKey]: data.publicUrl },
+      }));
+      setStatusMessage(`${rule.labelFr} 已上传 Téléversement terminé.`);
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
   return (
     <div className="section-block">
       <div className="split-line">
@@ -574,15 +666,15 @@ export function AdminCategoryEnginePanel() {
       </div> : null}
 
       <div className="input-group admin-form-grid">
-        <input
+        {activeTab === "existing" ? <input
           className="input"
           placeholder="Slug"
           value={categoryDraft.slug}
           onChange={(event) => setCategoryDraft({ ...categoryDraft, slug: slugify(event.target.value) })}
-        />
+        /> : null}
         <input
           className="input"
-          placeholder="Titre FR"
+          placeholder="类目标题 Titre de la catégorie"
           value={categoryDraft.titleFr}
           onChange={(event) => setCategoryDraft({ ...categoryDraft, titleFr: event.target.value })}
         />
@@ -592,7 +684,7 @@ export function AdminCategoryEnginePanel() {
           value={categoryDraft.titleZh}
           onChange={(event) => setCategoryDraft({ ...categoryDraft, titleZh: event.target.value })}
         />
-        <select
+        {activeTab === "existing" ? <select
           className="input"
           value={categoryDraft.kind}
           onChange={(event) =>
@@ -605,14 +697,14 @@ export function AdminCategoryEnginePanel() {
           <option value="book">Livres</option>
           <option value="resource">Ressources</option>
           <option value="custom">Categorie libre</option>
-        </select>
-        <input
+        </select> : null}
+        {activeTab === "existing" ? <input
           className="input"
           placeholder="Ordre accueil"
           value={categoryDraft.homepageSortOrder}
           onChange={(event) => setCategoryDraft({ ...categoryDraft, homepageSortOrder: event.target.value })}
-        />
-        <label className="tiny">
+        /> : null}
+        {activeTab === "existing" ? <label className="tiny">
           <input
             type="checkbox"
             checked={categoryDraft.homepagePinned}
@@ -620,20 +712,20 @@ export function AdminCategoryEnginePanel() {
             onChange={() => setCategoryDraft({ ...categoryDraft, homepagePinned: !categoryDraft.homepagePinned })}
           />{" "}
           Épingler en haut de l&apos;accueil 📌
-        </label>
-        <input
+        </label> : null}
+        {activeTab === "existing" ? <input
           className="input"
           placeholder="Icone lucide (sparkles, gamepad, tools...)"
           value={categoryDraft.iconName}
           onChange={(event) => setCategoryDraft({ ...categoryDraft, iconName: event.target.value })}
-        />
-        <input
+        /> : null}
+        {activeTab === "existing" ? <input
           className="input"
           placeholder="Formats autorises (.pdf, .zip...)"
           value={categoryDraft.allowedFileTypes}
           onChange={(event) => setCategoryDraft({ ...categoryDraft, allowedFileTypes: event.target.value })}
-        />
-        <label className="tiny">
+        /> : null}
+        {activeTab === "existing" ? <label className="tiny">
           <input
             type="checkbox"
             checked={categoryDraft.homepageVisible}
@@ -645,7 +737,7 @@ export function AdminCategoryEnginePanel() {
             }
           />{" "}
           Afficher sur l&apos;accueil
-        </label>
+        </label> : null}
         <textarea
           className="textarea"
           placeholder="Introduction FR"
@@ -656,137 +748,68 @@ export function AdminCategoryEnginePanel() {
 
       <div className="section-block">
         <div className="split-line">
-          <strong>Regles de champs 自定义字段</strong>
+          <strong>项目结构 Structure des produits</strong>
           <button
             className="pill-button"
             type="button"
             onClick={() => setRuleDrafts((current) => [...current, defaultRuleDraft()])}
           >
-            Ajouter un champ
+            增添一行 Ajouter une ligne
           </button>
         </div>
         <div className="admin-dynamic-stack">
           {ruleDrafts.map((rule, index) => (
-            <div className="admin-inline-card" key={`${rule.id || "new"}-${index}`}>
+            <div className="admin-inline-card admin-category-field-row" key={`${rule.id || "new"}-${index}`}>
               <input
                 className="input"
-                placeholder="field_key"
-                value={rule.fieldKey}
-                onChange={(event) =>
-                  setRuleDrafts((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index ? { ...item, fieldKey: event.target.value } : item,
-                    ),
-                  )
-                }
-              />
-              <input
-                className="input"
-                placeholder="Label FR"
+                placeholder="项目名称 Nom du champ"
                 value={rule.labelFr}
                 onChange={(event) =>
                   setRuleDrafts((current) =>
                     current.map((item, itemIndex) =>
-                      itemIndex === index ? { ...item, labelFr: event.target.value } : item,
+                      itemIndex === index
+                        ? { ...item, labelFr: event.target.value, fieldKey: slugify(event.target.value).replace(/-/g, "_") }
+                        : item,
                     ),
                   )
                 }
               />
               <select
                 className="input"
-                value={rule.fieldType}
+                value={rule.uploadType}
+                onChange={(event) => {
+                  const uploadType = event.target.value;
+                  const config = uploadTypeConfig(uploadType);
+                  setRuleDrafts((current) => current.map((item, itemIndex) =>
+                    itemIndex === index
+                      ? { ...item, uploadType, fieldType: config.fieldType, acceptedFileTypes: config.extensions }
+                      : item,
+                  ));
+                }}
+              >
+                {uploadTypeOptions.map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+              </select>
+              <select
+                className="input"
+                value={rule.displayPosition}
                 onChange={(event) =>
                   setRuleDrafts((current) =>
                     current.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? { ...item, fieldType: event.target.value as RuleDraft["fieldType"] }
-                        : item,
+                      itemIndex === index ? { ...item, displayPosition: event.target.value } : item,
                     ),
                   )
                 }
               >
-                <option value="text">Texte</option>
-                <option value="textarea">Texte long</option>
-                <option value="url">Lien externe</option>
-                <option value="file">Fichier</option>
-                <option value="image">Image</option>
-                <option value="number">Nombre</option>
-                <option value="boolean">Oui / Non</option>
+                {positionOptions.map((position) => <option value={position} key={position}>{position}</option>)}
               </select>
-              {(rule.fieldType === "file" || rule.fieldType === "image") ? (
-                <input
-                  className="input"
-                  placeholder="Extensions autorisées: .jpg, .png, .pdf..."
-                  value={rule.acceptedFileTypes}
-                  onChange={(event) =>
-                    setRuleDrafts((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, acceptedFileTypes: event.target.value } : item,
-                      ),
-                    )
-                  }
-                />
-              ) : null}
-              <input
-                className="input"
-                placeholder="Placeholder FR"
-                value={rule.placeholderFr}
-                onChange={(event) =>
-                  setRuleDrafts((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index ? { ...item, placeholderFr: event.target.value } : item,
-                    ),
-                  )
-                }
-              />
-              <input
-                className="input"
-                placeholder="Ordre"
-                value={rule.sortOrder}
-                onChange={(event) =>
-                  setRuleDrafts((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index ? { ...item, sortOrder: event.target.value } : item,
-                    ),
-                  )
-                }
-              />
-              <label className="tiny">
-                <input
-                  type="checkbox"
-                  checked={rule.required}
-                  onChange={() =>
-                    setRuleDrafts((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, required: !item.required } : item,
-                      ),
-                    )
-                  }
-                />{" "}
-                Obligatoire
-              </label>
-              <label className="tiny">
-                <input
-                  type="checkbox"
-                  checked={rule.showInCard}
-                  onChange={() =>
-                    setRuleDrafts((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, showInCard: !item.showInCard } : item,
-                      ),
-                    )
-                  }
-                />{" "}
-                Montrer en carte
-              </label>
               <button
-                className="pill-button"
+                className="pill-button danger"
                 type="button"
                 onClick={() =>
                   setRuleDrafts((current) => current.filter((_, itemIndex) => itemIndex !== index))
                 }
               >
-                Supprimer
+                减少 Supprimer
               </button>
             </div>
           ))}
@@ -871,7 +894,23 @@ export function AdminCategoryEnginePanel() {
                     {rule.labelFr}
                     {rule.acceptedFileTypes ? ` · ${rule.acceptedFileTypes}` : ""}
                   </label>
-                  {rule.fieldType === "textarea" ? (
+                  {rule.fieldType === "file" || rule.fieldType === "image" ? (
+                    <div className="input-group">
+                      <input
+                        className="input"
+                        type="file"
+                        accept={rule.acceptedFileTypes || undefined}
+                        disabled={busyKey === `upload-field-${rule.fieldKey}`}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) void uploadEntryField(rule, file);
+                        }}
+                      />
+                      {entryDraft.payload[rule.fieldKey] ? (
+                        <a className="tiny" href={entryDraft.payload[rule.fieldKey]} target="_blank" rel="noreferrer">已上传 Voir le fichier</a>
+                      ) : null}
+                    </div>
+                  ) : rule.fieldType === "textarea" ? (
                     <textarea
                       className="textarea"
                       placeholder={rule.placeholderFr || rule.labelFr}

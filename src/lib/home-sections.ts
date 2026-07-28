@@ -26,6 +26,7 @@ export type CategoryFieldRule = {
   showInCard: boolean;
   placeholderFr: string;
   acceptedFileTypes: string[];
+  displayPosition: string;
 };
 
 export type CategoryEntry = {
@@ -99,6 +100,7 @@ type CategoryFieldRuleRow = {
   show_in_card: boolean | null;
   placeholder_fr: string | null;
   accepted_file_types?: string[] | null;
+  display_position?: string | null;
 };
 
 type CategoryEntryRow = {
@@ -184,6 +186,7 @@ function mapRule(row: CategoryFieldRuleRow): CategoryFieldRule {
     showInCard: Boolean(row.show_in_card),
     placeholderFr: row.placeholder_fr || "",
     acceptedFileTypes: row.accepted_file_types || [],
+    displayPosition: row.display_position || "left-top-1",
   };
 }
 
@@ -265,7 +268,7 @@ export async function loadExpandedHomeData() {
         .order("created_at", { ascending: true }),
       supabase
         .from("category_field_rules")
-        .select("id, category_id, field_key, label_fr, field_type, sort_order, required, show_in_card, placeholder_fr, accepted_file_types")
+        .select("id, category_id, field_key, label_fr, field_type, sort_order, required, show_in_card, placeholder_fr, accepted_file_types, display_position")
         .order("sort_order", { ascending: true }),
       supabase
         .from("category_entries")

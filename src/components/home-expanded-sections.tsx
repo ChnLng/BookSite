@@ -114,6 +114,7 @@ function resolveCategoryIcon(iconName?: string) {
 
 function renderEntryField(rule: CategoryFieldRule, entry: CategoryEntry) {
   const value = entry.payload?.[rule.fieldKey];
+  const positionClass = `field-position-${rule.displayPosition}`;
 
   if (value == null || value === "") {
     return null;
@@ -121,7 +122,7 @@ function renderEntryField(rule: CategoryFieldRule, entry: CategoryEntry) {
 
   if (rule.fieldType === "boolean") {
     return (
-      <li key={rule.id} className="tiny">
+      <li key={rule.id} className={`tiny ${positionClass}`}>
         <strong>{rule.labelFr} :</strong> {value ? "Oui" : "Non"}
       </li>
     );
@@ -131,7 +132,7 @@ function renderEntryField(rule: CategoryFieldRule, entry: CategoryEntry) {
     return (
       <a
         key={rule.id}
-        className="pill-button"
+        className={`pill-button ${positionClass}`}
         href={String(value)}
         target="_blank"
         rel="noreferrer"
@@ -142,7 +143,7 @@ function renderEntryField(rule: CategoryFieldRule, entry: CategoryEntry) {
   }
 
   return (
-    <li key={rule.id} className="tiny">
+    <li key={rule.id} className={`tiny ${positionClass}`}>
       <strong>{rule.labelFr} :</strong> {String(value)}
     </li>
   );
