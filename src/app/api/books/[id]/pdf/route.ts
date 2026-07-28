@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
-import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
+import { getUserFromRequest } from "@/lib/auth-request";
 import { books } from "@/data/books";
 import { bookPdfPath, booksBucketName, isSupabaseBookPdfAsset, normalizeBookPdfAsset } from "@/lib/book-assets";
 import { hasPurchasedBook } from "@/lib/purchase-access";
@@ -104,26 +104,23 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Connexion requise." }, { status: 401 });
   }
 
-  const admin = await isAdminUser(user);
   const serviceClient = getSupabaseServiceClient();
 
-  if (!admin) {
-    if (!serviceClient) {
-      return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
-    }
-
-    const hasAccess = await hasPurchasedBook(serviceClient, {
-      userId: user.id,
-      email: user.email,
-      bookId: id,
-    });
-
-    if (!hasAccess) {
-      return NextResponse.json({ ok: false, message: "Acces non autorise." }, { status: 403 });
-    }
+  if (!serviceClient) {
+    return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
   }
 
-  if (!admin && serviceClient) {
+  const hasAccess = await hasPurchasedBook(serviceClient, {
+    userId: user.id,
+    email: user.email,
+    bookId: id,
+  });
+
+  if (!hasAccess) {
+    return NextResponse.json({ ok: false, message: "Acces non autorise." }, { status: 403 });
+  }
+
+  if (serviceClient) {
     const { data: purchase } = await serviceClient
       .from("downloads")
       .select("id, download_count")
