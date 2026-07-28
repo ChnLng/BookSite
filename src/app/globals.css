@@ -682,97 +682,8 @@ select {
   -webkit-backdrop-filter: var(--backdrop-blur);
 }
 
-.donation-field-label {
-  display: block;
-  margin: 2px 0 6px;
-  color: #526482;
-  font-size: 0.76rem;
-  font-weight: 600;
-}
-
-.donation-amount-field {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  min-height: 46px;
-  margin-bottom: 12px;
-  padding: 0 11px;
-  border: 1px solid rgba(83, 96, 123, 0.42);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.76);
-  color: #172033;
-}
-
-.donation-amount-field input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #172033;
-  font: inherit;
-  font-size: 1rem;
-}
-
-.donation-purpose-select {
-  width: 100%;
-  min-height: 46px;
-  margin-bottom: 14px;
-  padding: 0 34px 0 11px;
-  border: 1px solid rgba(83, 96, 123, 0.42);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.76);
-  color: #172033;
-  font: inherit;
-  font-size: 0.82rem;
-}
-
-.donation-paypal-buttons {
-  min-height: 88px;
-}
-
-.donation-paypal-checkout {
-  width: 100%;
-  min-height: 42px;
-  margin-top: 14px;
-  border: 0;
-  border-radius: 5px;
-  background: #ffc439;
-  color: #003087;
-  cursor: pointer;
-  font-size: 1.15rem;
-  font-style: italic;
-  box-shadow: 0 6px 14px rgba(0, 48, 135, 0.12);
-}
-
-.donation-paypal-checkout em {
-  color: #0070ba;
-  font-style: italic;
-  font-weight: 800;
-}
-
-.donation-paypal-checkout:disabled {
-  cursor: wait;
-  opacity: 0.68;
-}
-
-.donation-payment-methods {
-  margin: 8px 0 0;
-  color: var(--text-muted);
-  font-size: 0.72rem;
-  text-align: center;
-}
-
-.donation-amount-field input[type="number"] {
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-.donation-amount-field input[type="number"]::-webkit-inner-spin-button,
-.donation-amount-field input[type="number"]::-webkit-outer-spin-button {
-  margin: 0;
-  -webkit-appearance: none;
+.donation-hosted-button {
+  min-height: 210px;
 }
 
 .donation-payment-error {
@@ -3544,20 +3455,6 @@ select {
   background: #e0e7ff;
   color: #3730a3;
   transform: translateY(1px) scale(0.97);
-}
-
-.donation-paypal-checkout:hover:not(:disabled) {
-  background: #ffcf5c;
-  color: #002c78;
-  box-shadow: 0 9px 20px rgba(0, 48, 135, 0.2);
-  transform: translateY(-1px);
-}
-
-.donation-paypal-checkout:active:not(:disabled) {
-  background: #f2b827;
-  color: #001f5b;
-  box-shadow: 0 4px 10px rgba(0, 48, 135, 0.18);
-  transform: translateY(1px) scale(0.99);
 }
 
 :is(a, button, input, select, textarea):focus-visible {
