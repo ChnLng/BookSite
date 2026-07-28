@@ -1,7 +1,8 @@
 -- Category manager: per-field file formats, homepage ordering and a single pinned section.
 
 alter table public.categories
-  add column if not exists homepage_pinned boolean not null default false;
+  add column if not exists homepage_pinned boolean not null default false,
+  add column if not exists allowed_file_types text[] not null default '{}';
 
 alter table public.category_field_rules
   add column if not exists accepted_file_types text[] not null default '{}',
@@ -14,6 +15,11 @@ create index if not exists categories_homepage_position_idx
 create unique index if not exists categories_single_homepage_pin_idx
   on public.categories (homepage_pinned)
   where homepage_pinned = true;
+
+alter table public.categories enable row level security;
+drop policy if exists "Anyone can read homepage categories" on public.categories;
+create policy "Anyone can read homepage categories" on public.categories
+  for select using (homepage_visible = true or public.is_admin());
 
 with seed_categories (slug, title_fr, kind, sort_order, icon_name, intro_fr) as (
   values
