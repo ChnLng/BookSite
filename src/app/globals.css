@@ -2333,6 +2333,19 @@ select {
   scrollbar-width: thin;
 }
 
+.home-resource-marquee-shell {
+  margin-top: 18px;
+  padding-bottom: 4px;
+}
+
+.home-resource-marquee-inner {
+  animation-duration: 22s;
+}
+
+.home-resource-marquee-track {
+  gap: 16px;
+}
+
 .home-resource-carousel-card {
   flex: 0 0 280px;
   width: 280px;

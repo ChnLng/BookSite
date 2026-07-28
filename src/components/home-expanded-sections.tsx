@@ -456,32 +456,43 @@ export function HomeExpandedSections() {
               {section.resources.length === 0 ? (
                 <p className="tiny">Cette categorie est prete. Ajoutez maintenant ses premiers outils dans l&apos;admin.</p>
               ) : (
-                <div className="home-resource-carousel" role="list">
-                  {section.resources.map((resource) => (
-                    <Link
-                      className="home-resource-carousel-card"
-                      href={`/outils/${resource.slug || resource.id}`}
-                      key={resource.id}
-                      role="listitem"
-                    >
-                      <div className="home-resource-carousel-image">
-                        <Image
-                          src={resource.qrImageUrl || "/images/logo.png"}
-                          alt={resource.titleFr}
-                          fill
-                          sizes="280px"
-                          className="carousel-cover-image"
-                        />
+                <div className="marquee-shell home-resource-marquee-shell" role="list">
+                  <div className="marquee-inner home-resource-marquee-inner">
+                    {[0, 1].map((trackIndex) => (
+                      <div
+                        className="marquee-track home-resource-marquee-track"
+                        key={`${section.id}-track-${trackIndex}`}
+                        aria-hidden={trackIndex === 1}
+                      >
+                        {section.resources.map((resource) => (
+                          <Link
+                            className="home-resource-carousel-card"
+                            href={`/outils/${resource.slug || resource.id}`}
+                            key={`${resource.id}-${trackIndex}`}
+                            role="listitem"
+                            tabIndex={trackIndex === 1 ? -1 : 0}
+                          >
+                            <div className="home-resource-carousel-image">
+                              <Image
+                                src={resource.qrImageUrl || "/images/logo.png"}
+                                alt={resource.titleFr}
+                                fill
+                                sizes="280px"
+                                className="carousel-cover-image"
+                              />
+                            </div>
+                            <div className="home-resource-carousel-copy">
+                              <strong>{resource.titleFr}</strong>
+                              <p className="tiny">{resource.summaryFr || "Ouvrez la fiche pour voir les details et les options de telechargement."}</p>
+                              <span className="home-resource-carousel-meta">
+                                {resource.downloads.length > 0 ? `${resource.downloads.length} version(s)` : "Voir la fiche"}
+                              </span>
+                            </div>
+                          </Link>
+                        ))}
                       </div>
-                      <div className="home-resource-carousel-copy">
-                        <strong>{resource.titleFr}</strong>
-                        <p className="tiny">{resource.summaryFr || "Ouvrez la fiche pour voir les details et les options de telechargement."}</p>
-                        <span className="home-resource-carousel-meta">
-                          {resource.downloads.length > 0 ? `${resource.downloads.length} version(s)` : "Voir la fiche"}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </section>
