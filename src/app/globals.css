@@ -1276,14 +1276,15 @@ select {
 }
 
 .book-commerce-toolbar .book-promo-row {
-  flex: 1 1 170px;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
 .book-commerce-toolbar .book-promo-input {
-  width: 100%;
-  min-width: 82px;
-  max-width: none;
+  width: calc(8ch + 32px);
+  min-width: calc(8ch + 32px);
+  max-width: calc(8ch + 32px);
+  flex: 0 0 calc(8ch + 32px);
 }
 
 .book-commerce-toolbar .book-buy-row {
@@ -1310,14 +1311,15 @@ select {
 }
 
 .resource-commerce-toolbar .resource-promo-row {
-  flex: 1 1 170px;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
 .resource-commerce-toolbar .resource-promo-input {
-  width: 100%;
-  min-width: 82px;
-  max-width: none;
+  width: calc(8ch + 32px);
+  min-width: calc(8ch + 32px);
+  max-width: calc(8ch + 32px);
+  flex: 0 0 calc(8ch + 32px);
 }
 
 .resource-commerce-toolbar .resource-buy-row {
