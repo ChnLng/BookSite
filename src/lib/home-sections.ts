@@ -58,6 +58,7 @@ export type ResourceItem = {
   summaryFr: string;
   qrImageUrl: string;
   externalUrl: string;
+  priceEur: number;
   visible: boolean;
   sortOrder: number;
   downloads: ResourceDownloadVariant[];
@@ -119,6 +120,7 @@ type ResourceItemRow = {
   summary_fr: string | null;
   qr_image_url: string | null;
   external_url: string | null;
+  price_eur: number | string | null;
   visible: boolean | null;
   sort_order: number | null;
 };
@@ -218,6 +220,7 @@ function mapResource(row: ResourceItemRow, variants: ResourceDownloadVariant[]):
     summaryFr: row.summary_fr || "",
     qrImageUrl: row.qr_image_url || "",
     externalUrl: row.external_url || "",
+    priceEur: Number(row.price_eur || 0),
     visible: row.visible !== false,
     sortOrder: row.sort_order ?? 0,
     downloads: variants.sort((left, right) => left.sortOrder - right.sortOrder),
@@ -268,7 +271,7 @@ export async function loadExpandedHomeData() {
         .order("created_at", { ascending: true }),
       supabase
         .from("resource_items")
-        .select("id, slug, category_id, title_fr, summary_fr, qr_image_url, external_url, visible, sort_order")
+        .select("id, slug, category_id, title_fr, summary_fr, qr_image_url, external_url, price_eur, visible, sort_order")
         .eq("visible", true)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true }),

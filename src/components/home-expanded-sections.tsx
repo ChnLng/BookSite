@@ -175,6 +175,7 @@ export function HomeExpandedSections() {
         summaryFr: resource.summaryFr,
         qrImageUrl: resource.qrImageUrl || resource.coverImageUrl,
         externalUrl: resource.externalUrl,
+        priceEur: resource.priceEur,
         visible: resource.visible,
         sortOrder: resource.sortOrder,
         downloads: resource.downloads.map((download) => ({
@@ -517,7 +518,10 @@ export function HomeExpandedSections() {
                               />
                             </div>
                             <div className="home-resource-carousel-copy">
-                              <strong>{resource.titleFr}</strong>
+                              <div className="home-resource-carousel-title-row">
+                                <strong>{resource.titleFr}</strong>
+                                <span>{resource.priceEur.toFixed(2)} EUR</span>
+                              </div>
                               <p className="tiny">{resource.summaryFr || "Ouvrez la fiche pour voir les details et les options de telechargement."}</p>
                               <span className="home-resource-carousel-meta">
                                 {resource.downloads.length > 0 ? `${resource.downloads.length} version(s)` : "Voir la fiche"}

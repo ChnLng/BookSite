@@ -2742,6 +2742,26 @@ select {
   gap: 8px;
 }
 
+.home-resource-carousel-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.home-resource-carousel-title-row strong {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.home-resource-carousel-title-row span {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .home-resource-carousel-copy p {
   margin: 0;
 }
