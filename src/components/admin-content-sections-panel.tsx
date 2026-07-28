@@ -50,7 +50,11 @@ export function AdminContentSectionsPanel() {
       setMessage(`请先运行 content section SQL：${sectionResult.error.message}`);
       return;
     }
-    const nextSections = (sectionResult.data || []) as SectionRow[];
+    const nextSections = ((sectionResult.data || []) as SectionRow[]).sort((left, right) => {
+      if (left.section_key === "liens-partenaires") return 1;
+      if (right.section_key === "liens-partenaires") return -1;
+      return left.sort_order - right.sort_order;
+    });
     setSections(nextSections);
     setItems((itemResult.data || []) as ItemRow[]);
     setSelectedId((current) => current || nextSections[0]?.id || "");
@@ -77,11 +81,12 @@ export function AdminContentSectionsPanel() {
 
   const moveSection = async (direction: "up" | "down") => {
     const supabase = getSupabaseBrowserClient();
-    const index = sections.findIndex((section) => section.id === selectedId);
+    const movableSections = sections.filter((section) => section.section_key !== "liens-partenaires");
+    const index = movableSections.findIndex((section) => section.id === selectedId);
     const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (!supabase || index < 0 || targetIndex < 0 || targetIndex >= sections.length) return;
-    const current = sections[index];
-    const target = sections[targetIndex];
+    if (!supabase || selected?.section_key === "liens-partenaires" || index < 0 || targetIndex < 0 || targetIndex >= movableSections.length) return;
+    const current = movableSections[index];
+    const target = movableSections[targetIndex];
     await Promise.all([
       supabase.from("content_sections").update({ sort_order: target.sort_order }).eq("id", current.id),
       supabase.from("content_sections").update({ sort_order: current.sort_order }).eq("id", target.id),
@@ -94,7 +99,8 @@ export function AdminContentSectionsPanel() {
     const sectionKey = slugify(newTitle);
     if (!supabase || !sectionKey) { setMessage("请填写新类目名称。"); return; }
     setBusy(true);
-    const nextOrder = sections.length > 0 ? Math.max(...sections.map((section) => section.sort_order)) + 10 : 10;
+    const movableOrders = sections.filter((section) => section.section_key !== "liens-partenaires").map((section) => section.sort_order);
+    const nextOrder = movableOrders.length > 0 ? Math.max(...movableOrders) + 10 : 10;
     const { data, error } = await supabase.from("content_sections").insert({ section_key: sectionKey, title: newTitle.trim(), section_type: newType, sort_order: nextOrder, visible: true }).select("id").single();
     if (error || !data?.id) { setMessage(error?.message || "创建失败"); setBusy(false); return; }
     const { error: itemError } = await supabase.from("content_section_items").insert(newItems.filter((item) => item.admin_label.trim()).map((item, index) => ({
@@ -110,6 +116,28 @@ export function AdminContentSectionsPanel() {
     if (itemError) { setMessage(itemError.message); setBusy(false); return; }
     setNewTitle(""); setNewType("catalog"); setNewItems(defaultNewItems()); setSelectedId(data.id); setActiveTab("edit"); setBusy(false);
     setMessage("新类目已创建。"); await loadData();
+  };
+
+  const moveItem = (index: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= selectedItems.length) return;
+    const reordered = [...selectedItems];
+    [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+    setItems((current) => [
+      ...current.filter((item) => item.section_id !== selectedId),
+      ...reordered.map((item, itemIndex) => ({ ...item, sort_order: (itemIndex + 1) * 10 })),
+    ]);
+  };
+
+  const deleteSection = async () => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase || !selected || ["albums", "coin-ludique", "liens-partenaires"].includes(selected.section_key)) return;
+    if (!window.confirm(`确定删除类目“${selected.title}”以及它的页面项目吗？`)) return;
+    setBusy(true);
+    const { error } = await supabase.from("content_sections").delete().eq("id", selected.id);
+    if (error) setMessage(error.message);
+    else { setMessage("类目已删除。"); setSelectedId(""); await loadData(); }
+    setBusy(false);
   };
 
   const save = async () => {
@@ -191,8 +219,9 @@ export function AdminContentSectionsPanel() {
           </select>
           <label className="tiny"><input type="checkbox" checked={selected.visible} onChange={() => updateSection({ visible: !selected.visible })} /> 显示在用户页</label>
           <div className="actions-row">
-            <button className="pill-button" type="button" onClick={() => void moveSection("up")}>↑ 上移</button>
-            <button className="pill-button" type="button" onClick={() => void moveSection("down")}>↓ 下移</button>
+            <button className="pill-button" type="button" disabled={selected.section_key === "liens-partenaires"} onClick={() => void moveSection("up")}>↑ 上移</button>
+            <button className="pill-button" type="button" disabled={selected.section_key === "liens-partenaires"} onClick={() => void moveSection("down")}>↓ 下移</button>
+            <button className="pill-button" type="button" disabled={["albums", "coin-ludique", "liens-partenaires"].includes(selected.section_key) || busy} onClick={() => void deleteSection()}>删除类目</button>
           </div>
         </div>
 
@@ -219,7 +248,11 @@ export function AdminContentSectionsPanel() {
                 {positionOptions.map((position) => <option value={position} key={position}>{position}</option>)}
               </select>
               <label className="tiny"><input type="checkbox" checked={item.show_on_user_page} onChange={() => updateItem(index, { show_on_user_page: !item.show_on_user_page })} /> 用户页显示</label>
-              <button className="pill-button" type="button" onClick={() => setItems((current) => current.filter((entry) => entry !== item))}>删除</button>
+              <div className="actions-row">
+                <button className="pill-button" type="button" disabled={index === 0} onClick={() => moveItem(index, "up")}>↑</button>
+                <button className="pill-button" type="button" disabled={index === selectedItems.length - 1} onClick={() => moveItem(index, "down")}>↓</button>
+                <button className="pill-button" type="button" onClick={() => setItems((current) => current.filter((entry) => entry !== item))}>删除</button>
+              </div>
             </div>
           ))}
         </div>

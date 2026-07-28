@@ -49,6 +49,10 @@ values
   ('liens-partenaires', 'Liens partenaires', 'links', 30)
 on conflict (section_key) do update set title = excluded.title;
 
+update public.content_sections
+set sort_order = 2147483647
+where section_key = 'liens-partenaires';
+
 with album as (select id from public.content_sections where section_key = 'albums')
 insert into public.content_section_items
   (section_id, admin_label, source_key, content_type, module_type, display_position, show_on_user_page, sort_order)

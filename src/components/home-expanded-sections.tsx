@@ -64,6 +64,12 @@ type RenderedSection =
       label: string;
       kind: "partner";
       order: number;
+    }
+  | {
+      id: string;
+      label: string;
+      kind: "generic";
+      order: number;
     };
 
 function getHeaderOffset() {
@@ -155,7 +161,7 @@ export function HomeExpandedSections() {
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [partnerLinks, setPartnerLinks] = useState<PartnerLink[]>([]);
   const [activeSectionId, setActiveSectionId] = useState<string>("scene");
-  const [sectionSettings, setSectionSettings] = useState<Record<string, { title: string; order: number }>>({});
+  const [sectionSettings, setSectionSettings] = useState<Record<string, { title: string; order: number; type: string }>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -212,9 +218,9 @@ export function HomeExpandedSections() {
     const loadSettings = async () => {
       const supabase = getSupabaseBrowserClient();
       if (!supabase) return;
-      const { data } = await supabase.from("content_sections").select("section_key, title, sort_order").eq("visible", true);
+      const { data } = await supabase.from("content_sections").select("section_key, title, section_type, sort_order").eq("visible", true);
       if (!data) return;
-      setSectionSettings(Object.fromEntries(data.map((row) => [String(row.section_key), { title: String(row.title), order: Number(row.sort_order || 0) }])));
+      setSectionSettings(Object.fromEntries(data.map((row) => [String(row.section_key), { title: String(row.title), order: Number(row.sort_order || 0), type: String(row.section_type || "custom") }])));
     };
     void loadSettings();
   }, []);
@@ -266,8 +272,14 @@ export function HomeExpandedSections() {
       id: "liens-partenaires",
       label: sectionSettings["liens-partenaires"]?.title || "Liens partenaires",
       kind: "partner",
-      order: sectionSettings["liens-partenaires"]?.order ?? 30,
+      order: Number.MAX_SAFE_INTEGER,
     });
+
+    Object.entries(sectionSettings)
+      .filter(([key]) => !["albums", "coin-ludique", "liens-partenaires"].includes(key))
+      .forEach(([key, setting]) => {
+        sections.push({ id: `content-section-${key}`, label: setting.title, kind: "generic", order: setting.order });
+      });
 
     customCategories.forEach((category) => {
       sections.push({
@@ -576,6 +588,18 @@ export function HomeExpandedSections() {
                   ))}
                 </div>
               )}
+            </section>
+          );
+        }
+
+        if (section.kind === "generic") {
+          return (
+            <section className="panel glass home-section-panel" id={section.id} key={section.id} style={{ order: section.order }}>
+              <div className="section-heading">
+                <span className="section-heading-icon" aria-hidden="true"><Sparkles size={17} /></span>
+                <h2 className="section-heading-text">{section.label}</h2>
+              </div>
+              <p className="section-caption">该类目已经创建，可以在管理页面继续添加和编辑商品内容。</p>
             </section>
           );
         }
