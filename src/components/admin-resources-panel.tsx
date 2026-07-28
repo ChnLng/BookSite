@@ -99,6 +99,7 @@ export function AdminResourcesPanel() {
   const [statusMessage, setStatusMessage] = useState("");
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"create" | "edit">("create");
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -199,9 +200,15 @@ export function AdminResourcesPanel() {
     setEditingId(null);
   };
 
+  const startNewResource = () => {
+    resetDraft();
+    setActiveTab("create");
+  };
+
   const beginEdit = (resource: ResourceRow) => {
     const relatedFiles = filesByResource[resource.id] || [];
     setEditingId(resource.id);
+    setActiveTab("edit");
     setDraft({
       id: resource.id,
       categoryId: resource.category_id || "",
@@ -360,14 +367,33 @@ export function AdminResourcesPanel() {
             {resourceCount} ressource(s) geree(s), avec versions telechargeables illimitees.
           </p>
         </div>
-        <button className="pill-button" type="button" onClick={resetDraft}>
-          Nouvelle ressource
+      </div>
+
+      <div className="admin-category-tabs" role="tablist" aria-label="Gestion des outils">
+        <button
+          className={`admin-category-tab ${activeTab === "create" ? "active" : ""}`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "create"}
+          onClick={startNewResource}
+        >
+          添加新的 Ajouter un nouvel outil
+        </button>
+        <button
+          className={`admin-category-tab ${activeTab === "edit" ? "active" : ""}`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "edit"}
+          onClick={() => { resetDraft(); setActiveTab("edit"); }}
+        >
+          编辑已有 Modifier les outils
         </button>
       </div>
 
       {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
       {loading ? <p className="muted">Chargement des ressources...</p> : null}
 
+      {activeTab === "create" || editingId ? <>
       <div className="input-group admin-form-grid">
         <select
           className="input"
@@ -593,6 +619,9 @@ export function AdminResourcesPanel() {
         </button>
       </div>
 
+      </> : null}
+
+      {activeTab === "edit" ? <>
       <div className="split-line" style={{ marginTop: 18 }}>
         <div>
           <h4 style={{ margin: 0 }}>Liste des outils existants</h4>
@@ -628,6 +657,7 @@ export function AdminResourcesPanel() {
           </div>
         ))}
       </div>
+      </> : null}
     </div>
   );
 }

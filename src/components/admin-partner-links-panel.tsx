@@ -37,6 +37,7 @@ export function AdminPartnerLinksPanel() {
   const [statusMessage, setStatusMessage] = useState("");
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"create" | "edit">("create");
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -112,6 +113,11 @@ export function AdminPartnerLinksPanel() {
     setEditingId(null);
   };
 
+  const startNewLink = () => {
+    resetDraft();
+    setActiveTab("create");
+  };
+
   const saveLink = async () => {
     if (!draft.titleFr.trim() || !draft.targetUrl.trim() || !draft.iconUrl.trim()) {
       setStatusMessage("Remplissez le titre, l'icone et l'URL cible.");
@@ -150,6 +156,7 @@ export function AdminPartnerLinksPanel() {
 
   const editLink = (link: PartnerLinkRow) => {
     setEditingId(link.id);
+    setActiveTab("edit");
     setDraft({
       id: link.id,
       titleFr: link.title_fr || "",
@@ -236,14 +243,33 @@ export function AdminPartnerLinksPanel() {
             Icônes only, ouverture en nouvel onglet, tri gauche / droite depuis l&apos;admin.
           </p>
         </div>
-        <button className="pill-button" type="button" onClick={resetDraft}>
-          Nouveau lien
+      </div>
+
+      <div className="admin-category-tabs" role="tablist" aria-label="Gestion des liens partenaires">
+        <button
+          className={`admin-category-tab ${activeTab === "create" ? "active" : ""}`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "create"}
+          onClick={startNewLink}
+        >
+          添加新的 Ajouter un nouveau lien
+        </button>
+        <button
+          className={`admin-category-tab ${activeTab === "edit" ? "active" : ""}`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "edit"}
+          onClick={() => { resetDraft(); setActiveTab("edit"); }}
+        >
+          编辑已有 Modifier les liens
         </button>
       </div>
 
       {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
       {loading ? <p className="muted">Chargement des liens...</p> : null}
 
+      {activeTab === "create" || editingId ? <>
       <div className="input-group admin-form-grid">
         <input
           className="input"
@@ -307,6 +333,9 @@ export function AdminPartnerLinksPanel() {
         </button>
       </div>
 
+      </> : null}
+
+      {activeTab === "edit" ? <>
       <div className="split-line" style={{ marginTop: 18 }}>
         <div>
           <h4 style={{ margin: 0 }}>Liste des liens existants</h4>
@@ -346,6 +375,7 @@ export function AdminPartnerLinksPanel() {
           </div>
         ))}
       </div>
+      </> : null}
     </div>
   );
 }
