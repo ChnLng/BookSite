@@ -1815,6 +1815,15 @@ select {
     overflow-x: auto;
   }
 
+  html[data-preferred-view="desktop"] .page-shell {
+    width: 1148px;
+    max-width: 1148px;
+  }
+
+  html[data-preferred-view="desktop"] .homepage-shell {
+    overflow-x: visible;
+  }
+
   html[data-preferred-view="desktop"] .topbar {
     align-items: center;
     flex-direction: row;
