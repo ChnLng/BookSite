@@ -2477,6 +2477,30 @@ select {
   box-shadow: var(--shadow-glass);
 }
 
+.promo-percent-input {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-soft);
+}
+
+.promo-percent-input input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
 .admin-layout-item-row {
   display: grid;
   grid-template-columns: 1.2fr 0.9fr 1fr 0.9fr auto auto;

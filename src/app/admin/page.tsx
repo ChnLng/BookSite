@@ -2258,12 +2258,20 @@ function AdminPageContent() {
                     value={promoForm.code}
                     onChange={(event) => setPromoForm({ ...promoForm, code: event.target.value })}
                   />
-                  <input
-                    className="input"
-                    placeholder="Remise %"
-                    value={promoForm.discountPercent}
-                    onChange={(event) => setPromoForm({ ...promoForm, discountPercent: event.target.value })}
-                  />
+                  <label className="promo-percent-input" aria-label="Pourcentage de remise">
+                    <span aria-hidden="true">➖</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      inputMode="numeric"
+                      placeholder="10"
+                      value={promoForm.discountPercent}
+                      onChange={(event) => setPromoForm({ ...promoForm, discountPercent: event.target.value })}
+                    />
+                    <span aria-hidden="true">%</span>
+                  </label>
                   <input
                     className="input"
                     type="datetime-local"
@@ -2331,17 +2339,25 @@ function AdminPageContent() {
                                 setPromoEdits({ ...promoEdits, [promo.id]: { ...edit, code: event.target.value } })
                               }
                             />
-                            <input
-                              className="input"
-                              placeholder="Remise %"
-                              value={edit.discountPercent}
-                              onChange={(event) =>
-                                setPromoEdits({
-                                  ...promoEdits,
-                                  [promo.id]: { ...edit, discountPercent: event.target.value },
-                                })
-                              }
-                            />
+                            <label className="promo-percent-input" aria-label="Pourcentage de remise">
+                              <span aria-hidden="true">➖</span>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="1"
+                                inputMode="numeric"
+                                placeholder="10"
+                                value={edit.discountPercent}
+                                onChange={(event) =>
+                                  setPromoEdits({
+                                    ...promoEdits,
+                                    [promo.id]: { ...edit, discountPercent: event.target.value },
+                                  })
+                                }
+                              />
+                              <span aria-hidden="true">%</span>
+                            </label>
                             <input
                               className="input"
                               type="datetime-local"
