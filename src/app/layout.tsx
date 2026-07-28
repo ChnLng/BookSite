@@ -37,6 +37,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
+      <head>
+        <script
+          async
+          crossOrigin="anonymous"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6796254088003500"
+        />
+      </head>
       <body
         className={`${heading.variable} ${body.variable}`}
         style={{
