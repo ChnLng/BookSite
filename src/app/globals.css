@@ -1594,25 +1594,6 @@ select {
   margin-top: 18px;
 }
 
-@media (min-width: 768px) {
-  .admin-promo-summary-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 24px;
-  }
-
-  .admin-promo-summary-row .admin-promo-actions {
-    margin-top: 0;
-    flex-wrap: nowrap;
-    justify-content: flex-end;
-  }
-
-  .admin-promo-summary-row .admin-promo-actions .pill-button {
-    white-space: nowrap;
-  }
-}
-
 .cta-button {
   border: 1px solid rgba(255, 255, 255, 0.24);
   cursor: pointer;
@@ -2085,6 +2066,29 @@ select {
   gap: 12px;
   padding: 14px 0;
   border-bottom: 1px solid rgba(25, 52, 68, 0.08);
+}
+
+@media (min-width: 768px) {
+  .admin-book-card.admin-promo-summary-row {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) auto;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .admin-book-card.admin-promo-summary-row > .split-line {
+    justify-content: flex-start;
+  }
+
+  .admin-book-card.admin-promo-summary-row > .admin-promo-actions {
+    margin: 0;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+
+  .admin-book-card.admin-promo-summary-row .admin-promo-actions .pill-button {
+    white-space: nowrap;
+  }
 }
 
 .admin-book-preview {
