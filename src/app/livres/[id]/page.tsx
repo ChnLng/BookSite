@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { LayoutGrid } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
@@ -780,7 +781,12 @@ export default function BookDetailPage() {
       <section className="book-detail-layout">
         <aside className="book-detail-sidebar">
           <div className="panel glass">
-            <div className="badge">Produits associes</div>
+            <div className="section-heading">
+              <span className="section-heading-icon" aria-hidden="true">
+                <LayoutGrid size={17} />
+              </span>
+              <span className="section-heading-text">Produits associés</span>
+            </div>
             <div className="book-detail-related-list">
               {loading ? (
                 <p className="muted">Chargement des suggestions...</p>

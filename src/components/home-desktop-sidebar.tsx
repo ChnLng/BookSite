@@ -128,16 +128,48 @@ export function HomeDesktopSidebar() {
     };
     let stopped = false;
 
+    const selectFirstDonationPurpose = () => {
+      const select = container.querySelector("select") as HTMLSelectElement | null;
+      if (select && select.options.length > 0) {
+        const options = Array.from(select.options);
+        options.forEach((option, index) => {
+          const value = option.value.trim();
+          const text = option.textContent?.trim() || "";
+          if ((index === 0 && !value) || (!value && !text)) {
+            option.hidden = true;
+            option.disabled = true;
+          }
+        });
+        const firstPurposeIndex = options.findIndex((option) => !option.disabled && Boolean(option.value.trim() || option.textContent?.trim()));
+        if ((!select.value || select.selectedOptions[0]?.disabled) && firstPurposeIndex >= 0) {
+          select.selectedIndex = firstPurposeIndex;
+          select.dispatchEvent(new Event("input", { bubbles: true }));
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      }
+
+      const radios = Array.from(container.querySelectorAll('input[type="radio"]')) as HTMLInputElement[];
+      if (radios.length > 0 && !radios.some((radio) => radio.checked)) {
+        const firstEnabledRadio = radios.find((radio) => !radio.disabled);
+        firstEnabledRadio?.click();
+      }
+    };
+
+    const observer = new MutationObserver(selectFirstDonationPurpose);
+    observer.observe(container, { childList: true, subtree: true });
+
     const renderHostedButton = () => {
       const hostedButtons = paypalWindow.paypal?.HostedButtons;
       if (!hostedButtons || container.querySelector("iframe")) return false;
       Promise.resolve(hostedButtons({ hostedButtonId: "D3LVZA49QZ4VE" }).render(`#${containerId}`)).catch(() => {
         if (!stopped) setDonationPaymentError("Le module PayPal ne s'est pas chargé. Veuillez actualiser la page.");
       });
+      window.setTimeout(selectFirstDonationPurpose, 0);
       return true;
     };
 
-    if (renderHostedButton()) return () => { stopped = true; };
+    selectFirstDonationPurpose();
+    if (renderHostedButton()) return () => { stopped = true; observer.disconnect(); };
     let attempts = 0;
     const intervalId = window.setInterval(() => {
       attempts += 1;
@@ -151,6 +183,7 @@ export function HomeDesktopSidebar() {
     return () => {
       stopped = true;
       window.clearInterval(intervalId);
+      observer.disconnect();
     };
   }, []);
 
