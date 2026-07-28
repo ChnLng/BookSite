@@ -8,8 +8,18 @@ import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { TopNav } from "@/components/top-nav";
 import { infoLinks } from "@/lib/legal-info";
 import type { DisplayBook } from "@/lib/books-service";
+import { loadDisplayResources } from "@/lib/resources-service";
 
-const INITIAL_VISIBLE_BOOKS = 8;
+type CatalogueProduct = {
+  id: string;
+  kind: "book" | "resource";
+  titleFr: string;
+  titleZh: string;
+  image: string;
+  priceEur: number;
+  href: string;
+  externalUrl: string;
+};
 
 type CatalogueClientProps = {
   initialBooks: DisplayBook[];
@@ -19,32 +29,39 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [payingBookId, setPayingBookId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_BOOKS);
+  const [resources, setResources] = useState<CatalogueProduct[]>([]);
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadDisplayResources().then((items) => {
+      if (cancelled) return;
+      setResources(items.filter((item) => item.visible).map((item) => ({ id: item.slug || item.id, kind: "resource", titleFr: item.titleFr, titleZh: "", image: item.coverImageUrl || item.qrImageUrl, priceEur: item.priceEur, href: `/outils/${item.slug || item.id}`, externalUrl: item.externalUrl })));
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const products = useMemo<CatalogueProduct[]>(() => [
+    ...initialBooks.map((book) => ({ id: book.id, kind: "book" as const, titleFr: book.titleFr, titleZh: book.titleZh, image: book.coverImage, priceEur: book.priceEur, href: `/livres/${book.id}`, externalUrl: book.amazonEbookUrl })),
+    ...resources,
+  ].sort((left, right) => left.titleFr.localeCompare(right.titleFr, "fr", { sensitivity: "base" })), [initialBooks, resources]);
 
   const filteredBooks = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
 
     if (!keyword) {
-      return initialBooks;
+      return products;
     }
 
-    return initialBooks.filter((book) => {
+    return products.filter((book) => {
       const haystack = [book.titleFr, book.titleZh].join(" ").toLowerCase();
       return haystack.includes(keyword);
     });
-  }, [initialBooks, searchTerm]);
+  }, [products, searchTerm]);
 
-  useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE_BOOKS);
-  }, [searchTerm]);
-
-  const displayedBooks = searchTerm.trim() ? filteredBooks : filteredBooks.slice(0, visibleCount);
-  const canShowMore = !searchTerm.trim() && filteredBooks.length > visibleCount;
-
-  const handleBookCheckout = async (bookId: string) => {
-    setPayingBookId(bookId);
-    window.location.href = `/livres/${bookId}?buy=1`;
+  const handleBookCheckout = async (product: CatalogueProduct) => {
+    setPayingBookId(product.id);
+    window.location.href = `${product.href}?buy=1`;
     setPayingBookId(null);
   };
 
@@ -91,11 +108,11 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
             Catalogue
           </h1>
           <div className="book-grid catalogue-book-grid">
-            {displayedBooks.map((book) => (
-              <article className="book-card" key={book.id}>
-                <Link href={`/livres/${book.id}`} className="book-cover-wrap">
+            {filteredBooks.map((book) => (
+              <article className="book-card catalogue-product-card" key={`${book.kind}-${book.id}`}>
+                <Link href={book.href} className="book-cover-wrap">
                   <Image
-                    src={book.coverImage}
+                    src={book.image}
                     alt={book.titleFr}
                     width={320}
                     height={420}
@@ -104,42 +121,28 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
                   />
                 </Link>
                 <div className="book-meta" style={{ marginTop: 16 }}>
-                  <Link href={`/livres/${book.id}`}>
+                  <Link href={book.href}>
                     <strong>{book.titleFr}</strong>
                   </Link>
-                  <div className="tiny">{book.titleZh}</div>
-                  <div className="tiny">{book.teachingPointFr}</div>
-                  <p className="muted">{book.synopsisFr}</p>
+                  {book.titleZh ? <div className="tiny">{book.titleZh}</div> : null}
                   <div className="split-line">
                     <span>Prix</span>
                     <strong>{book.priceEur.toFixed(2)} EUR</strong>
                   </div>
-                  <div className="actions-row">
-                    <Link className="pill-button" href={`/livres/${book.id}`}>
-                      Decouvrir
-                    </Link>
-                    <button className="cta-button" type="button" onClick={() => void handleBookCheckout(book.id)}>
+                  <div className="catalogue-card-actions">
+                    <button className="cta-button catalogue-compact-button" type="button" onClick={() => void handleBookCheckout(book)}>
                       {payingBookId === book.id ? "Paiement..." : "Acheter"}
                     </button>
-                    <a className="pill-button" href={book.amazonEbookUrl} target="_blank" rel="noreferrer">
-                      Voir Amazon
-                    </a>
+                    {book.externalUrl ? <a className="pill-button catalogue-compact-button" href={book.externalUrl} target="_blank" rel="noreferrer">{book.kind === "book" ? "Amazon" : "Lien externe"}</a> : null}
                   </div>
                 </div>
               </article>
             ))}
           </div>
-          {displayedBooks.length === 0 ? (
+          {filteredBooks.length === 0 ? (
             <p className="muted" style={{ marginTop: 18 }}>
               Magie en cours... Les tresors arrivent tout de suite ! ✨
             </p>
-          ) : null}
-          {canShowMore ? (
-            <div className="catalogue-more-row">
-              <button className="pill-button" type="button" onClick={() => setVisibleCount((count) => count + INITIAL_VISIBLE_BOOKS)}>
-                Voir plus
-              </button>
-            </div>
           ) : null}
         </section>
       </section>

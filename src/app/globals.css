@@ -397,6 +397,28 @@ select {
 
 .catalogue-book-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+}
+
+.catalogue-product-card {
+  padding: 14px;
+}
+
+.catalogue-product-card .book-meta {
+  gap: 7px;
+}
+
+.catalogue-card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.catalogue-compact-button {
+  min-width: 0;
+  padding: 9px 10px;
+  font-size: 0.86rem;
+  text-align: center;
 }
 
 .catalogue-more-row {
