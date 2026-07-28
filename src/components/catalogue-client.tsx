@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Ticket, X } from "lucide-react";
+import { Search, Ticket, X } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { TopNav } from "@/components/top-nav";
 import { infoLinks } from "@/lib/legal-info";
@@ -80,8 +80,11 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
         <aside className="catalogue-sidebar">
           <div className="panel glass">
             <div className="section-block">
-              <label className="tiny" htmlFor="catalog-search">
-                Rechercher par titre
+              <label className="section-heading" htmlFor="catalog-search">
+                <span className="section-heading-icon" aria-hidden="true">
+                  <Search size={17} />
+                </span>
+                <span className="section-heading-text">Rechercher par titre</span>
               </label>
               <p className="tiny" style={{ marginTop: 8, marginBottom: 10 }}>
                 Entrez un titre en francais ou en chinois pour afficher le produit correspondant.
