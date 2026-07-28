@@ -27,9 +27,7 @@ export async function GET(request: Request) {
       ? row.book_id === product.product_ref
       : product.product_kind === "resource" ? row.resource_id === product.product_ref : false);
     const byPurchase = [...rows].sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
-    const byDownload = [...rows].filter((row) => row.last_downloaded_at).sort((a, b) => String(b.last_downloaded_at).localeCompare(String(a.last_downloaded_at)));
     const lastPurchase = byPurchase[0];
-    const lastDownload = byDownload[0];
     return {
       kind: product.product_kind,
       ref: product.product_ref,
@@ -40,9 +38,8 @@ export async function GET(request: Request) {
       downloads: rows.reduce((sum, row) => sum + Number(row.download_count || 0), 0),
       revenue: rows.reduce((sum, row) => sum + Number(row.amount_paid || 0), 0),
       lastPurchasedAt: lastPurchase?.created_at || null,
-      lastDownloadedAt: lastDownload?.last_downloaded_at || null,
+      lastDownloadedAt: lastPurchase?.last_downloaded_at || null,
       lastBuyer: lastPurchase?.user_email || null,
-      lastDownloader: lastDownload?.user_email || null,
       lastAmount: lastPurchase?.amount_paid == null ? null : Number(lastPurchase.amount_paid),
       currency: lastPurchase?.currency || "EUR",
     };
