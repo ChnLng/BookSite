@@ -368,6 +368,39 @@ export async function GET(request: Request) {
       });
     }
 
+    if (kind === "paid-assets") {
+      if (!githubToken || !githubPaidOwner || !githubPaidRepo) {
+        return NextResponse.json(
+          { ok: false, message: "Configuration du depot GitHub prive manquante." },
+          { status: 500 },
+        );
+      }
+
+      const response = await fetch(
+        `https://api.github.com/repos/${githubPaidOwner}/${githubPaidRepo}/releases/tags/${encodeURIComponent(githubPaidReleaseTag)}`,
+        { headers: githubPaidHeaders(), cache: "no-store" },
+      );
+
+      if (!response.ok) {
+        return NextResponse.json(
+          { ok: false, message: "Impossible de lire les fichiers de la GitHub Release privee." },
+          { status: response.status === 404 ? 404 : 502 },
+        );
+      }
+
+      const release = (await response.json()) as GitHubRelease;
+      const assets = (release.assets || [])
+        .filter((asset) => !/^Source code /i.test(asset.name))
+        .map((asset) => ({
+          id: asset.id,
+          name: asset.name,
+          reference: githubPaidAssetReference(asset.id, asset.name),
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name));
+
+      return NextResponse.json({ ok: true, assets });
+    }
+
     return NextResponse.json({ ok: false, message: "Type de lecture inconnu." }, { status: 400 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Lecture impossible.";

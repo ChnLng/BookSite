@@ -133,6 +133,11 @@ type PdfStorageStatus = {
   exists: boolean;
   message: string;
 };
+type PaidReleaseAsset = {
+  id: number;
+  name: string;
+  reference: string;
+};
 
 const adminSections = [
   { key: "purchases", label: "🔎 用户购买记录" },
@@ -374,6 +379,7 @@ function AdminPageContent() {
   const [categoryEdits, setCategoryEdits] = useState<Record<string, CategoryEditState>>({});
   const [promoEdits, setPromoEdits] = useState<Record<string, PromoEditState>>({});
   const [pdfStatuses, setPdfStatuses] = useState<Record<string, PdfStorageStatus>>({});
+  const [paidReleaseAssets, setPaidReleaseAssets] = useState<PaidReleaseAsset[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [createSelectedFiles, setCreateSelectedFiles] = useState<Partial<Record<AssetKind, File | null>>>({});
@@ -570,6 +576,30 @@ function AdminPageContent() {
   useEffect(() => {
     void loadDisplayResources().then(setRelatedResources).catch(() => setRelatedResources([]));
   }, []);
+
+  useEffect(() => {
+    if (!session?.access_token) {
+      setPaidReleaseAssets([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    void authorizedAdminFetch("/api/admin/assets?kind=paid-assets", {
+      signal: controller.signal,
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        const result = (await response.json()) as { ok?: boolean; assets?: PaidReleaseAsset[]; message?: string };
+        if (!response.ok || !result.ok) throw new Error(result.message || "无法读取私有 Release 文件。");
+        setPaidReleaseAssets(result.assets || []);
+      })
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setStatusMessage(error instanceof Error ? error.message : "无法读取私有 Release 文件。");
+      });
+
+    return () => controller.abort();
+  }, [session?.access_token]);
 
   useEffect(() => {
     if (!session?.access_token || books.length === 0) {
@@ -1649,6 +1679,26 @@ function AdminPageContent() {
                     <strong>付费后下载的内容文件 私有 GitHub Releases</strong>
                     {form.pdfFile ? <span className="tiny">{form.pdfFile}</span> : <span className="tiny">未上传内容文件</span>}
                   </div>
+                  <label className="tiny" htmlFor="create-paid-release-asset">绑定已经上传的文件</label>
+                  <select
+                    className="input"
+                    id="create-paid-release-asset"
+                    value={form.pdfFile}
+                    onChange={(event) => {
+                      const reference = event.target.value;
+                      const asset = paidReleaseAssets.find((entry) => entry.reference === reference);
+                      setForm((current) => ({ ...current, pdfFile: reference }));
+                      setCreateUploadStatus((current) => ({
+                        ...current,
+                        pdf: asset ? `已绑定 ${asset.name}，创建商品时生效。` : "",
+                      }));
+                    }}
+                  >
+                    <option value="">选择私有 Release 文件...</option>
+                    {paidReleaseAssets.map((asset) => (
+                      <option key={asset.id} value={asset.reference}>{asset.name}</option>
+                    ))}
+                  </select>
                   {createUploadStatus.pdf ? <p className="tiny">{createUploadStatus.pdf}</p> : null}
                   <div className="actions-row">
                     <input
@@ -1975,6 +2025,35 @@ function AdminPageContent() {
                                 <strong>付费后下载的内容文件 私有 GitHub Releases</strong>
                                 {edit.pdfFile ? <span className="tiny">{edit.pdfFile}</span> : <span className="tiny">暂无内容文件</span>}
                               </div>
+                              <label className="tiny" htmlFor={`paid-release-asset-${book.id}`}>绑定已经上传的文件</label>
+                              <select
+                                className="input"
+                                id={`paid-release-asset-${book.id}`}
+                                value={edit.pdfFile}
+                                onChange={(event) => {
+                                  const reference = event.target.value;
+                                  const asset = paidReleaseAssets.find((entry) => entry.reference === reference);
+                                  setBookEdits((current) => ({
+                                    ...current,
+                                    [book.id]: { ...current[book.id], pdfFile: reference },
+                                  }));
+                                  setEditUploadStatus((current) => ({
+                                    ...current,
+                                    [book.id]: {
+                                      ...(current[book.id] || {}),
+                                      pdf: asset ? `已绑定 ${asset.name}，点击 Enregistrer 保存。` : "",
+                                    },
+                                  }));
+                                }}
+                              >
+                                <option value="">选择私有 Release 文件...</option>
+                                {edit.pdfFile && !paidReleaseAssets.some((asset) => asset.reference === edit.pdfFile) ? (
+                                  <option value={edit.pdfFile}>当前文件（旧记录）</option>
+                                ) : null}
+                                {paidReleaseAssets.map((asset) => (
+                                  <option key={asset.id} value={asset.reference}>{asset.name}</option>
+                                ))}
+                              </select>
                               <p className="tiny" style={{ marginTop: 8 }}>
                                 当前状态: {pdfStatus ? pdfStatus.message : "检查中..."}
                               </p>

@@ -77,8 +77,8 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: 10px;
+  padding: 14px 16px;
   border-radius: 28px;
   position: sticky;
   top: 12px;
@@ -127,6 +127,7 @@ select {
     inset -1px -1px 0 rgba(203, 213, 225, 0.34),
     10px 10px 22px rgba(175, 186, 202, 0.15),
     -8px -8px 18px rgba(255, 255, 255, 0.88);
+  min-width: 0;
 }
 
 .brand-copy {
@@ -152,6 +153,7 @@ select {
   flex: 1;
   display: flex;
   justify-content: flex-start;
+  min-width: 0;
 }
 
 .brand-avatar {
@@ -191,8 +193,10 @@ select {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  white-space: nowrap;
   padding: 6px;
   border-radius: 999px;
   background: linear-gradient(145deg, #f7f9fd, #e8edf6);
@@ -298,6 +302,11 @@ select {
   cursor: pointer;
   font: inherit;
   text-decoration: none;
+}
+
+.nav-links a,
+.nav-button {
+  padding: 10px 14px;
 }
 
 .nav-links a:hover,
