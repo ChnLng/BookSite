@@ -53,6 +53,12 @@ function fallbackBookExists(bookId: string) {
   return fallbackBooks.some((book) => book.id === bookId);
 }
 
+function publicAuthorName(value: unknown, fallbackEmail?: string | null) {
+  const name = String(value || "").trim();
+  if (name.includes("@")) return name.split("@")[0];
+  return name || fallbackEmail?.split("@")[0] || "Lecteur";
+}
+
 async function bookExists(bookId: string, accessToken?: string) {
   const supabase = createServerSupabaseClient(accessToken);
 
@@ -74,6 +80,7 @@ export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const accessToken = _request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
   const supabase = createServerSupabaseClient(accessToken);
+  const currentUser = await getUserFromAccessToken(accessToken);
 
   if (!supabase) {
     return NextResponse.json({
@@ -88,7 +95,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
   const { data, error } = await supabase
     .from("book_reviews")
-    .select("id, author_name, rating, review_text, created_at")
+    .select("id, user_id, user_email, author_name, rating, review_text, created_at")
     .eq("book_id", id)
     .eq("visible", true)
     .order("created_at", { ascending: false })
@@ -100,10 +107,11 @@ export async function GET(_request: Request, context: RouteContext) {
 
   const reviews = (data || []).map((row) => ({
     id: row.id,
-    authorName: row.author_name || "Lecteur",
+    authorName: publicAuthorName(row.author_name, row.user_email),
     rating: Number(row.rating || 0),
     reviewText: row.review_text || "",
     createdAt: row.created_at || null,
+    isOwn: Boolean(currentUser?.id && row.user_id === currentUser.id),
   }));
 
   const totalReviews = reviews.length;
@@ -155,11 +163,7 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const user = await getUserFromAccessToken(accessToken);
-  const authorName =
-    suppliedName ||
-    user?.user_metadata?.full_name ||
-    user?.email?.split("@")[0] ||
-    "Lecteur";
+  const authorName = publicAuthorName(suppliedName || user?.user_metadata?.full_name, user?.email);
 
   const basePayload = {
     book_id: id,

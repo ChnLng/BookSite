@@ -34,7 +34,8 @@ export type DisplayBook = Book & {
 export const BOOK_PUBLIC_SELECT =
   "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, related_book_ids, created_at, deleted_at";
 
-const BOOK_CACHE_TTL_MS = 60_000;
+// Supabase is authoritative; admin edits should appear immediately on product pages.
+const BOOK_CACHE_TTL_MS = 0;
 const bookListCache = new Map<boolean, { expiresAt: number; data: DisplayBook[] }>();
 const bookListInFlight = new Map<boolean, Promise<DisplayBook[]>>();
 

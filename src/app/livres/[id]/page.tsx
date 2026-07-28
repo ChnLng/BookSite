@@ -25,6 +25,7 @@ type ReviewRecord = {
   rating: number;
   reviewText: string;
   createdAt: string | null;
+  isOwn?: boolean;
 };
 
 type ReviewSummary = {
@@ -103,7 +104,7 @@ function formatReviewDate(value: string | null) {
 }
 
 function buildDefaultAuthorName(email?: string | null, displayName?: string | null) {
-  if (displayName?.trim()) {
+  if (displayName?.trim() && !displayName.includes("@")) {
     return displayName.trim();
   }
 
@@ -228,6 +229,7 @@ export default function BookDetailPage() {
     try {
       const response = await fetch(`/api/books/${targetBookId}/reviews`, {
         cache: "no-store",
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
       const result = (await response.json().catch(() => null)) as
         | {
@@ -263,7 +265,7 @@ export default function BookDetailPage() {
         },
       };
     }
-  }, []);
+  }, [session?.access_token]);
 
   useEffect(() => {
     setReviewForm((current) => {
@@ -358,6 +360,10 @@ export default function BookDetailPage() {
 
       setReviews(reviewData.reviews);
       setReviewSummary(reviewData.summary);
+      const ownReview = reviewData.reviews.find((review) => review.isOwn);
+      if (ownReview) {
+        setReviewForm({ authorName: ownReview.authorName, rating: ownReview.rating, reviewText: ownReview.reviewText });
+      }
       setReviewsLoading(false);
     };
 
