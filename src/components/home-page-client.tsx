@@ -39,16 +39,7 @@ type HomePageClientProps = {
   initialMobile: boolean;
 };
 
-function shouldRenderDesktopSidebar() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const preferDesktopView = document.documentElement.dataset.preferredView === "desktop";
-  return window.innerWidth >= 768 || preferDesktopView;
-}
-
-export function HomePageClient({ initialMobile }: HomePageClientProps) {
+export function HomePageClient({ initialMobile: _initialMobile }: HomePageClientProps) {
   const [authOpen, setAuthOpen] = useState(false);
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -62,29 +53,9 @@ export function HomePageClient({ initialMobile }: HomePageClientProps) {
   const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>(defaultCarouselBooks);
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
-  const [showDesktopSidebar, setShowDesktopSidebar] = useState(!initialMobile);
   const { signInWithPassword, signUpWithPassword } = useAuth();
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const syncDesktopSidebar = () => {
-      setShowDesktopSidebar(shouldRenderDesktopSidebar());
-    };
-
-    syncDesktopSidebar();
-    window.addEventListener("resize", syncDesktopSidebar);
-    window.addEventListener("visdar:view-mode-changed", syncDesktopSidebar as EventListener);
-
-    return () => {
-      window.removeEventListener("resize", syncDesktopSidebar);
-      window.removeEventListener("visdar:view-mode-changed", syncDesktopSidebar as EventListener);
-    };
-  }, []);
 
   useEffect(() => {
     void loadDisplayBooks().then((books) => {
@@ -228,7 +199,9 @@ export function HomePageClient({ initialMobile }: HomePageClientProps) {
       />
 
       <section className="homepage-responsive-grid homepage-main-grid">
-        {showDesktopSidebar ? <HomeDesktopSidebar /> : null}
+        <div className="home-desktop-sidebar-wrapper">
+          <HomeDesktopSidebar />
+        </div>
 
         <div className="home-main-flow">
           <section className="panel glass carousel-stage" id="scene">

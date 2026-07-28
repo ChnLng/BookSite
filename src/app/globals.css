@@ -2862,3 +2862,8 @@ select {
     font-size: 1rem;
   }
 }
+@media (max-width: 767px) {
+  html:not([data-preferred-view="desktop"]) .home-desktop-sidebar-wrapper {
+    display: none !important;
+  }
+}
