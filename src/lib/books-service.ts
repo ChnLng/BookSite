@@ -20,6 +20,7 @@ export type BookRow = {
   asin: string | null;
   related_book_ids?: string[] | null;
   created_at?: string | null;
+  deleted_at?: string | null;
 };
 
 export type DisplayBook = Book & {
@@ -31,7 +32,7 @@ export type DisplayBook = Book & {
 };
 
 export const BOOK_PUBLIC_SELECT =
-  "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, related_book_ids, created_at";
+  "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, related_book_ids, created_at, deleted_at";
 
 const BOOK_CACHE_TTL_MS = 60_000;
 const bookListCache = new Map<boolean, { expiresAt: number; data: DisplayBook[] }>();
@@ -104,6 +105,7 @@ async function fetchDisplayBooks(includeHidden = false): Promise<DisplayBook[]> 
   const query = supabase
     .from("books")
     .select(BOOK_PUBLIC_SELECT)
+    .is("deleted_at", null)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
@@ -166,6 +168,7 @@ export async function resolveDisplayBookById(
     let query = supabase
       .from("books")
       .select(BOOK_PUBLIC_SELECT)
+      .is("deleted_at", null)
       .or(`slug.eq.${bookId},id.eq.${bookId}`)
       .limit(1);
 

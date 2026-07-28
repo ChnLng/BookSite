@@ -33,6 +33,7 @@ type BookRow = {
   amazon_paperback_url: string | null;
   related_book_ids?: string[] | null;
   created_at?: string | null;
+  deleted_at?: string | null;
 };
 
 type CategoryRow = {
@@ -298,7 +299,7 @@ function mergeBooksWithFallback(rows: BookRow[]) {
     .filter((book) => !knownKeys.has(book.id.toLowerCase()))
     .map((book, index) => fallbackBookRow(index, book));
 
-  return [...rows, ...missingStaticRows].sort((left, right) => {
+  return [...rows.filter((row) => !row.deleted_at), ...missingStaticRows].sort((left, right) => {
     const leftSort = left.sort_order ?? Number.MAX_SAFE_INTEGER;
     const rightSort = right.sort_order ?? Number.MAX_SAFE_INTEGER;
     return leftSort - rightSort || left.title_fr.localeCompare(right.title_fr);
@@ -354,6 +355,7 @@ function AdminPageContent() {
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<AdminSectionKey>("categories");
   const [bookAdminTab, setBookAdminTab] = useState<"create" | "edit">("create");
+  const [lastDeletedBook, setLastDeletedBook] = useState<{ id: string; title: string; wasVisible: boolean } | null>(null);
   const [form, setForm] = useState<BookFormState>(defaultBookForm);
   const [categoryForm, setCategoryForm] = useState<CategoryFormState>(defaultCategoryForm);
   const [promoForm, setPromoForm] = useState<PromoFormState>(defaultPromoForm);
@@ -394,7 +396,7 @@ function AdminPageContent() {
     const booksQuery = await supabase
       .from("books")
       .select(
-        "id, slug, category_id, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, related_book_ids, created_at",
+        "id, slug, category_id, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, related_book_ids, created_at, deleted_at",
       )
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
@@ -403,7 +405,7 @@ function AdminPageContent() {
       const fallbackBooksQuery = await supabase
         .from("books")
         .select(
-          "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, related_book_ids, created_at",
+          "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, related_book_ids, created_at, deleted_at",
         )
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true });
@@ -683,6 +685,9 @@ function AdminPageContent() {
 
     try {
       return await action();
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "操作失败，请重试。");
+      return undefined;
     } finally {
       setBusyKey(null);
     }
@@ -874,6 +879,8 @@ function AdminPageContent() {
   };
 
   const deleteBook = async (id: string) => {
+    const book = books.find((entry) => entry.id === id);
+    if (!book) return;
     await withBusyState(`delete-book-${id}`, async () => {
       await adminBooksFetch({
         method: "DELETE",
@@ -883,7 +890,26 @@ function AdminPageContent() {
         body: JSON.stringify({ bookId: id }),
       });
 
-      setStatusMessage("书籍记录已删除。");
+      setLastDeletedBook({ id, title: `${book.title_zh} ${book.title_fr}`.trim(), wasVisible: Boolean(book.visible) });
+      setStatusMessage("商品已删除。可点击 Restaurer 撤销这一次删除。");
+      await reload();
+    });
+  };
+
+  const restoreLastDeletedBook = async () => {
+    if (!lastDeletedBook) return;
+    await withBusyState(`restore-book-${lastDeletedBook.id}`, async () => {
+      await adminBooksFetch({
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "restore",
+          bookId: lastDeletedBook.id,
+          visible: lastDeletedBook.wasVisible,
+        }),
+      });
+      setStatusMessage(`已恢复商品：${lastDeletedBook.title}`);
+      setLastDeletedBook(null);
       await reload();
     });
   };
@@ -1651,6 +1677,19 @@ function AdminPageContent() {
               {bookAdminTab === "edit" ? <div className="section-block">
                 <h3>编辑已有商品 Modifier les produits</h3>
                 <p className="tiny">这里的从上到下顺序，就是主页跑马灯从左到右和 Catalogue 的展示顺序。</p>
+                {lastDeletedBook ? (
+                  <div className="admin-restore-notice">
+                    <span>刚刚删除：{lastDeletedBook.title}</span>
+                    <button
+                      className="cta-button"
+                      type="button"
+                      disabled={busyKey === `restore-book-${lastDeletedBook.id}`}
+                      onClick={() => void restoreLastDeletedBook()}
+                    >
+                      {busyKey === `restore-book-${lastDeletedBook.id}` ? "Restauration..." : "Restaurer 恢复"}
+                    </button>
+                  </div>
+                ) : null}
                 {loading ? (
                   <p className="muted">Chargement...</p>
                 ) : books.length === 0 ? (
@@ -1988,7 +2027,7 @@ function AdminPageContent() {
                           <button
                             className="pill-button"
                             type="button"
-                            disabled={busyKey === `move-book-${book.id}-up`}
+                            disabled={busyKey === `move-book-${book.id}-up` || books.findIndex((entry) => entry.id === book.id) === 0}
                             onClick={() => void moveBook(book.id, "up")}
                           >
                             ↑ 上移（跑马灯向左）
@@ -1996,7 +2035,7 @@ function AdminPageContent() {
                           <button
                             className="pill-button"
                             type="button"
-                            disabled={busyKey === `move-book-${book.id}-down`}
+                            disabled={busyKey === `move-book-${book.id}-down` || books.findIndex((entry) => entry.id === book.id) === books.length - 1}
                             onClick={() => void moveBook(book.id, "down")}
                           >
                             ↓ 下移（跑马灯向右）
