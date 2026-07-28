@@ -48,7 +48,8 @@ export type DisplayResource = {
 };
 
 const platformOrder = ["通用", "Mac", "Windows", "Linux", "手机"] as const;
-const RESOURCE_CACHE_TTL_MS = 60_000;
+// Keep homepage tools synchronized with admin edits instead of showing a stale list.
+const RESOURCE_CACHE_TTL_MS = 0;
 let resourceListCache: { expiresAt: number; data: DisplayResource[] } | null = null;
 let resourceListInFlight: Promise<DisplayResource[]> | null = null;
 

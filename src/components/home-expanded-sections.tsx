@@ -166,12 +166,39 @@ export function HomeExpandedSections() {
   useEffect(() => {
     let cancelled = false;
 
+    const mapFallbackResources = (fallbackResources: Awaited<ReturnType<typeof loadDisplayResources>>) =>
+      fallbackResources.map((resource) => ({
+        id: resource.id,
+        slug: resource.slug,
+        categoryId: null,
+        titleFr: resource.titleFr,
+        summaryFr: resource.summaryFr,
+        qrImageUrl: resource.qrImageUrl || resource.coverImageUrl,
+        externalUrl: resource.externalUrl,
+        visible: resource.visible,
+        sortOrder: resource.sortOrder,
+        downloads: resource.downloads.map((download) => ({
+          id: download.id,
+          resourceId: resource.id,
+          platform: download.platform,
+          labelFr: download.labelFr,
+          filePath: download.filePath,
+          externalUrl: download.externalUrl,
+          sortOrder: download.sortOrder,
+        })),
+      }));
+
     const loadSections = async () => {
-      const [expandedData, fallbackResources, fallbackPartnerLinks] = await Promise.all([
-        loadExpandedHomeData(),
-        loadDisplayResources(),
-        loadFallbackPartnerLinks(),
-      ]);
+      // Load Coin ludique independently so unrelated category/link queries cannot
+      // hold its carousel in an empty state.
+      void loadDisplayResources().then((fallbackResources) => {
+        if (!cancelled) setResources((current) => current.length > 0 ? current : mapFallbackResources(fallbackResources));
+      });
+      void loadFallbackPartnerLinks().then((links) => {
+        if (!cancelled) setPartnerLinks((current) => current.length > 0 ? current : links);
+      });
+
+      const expandedData = await loadExpandedHomeData();
 
       if (cancelled) {
         return;
@@ -180,31 +207,8 @@ export function HomeExpandedSections() {
       setCategories(expandedData.categories);
       setFieldRules(expandedData.fieldRules);
       setEntries(expandedData.entries);
-      setResources(
-        expandedData.resources.length > 0
-          ? expandedData.resources
-          : fallbackResources.map((resource) => ({
-              id: resource.id,
-              slug: resource.slug,
-              categoryId: null,
-              titleFr: resource.titleFr,
-              summaryFr: resource.summaryFr,
-              qrImageUrl: resource.qrImageUrl || resource.coverImageUrl,
-              externalUrl: resource.externalUrl,
-              visible: resource.visible,
-              sortOrder: resource.sortOrder,
-              downloads: resource.downloads.map((download) => ({
-                id: download.id,
-                resourceId: resource.id,
-                platform: download.platform,
-                labelFr: download.labelFr,
-                filePath: download.filePath,
-                externalUrl: download.externalUrl,
-                sortOrder: download.sortOrder,
-              })),
-            })),
-      );
-      setPartnerLinks(expandedData.partnerLinks.length > 0 ? expandedData.partnerLinks : fallbackPartnerLinks);
+      if (expandedData.resources.length > 0) setResources(expandedData.resources);
+      if (expandedData.partnerLinks.length > 0) setPartnerLinks(expandedData.partnerLinks);
     };
 
     void loadSections();
