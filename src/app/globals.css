@@ -593,6 +593,111 @@ select {
   -webkit-backdrop-filter: var(--backdrop-blur);
 }
 
+.donation-field-label {
+  display: block;
+  margin: 2px 0 6px;
+  color: #526482;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.donation-amount-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  margin-bottom: 12px;
+  padding: 0 11px;
+  border: 1px solid rgba(83, 96, 123, 0.42);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.76);
+  color: #172033;
+}
+
+.donation-amount-field input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #172033;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.donation-purpose-select {
+  width: 100%;
+  min-height: 46px;
+  margin-bottom: 14px;
+  padding: 0 34px 0 11px;
+  border: 1px solid rgba(83, 96, 123, 0.42);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.76);
+  color: #172033;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.donation-paypal-buttons {
+  min-height: 88px;
+}
+
+.donation-payment-error {
+  margin: 8px 2px 0;
+  color: #b44957;
+  font-size: 0.72rem;
+  line-height: 1.42;
+}
+
+.secure-payment-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 11px 13px;
+  border: 1px solid rgba(111, 92, 255, 0.13);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.58);
+  color: #5d6f8e;
+  font-size: 0.78rem;
+  line-height: 1.42;
+}
+
+.secure-payment-note svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #6d5dfc;
+}
+
+.secure-payment-note p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.secure-payment-note strong {
+  color: #172033;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.secure-payment-note span {
+  display: block;
+}
+
+.secure-payment-note-compact {
+  gap: 7px;
+  margin-top: 8px;
+  padding: 9px 10px;
+  border-radius: 14px;
+  font-size: 0.68rem;
+}
+
+.secure-payment-note-compact strong {
+  font-size: 0.72rem;
+}
+
 .donation-thank-you-modal {
   max-width: 460px;
   padding: 24px;

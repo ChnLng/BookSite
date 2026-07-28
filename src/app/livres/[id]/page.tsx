@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
+import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
@@ -502,6 +503,7 @@ export default function BookDetailPage() {
             payerName,
             amountPaid: finalPrice,
             captureId: order?.purchase_units?.[0]?.payments?.captures?.[0]?.id,
+            promoCode: appliedPromo?.code || "",
           }),
         });
 
@@ -1112,6 +1114,7 @@ export default function BookDetailPage() {
                 <div className="book-payment-shell">
                   <div ref={paypalContainerRef} />
                 </div>
+                <SecurePaymentNote />
                 {!paymentReady && !paymentError ? (
                   <p className="tiny" style={{ marginTop: 12 }}>
                     Chargement de PayPal...
