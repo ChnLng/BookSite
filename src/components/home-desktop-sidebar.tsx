@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Heart, Mail, MessageCircleHeart, Sparkles } from "lucide-react";
+import { Heart, Mail, MessageCircleHeart, Sparkles, X } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
 import { useAuth } from "@/components/auth-provider";
@@ -37,6 +37,11 @@ const sampleComments: CommentItem[] = [
   },
 ];
 
+const donationThankYouMessages = [
+  "Paiement réussi ! Merci beaucoup pour votre précieux soutien. ✨",
+  "Merci pour votre don ! C'est un véritable encouragement. 🌸",
+];
+
 export function HomeDesktopSidebar() {
   const emailLoginHintText = "Veuillez vous connecter pour envoyer un email à l'administrateur.";
   const siteCommentSuccessText = "Message bien enregistré ! Il est bien au chaud dans votre espace « Ma page ».";
@@ -48,6 +53,7 @@ export function HomeDesktopSidebar() {
   const [commentDeliveryMode, setCommentDeliveryMode] = useState<"site" | "email">("site");
   const [comments, setComments] = useState<CommentItem[]>(sampleComments);
   const [visitorToken, setVisitorToken] = useState("");
+  const [donationThankYou, setDonationThankYou] = useState<string | null>(null);
   const { user, session } = useAuth();
   const defaultCommentName = useMemo(() => user?.email?.split("@")[0] || "", [user?.email]);
 
@@ -66,6 +72,17 @@ export function HomeDesktopSidebar() {
     const nextToken = window.crypto?.randomUUID?.() || `visitor-${Date.now()}`;
     window.localStorage.setItem("visdar-visitor-token", nextToken);
     setVisitorToken(nextToken);
+  }, []);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const returnedFromDonation =
+      url.searchParams.get("donation") === "success" ||
+      url.searchParams.get("st")?.toLowerCase() === "completed";
+    if (!returnedFromDonation) return;
+    setDonationThankYou(donationThankYouMessages[Math.floor(Math.random() * donationThankYouMessages.length)]);
+    ["donation", "st", "tx", "amt", "cc", "cm", "item_number"].forEach((key) => url.searchParams.delete(key));
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
   }, []);
 
   const loadComments = useCallback(async () => {
@@ -433,6 +450,16 @@ export function HomeDesktopSidebar() {
           </div>
         </aside>
       </aside>
+      {donationThankYou ? (
+        <div className="overlay-backdrop" role="presentation" onClick={() => setDonationThankYou(null)}>
+          <div className="overlay-card overlay-card-small glass donation-thank-you-modal" role="dialog" aria-modal="true" aria-labelledby="donation-thank-you-title" onClick={(event) => event.stopPropagation()}>
+            <button className="overlay-close" type="button" aria-label="Fermer" onClick={() => setDonationThankYou(null)}><X size={18} /></button>
+            <div className="badge">Merci 💝</div>
+            <h3 id="donation-thank-you-title" style={{ margin: "16px 0 10px" }}>Merci pour votre soutien</h3>
+            <p className="muted" style={{ marginBottom: 0 }}>{donationThankYou}</p>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

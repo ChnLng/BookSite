@@ -11,6 +11,7 @@ import { useAuth } from "@/components/auth-provider";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
 import { loadDisplayResources } from "@/lib/resources-service";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { randomPurchaseThankYouMessage } from "@/lib/purchase-thank-you";
 
 type SectionLayoutItem = {
   source_key: string;
@@ -168,6 +169,7 @@ export default function BookDetailPage() {
   const [paymentReady, setPaymentReady] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(null);
+  const [purchaseThankYouMessage] = useState(() => randomPurchaseThankYouMessage());
   const [autoOpenedPayment, setAutoOpenedPayment] = useState(false);
   const [layoutItems, setLayoutItems] = useState<SectionLayoutItem[]>([]);
   const paypalContainerRef = useRef<HTMLDivElement | null>(null);
@@ -1092,9 +1094,7 @@ export default function BookDetailPage() {
 
             {paymentSuccess ? (
               <div className="book-payment-success">
-                <p className="muted">
-                  Paiement confirme. Le livre est maintenant ajoute a votre espace lecteur.
-                </p>
+                <p className="muted">{purchaseThankYouMessage}</p>
                 <div className="actions-row">
                   <Link className="cta-button" href={paymentSuccess.readUrl}>
                     Lire maintenant

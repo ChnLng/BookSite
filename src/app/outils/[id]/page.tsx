@@ -9,6 +9,7 @@ import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayResources, type DisplayResource } from "@/lib/resources-service";
+import { randomPurchaseThankYouMessage } from "@/lib/purchase-thank-you";
 
 type ReviewRecord = {
   id: string;
@@ -151,6 +152,7 @@ export default function ResourceDetailPage() {
   const [paymentReady, setPaymentReady] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(null);
+  const [purchaseThankYouMessage] = useState(() => randomPurchaseThankYouMessage());
   const paypalContainerRef = useRef<HTMLDivElement | null>(null);
 
   const resourceId = Array.isArray(params?.id) ? params.id[0] : params?.id || "";
@@ -996,9 +998,7 @@ export default function ResourceDetailPage() {
 
             {paymentSuccess ? (
               <div className="book-payment-success">
-                <p className="muted">
-                  Paiement confirme. Les telechargements sont maintenant ajoutes a votre espace lecteur.
-                </p>
+                <p className="muted">{purchaseThankYouMessage}</p>
                 <div className="actions-row">
                   <Link className="cta-button" href={paymentSuccess.resourceUrl}>
                     Revenir a cette fiche
