@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Heart, Mail, MessageCircleHeart, Sparkles } from "lucide-react";
+import { Heart, Mail, MessageCircleHeart, Sparkles, X } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
 import { useAuth } from "@/components/auth-provider";
@@ -37,6 +37,13 @@ const sampleComments: CommentItem[] = [
   },
 ];
 
+const donationThanks = [
+  "Merci du fond du cœur ! Votre soutien ajoute une petite étoile à l'univers Visd AR. ✨",
+  "Un immense merci ! Grâce à vous, de nouvelles histoires douces pourront prendre vie. 🌷",
+  "Votre générosité nous touche beaucoup. Merci d'accompagner cette aventure bilingue ! 🐾",
+  "Merci, merveilleux mécène ! Vous venez d'offrir un peu de magie aux prochains lecteurs. 💜",
+];
+
 export function HomeDesktopSidebar() {
   const emailLoginHintText = "Veuillez vous connecter pour envoyer un email à l'administrateur.";
   const siteCommentSuccessText = "Message bien enregistré ! Il est bien au chaud dans votre espace « Ma page ».";
@@ -48,6 +55,10 @@ export function HomeDesktopSidebar() {
   const [commentDeliveryMode, setCommentDeliveryMode] = useState<"site" | "email">("site");
   const [comments, setComments] = useState<CommentItem[]>(sampleComments);
   const [visitorToken, setVisitorToken] = useState("");
+  const [donationAmount, setDonationAmount] = useState("5");
+  const [donationNote, setDonationNote] = useState("Soutien libre et chaleureux");
+  const [donationMessage, setDonationMessage] = useState("");
+  const [donationThanksText, setDonationThanksText] = useState<string | null>(null);
   const { user, session } = useAuth();
   const defaultCommentName = useMemo(() => user?.email?.split("@")[0] || "", [user?.email]);
 
@@ -104,92 +115,49 @@ export function HomeDesktopSidebar() {
 
     const paypalWindow = window as Window & {
       paypal?: {
-        HostedButtons?: (config: { hostedButtonId: string }) => {
-          render: (selector: string) => void;
-        };
+        Buttons?: (config: Record<string, unknown>) => { render: (selector: string) => Promise<void>; close?: () => Promise<void> };
       };
     };
 
-    const container = document.getElementById("paypal-container-D3LVZA49QZ4VE");
-
-    if (!container) {
-      return;
-    }
-
-    const renderHostedButton = () => {
-      const hostedButtons = paypalWindow.paypal?.HostedButtons;
-
-      if (!hostedButtons || container.querySelector("iframe")) {
-        return false;
-      }
-
-      hostedButtons({ hostedButtonId: "D3LVZA49QZ4VE" }).render("#paypal-container-D3LVZA49QZ4VE");
+    const container = document.getElementById("paypal-donation-buttons");
+    if (!container) return;
+    let buttons: { render: (selector: string) => Promise<void>; close?: () => Promise<void> } | null = null;
+    let cancelled = false;
+    const renderButtons = () => {
+      if (!paypalWindow.paypal?.Buttons || cancelled || container.childElementCount > 0) return false;
+      const amount = Math.max(1, Number(donationAmount || 0)).toFixed(2);
+      buttons = paypalWindow.paypal.Buttons({
+        style: { layout: "vertical", shape: "pill", height: 42 },
+        createOrder: (_data: unknown, actions: any) => actions.order.create({ purchase_units: [{ description: donationNote, amount: { currency_code: "EUR", value: amount } }] }),
+        onApprove: async (data: any, actions: any) => {
+          setDonationMessage("Validation du paiement...");
+          const order = await actions.order.capture();
+          const captureId = order?.purchase_units?.[0]?.payments?.captures?.[0]?.id;
+          const response = await fetch("/api/paypal/donation/complete", { method: "POST", headers: { "Content-Type": "application/json", ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) }, body: JSON.stringify({ orderId: data.orderID, captureId, note: donationNote }) });
+          const result = await response.json().catch(() => null);
+          if (!response.ok || !result?.ok) { setDonationMessage(result?.message || "Paiement reçu, mais enregistrement impossible. Contactez-nous."); return; }
+          setDonationMessage("");
+          setDonationThanksText(donationThanks[Math.floor(Math.random() * donationThanks.length)]);
+        },
+        onError: () => setDonationMessage("PayPal est momentanément indisponible."),
+      });
+      void buttons.render("#paypal-donation-buttons");
       return true;
     };
-
-    const trySelectFirstDonationOption = () => {
-      const select = container.querySelector("select") as HTMLSelectElement | null;
-
-      if (select && select.options.length > 0) {
-        const options = Array.from(select.options);
-
-        options.forEach((option, index) => {
-          const value = option.value.trim();
-          const text = option.textContent?.trim() || "";
-          const isPlaceholder = index === 0 && !value;
-
-          if (isPlaceholder) {
-            option.hidden = true;
-            option.disabled = true;
-          }
-
-          if (!value && !text) {
-            option.hidden = true;
-            option.disabled = true;
-          }
-        });
-
-        if (!select.value) {
-          const firstRealOption = options.findIndex((option) => !option.disabled);
-          select.selectedIndex = firstRealOption >= 0 ? firstRealOption : 0;
-          select.dispatchEvent(new Event("change", { bubbles: true }));
-        }
-      }
-
-      const radios = Array.from(container.querySelectorAll('input[type="radio"]')) as HTMLInputElement[];
-
-      if (radios.length > 0 && !radios.some((radio) => radio.checked)) {
-        radios[0].click();
-      }
-    };
-
-    const observer = new MutationObserver(() => {
-      trySelectFirstDonationOption();
-    });
-
-    observer.observe(container, { childList: true, subtree: true });
-    trySelectFirstDonationOption();
-
-    if (renderHostedButton()) {
-      return () => {
-        observer.disconnect();
-      };
-    }
-
     let attempts = 0;
     const intervalId = window.setInterval(() => {
       attempts += 1;
-
-      if (renderHostedButton() || attempts >= 20) {
+      if (renderButtons() || attempts >= 30) {
         window.clearInterval(intervalId);
       }
     }, 200);
-
     return () => {
+      cancelled = true;
       window.clearInterval(intervalId);
-      observer.disconnect();
+      void buttons?.close?.();
+      container.replaceChildren();
     };
-  }, []);
+  }, [donationAmount, donationNote, session?.access_token]);
 
   useEffect(() => {
     if (defaultCommentName && !commentName) {
@@ -384,7 +352,12 @@ export function HomeDesktopSidebar() {
           </div>
           <div className="paypal-donation-shell">
             <div className="paypal-donation-card">
-              <div id="paypal-container-D3LVZA49QZ4VE" />
+              <label className="tiny" htmlFor="donation-amount">Montant de votre choix</label>
+              <div className="donation-amount-row"><span>€</span><input id="donation-amount" className="input" type="number" min="1" step="1" value={donationAmount} onChange={(event) => setDonationAmount(event.target.value)} /><span>EUR</span></div>
+              <label className="tiny" htmlFor="donation-note">Propos de votre donation</label>
+              <select id="donation-note" className="input" value={donationNote} onChange={(event) => setDonationNote(event.target.value)}><option>Soutien libre et chaleureux</option><option>Pour les nouveaux livres</option><option>Pour les outils éducatifs</option><option>Merci pour votre travail</option></select>
+              <div id="paypal-donation-buttons" style={{ marginTop: 12 }} />
+              {donationMessage ? <p className="tiny">{donationMessage}</p> : null}
             </div>
           </div>
         </aside>
@@ -475,6 +448,7 @@ export function HomeDesktopSidebar() {
           </div>
         </aside>
       </aside>
+      {donationThanksText ? <div className="overlay-backdrop" role="presentation" onClick={() => setDonationThanksText(null)}><div className="overlay-card overlay-card-small glass" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}><button className="overlay-close" type="button" onClick={() => setDonationThanksText(null)}><X size={18} /></button><div className="badge">Merci pour votre soutien 💝</div><h3 style={{ margin: "16px 0 10px" }}>Votre donation est bien arrivée !</h3><p className="muted">{donationThanksText}</p><button className="cta-button" type="button" onClick={() => setDonationThanksText(null)}>Avec plaisir</button></div></div> : null}
     </>
   );
 }

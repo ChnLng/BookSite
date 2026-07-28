@@ -73,10 +73,15 @@ type PartnerCountRow = {
 
 type DonationRow = {
   id: string;
+  user_name?: string | null;
   user_email: string | null;
   amount: number | null;
+  currency?: string | null;
   note: string | null;
   created_at: string | null;
+  paid_at?: string | null;
+  payment_status?: string | null;
+  refunded_at?: string | null;
 };
 
 type BookFormState = {
@@ -530,7 +535,7 @@ function AdminPageContent() {
     let nextDonations: DonationRow[] = [];
     const donationsQuery = await supabase
       .from("donations")
-      .select("id, user_email, amount, note, created_at")
+      .select("id, user_name, user_email, amount, currency, note, created_at, paid_at, payment_status, refunded_at")
       .order("created_at", { ascending: false });
 
     if (donationsQuery.error) {
@@ -1368,6 +1373,15 @@ function AdminPageContent() {
     setEditSelectedFiles((current) => ({ ...current, [book.id]: {} }));
     setEditUploadStatus((current) => ({ ...current, [book.id]: {} }));
     setEditingBookId(null);
+  };
+
+  const refundDonation = async (donation: DonationRow) => {
+    if (!session?.access_token || !window.confirm(`确认退还 ${Number(donation.amount || 0).toFixed(2)} ${donation.currency || "EUR"}？`)) return;
+    const reason = window.prompt("退款原因 Motif (optionnel)") || "";
+    const response = await fetch(`/api/admin/donations/${donation.id}/refund`, { method: "POST", headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" }, body: JSON.stringify({ reason }) });
+    const result = await response.json().catch(() => null) as { ok?: boolean; message?: string } | null;
+    setStatusMessage(result?.ok ? "退款已由 PayPal 确认。" : result?.message || "退款失败。");
+    if (result?.ok) await reload();
   };
 
   return (
@@ -2335,7 +2349,7 @@ function AdminPageContent() {
                     const isEditing = editingPromoId === promo.id;
 
                     return (
-                      <div className="admin-book-card" key={promo.id}>
+                      <div className={isEditing ? "admin-book-card" : "admin-book-card admin-promo-summary-row"} key={promo.id}>
                         {isEditing && edit ? (
                           <div className="input-group admin-form-grid">
                             <input
@@ -2443,7 +2457,7 @@ function AdminPageContent() {
                           </div>
                         )}
 
-                        <div className="actions-row">
+                        <div className="actions-row admin-promo-actions">
                           {isEditing ? (
                             <>
                               <button className="pill-button" type="button" onClick={() => void savePromo(promo.id)}>
@@ -2488,13 +2502,9 @@ function AdminPageContent() {
               {donations.length === 0 ? (
                 <p className="muted">Aucune donation enregistrée.</p>
               ) : (
-                donations.map((donation) => (
-                  <div className="split-line" key={donation.id}>
-                    <span>{donation.note || "Donation"}</span>
-                    <span className="tiny">{donation.user_email || "—"}</span>
-                    <span className="tiny">{donation.amount ? `${donation.amount.toFixed(2)} EUR` : "—"}</span>
-                  </div>
-                ))
+                <div className="admin-table-wrap"><table className="admin-data-table"><thead><tr><th>用户名</th><th>邮箱</th><th>付款日期时间</th><th>金额</th><th>Propos</th><th>状态 / 退款日期</th><th>操作</th></tr></thead><tbody>{donations.map((donation) => (
+                  <tr key={donation.id}><td>{donation.user_name || donation.user_email?.split("@")[0] || "—"}</td><td>{donation.user_email || "—"}</td><td>{donation.paid_at || donation.created_at ? new Date(donation.paid_at || donation.created_at || "").toLocaleString("fr-FR") : "—"}</td><td>{Number(donation.amount || 0).toFixed(2)} {donation.currency || "EUR"}</td><td>{donation.note || "Donation"}</td><td>{donation.payment_status === "refunded" ? `Remboursé · ${donation.refunded_at ? new Date(donation.refunded_at).toLocaleString("fr-FR") : "—"}` : "Payé"}</td><td>{donation.payment_status !== "refunded" ? <button className="pill-button" type="button" onClick={() => void refundDonation(donation)}>申请退款</button> : "—"}</td></tr>
+                ))}</tbody></table></div>
               )}
             </div>
           ) : null}
