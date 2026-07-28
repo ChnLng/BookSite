@@ -1049,7 +1049,7 @@ function AdminPageContent() {
         if (kind === "pdf") {
           setPdfStatuses((current) => ({
             ...current,
-            [book.id]: { exists: true, message: `已上传到 Supabase: ${assetPath}` },
+            [book.id]: { exists: true, message: `已上传到私有 GitHub Releases: ${assetPath}` },
           }));
         }
         setEditSelectedFiles((current) => ({
@@ -1646,7 +1646,7 @@ function AdminPageContent() {
 
                 <div className="section-block" style={{ marginTop: 14 }}>
                   <div className="split-line">
-                    <strong>付费后下载的内容文件 GitHub Releases</strong>
+                    <strong>付费后下载的内容文件 私有 GitHub Releases</strong>
                     {form.pdfFile ? <span className="tiny">{form.pdfFile}</span> : <span className="tiny">未上传内容文件</span>}
                   </div>
                   {createUploadStatus.pdf ? <p className="tiny">{createUploadStatus.pdf}</p> : null}
@@ -1972,7 +1972,7 @@ function AdminPageContent() {
 
                             <div className="section-block" style={{ marginTop: 14 }}>
                               <div className="split-line">
-                                <strong>付费后下载的内容文件 GitHub Releases</strong>
+                                <strong>付费后下载的内容文件 私有 GitHub Releases</strong>
                                 {edit.pdfFile ? <span className="tiny">{edit.pdfFile}</span> : <span className="tiny">暂无内容文件</span>}
                               </div>
                               <p className="tiny" style={{ marginTop: 8 }}>

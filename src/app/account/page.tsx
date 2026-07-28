@@ -354,6 +354,17 @@ export default function AccountPage() {
       },
     });
 
+    const contentType = response.headers.get("content-type") || "";
+    if (response.ok && !contentType.includes("application/json")) {
+      const blobUrl = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement("a");
+      anchor.href = blobUrl;
+      anchor.download = "telechargement";
+      anchor.click();
+      URL.revokeObjectURL(blobUrl);
+      return;
+    }
+
     const result = (await response.json().catch(() => null)) as { ok?: boolean; url?: string } | null;
 
     if (!response.ok || !result?.ok || !result.url) {

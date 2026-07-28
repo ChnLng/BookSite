@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
-import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
+import { getUserFromRequest } from "@/lib/auth-request";
 import { hasPurchasedResource } from "@/lib/purchase-access";
 import { normalizeResourceAssetPath, resourceDownloadsBucketName } from "@/lib/resource-assets";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
+import { fetchGithubPaidAsset, parseGithubPaidAssetReference } from "@/lib/github-paid-assets";
+
+function privateDownloadHeaders(fileName: string, contentType?: string | null) {
+  const safeName = fileName.replace(/["\\\r\n]/g, "-");
+  return {
+    "Content-Type": contentType || "application/octet-stream",
+    "Content-Disposition": `attachment; filename="${safeName}"`,
+    "Cache-Control": "private, no-store",
+  };
+}
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -12,7 +22,6 @@ export async function GET(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const fileId = new URL(request.url).searchParams.get("file") || "";
   const user = await getUserFromRequest(request);
-  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
 
   if (!user) {
     return NextResponse.json({ ok: false, message: "Connexion requise." }, { status: 401 });
@@ -34,18 +43,14 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Ressource introuvable." }, { status: 404 });
   }
 
-  const admin = await isAdminUser(user, accessToken);
+  const hasAccess = await hasPurchasedResource(supabase, {
+    userId: user.id,
+    email: user.email,
+    resourceId: resource.id,
+  });
 
-  if (!admin) {
-    const hasAccess = await hasPurchasedResource(supabase, {
-      userId: user.id,
-      email: user.email,
-      resourceId: resource.id,
-    });
-
-    if (!hasAccess) {
-      return NextResponse.json({ ok: false, message: "Acces non autorise." }, { status: 403 });
-    }
+  if (!hasAccess) {
+    return NextResponse.json({ ok: false, message: "Acces non autorise." }, { status: 403 });
   }
 
   const { data: fileRow } = await supabase
@@ -73,7 +78,7 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Fichier introuvable." }, { status: 404 });
   }
 
-  if (!admin) {
+  if (hasAccess) {
     const { data: purchase } = await supabase
       .from("downloads")
       .select("id, download_count")
@@ -95,8 +100,15 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   const rawFilePath = resolvedFileRow.file_path || resolvedFileRow.file_url || "";
-  if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(rawFilePath)) {
-    return NextResponse.json({ ok: true, url: rawFilePath });
+  if (parseGithubPaidAssetReference(rawFilePath) || /^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(rawFilePath)) {
+    const asset = await fetchGithubPaidAsset(rawFilePath);
+    if (!asset?.response.ok || !asset.response.body) {
+      return NextResponse.json({ ok: false, message: "Fichier GitHub prive introuvable." }, { status: 404 });
+    }
+    return new NextResponse(asset.response.body, {
+      status: 200,
+      headers: privateDownloadHeaders(asset.fileName, asset.response.headers.get("content-type")),
+    });
   }
 
   const storagePath = normalizeResourceAssetPath(rawFilePath);

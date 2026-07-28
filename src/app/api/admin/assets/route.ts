@@ -3,12 +3,20 @@ import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
 import { booksBucketName, normalizeBookPdfAsset } from "@/lib/book-assets";
 import { normalizeResourceAssetPath, resourceDownloadsBucketName } from "@/lib/resource-assets";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
+import {
+  githubPaidAssetReference,
+  githubPaidHeaders,
+  githubPaidOwner,
+  githubPaidReleaseTag,
+  githubPaidRepo,
+  parseGithubPaidAssetReference,
+  resolveLegacyGithubReleaseAsset,
+} from "@/lib/github-paid-assets";
 
 const githubToken = process.env.GITHUB_TOKEN;
 const githubOwner = process.env.GITHUB_OWNER;
 const githubRepo = process.env.GITHUB_REPO;
 const githubBranch = process.env.GITHUB_BRANCH || "main";
-const githubReleaseTag = process.env.GITHUB_RELEASE_TAG || "paid-downloads";
 
 type GitHubFileResponse = {
   sha?: string;
@@ -34,12 +42,12 @@ function githubHeaders() {
 }
 
 async function getOrCreateDownloadRelease() {
-  if (!githubToken || !githubOwner || !githubRepo) {
+  if (!githubToken || !githubPaidOwner || !githubPaidRepo) {
     throw new Error("Configuration GitHub manquante pour televerser les fichiers payants.");
   }
 
-  const byTagUrl = `https://api.github.com/repos/${githubOwner}/${githubRepo}/releases/tags/${encodeURIComponent(githubReleaseTag)}`;
-  const existing = await fetch(byTagUrl, { headers: githubHeaders(), cache: "no-store" });
+  const byTagUrl = `https://api.github.com/repos/${githubPaidOwner}/${githubPaidRepo}/releases/tags/${encodeURIComponent(githubPaidReleaseTag)}`;
+  const existing = await fetch(byTagUrl, { headers: githubPaidHeaders(), cache: "no-store" });
 
   if (existing.ok) {
     return (await existing.json()) as GitHubRelease;
@@ -49,11 +57,11 @@ async function getOrCreateDownloadRelease() {
     throw new Error("Impossible de lire la GitHub Release des fichiers payants.");
   }
 
-  const created = await fetch(`https://api.github.com/repos/${githubOwner}/${githubRepo}/releases`, {
+  const created = await fetch(`https://api.github.com/repos/${githubPaidOwner}/${githubPaidRepo}/releases`, {
     method: "POST",
-    headers: { ...githubHeaders(), "Content-Type": "application/json" },
+    headers: { ...githubPaidHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({
-      tag_name: githubReleaseTag,
+      tag_name: githubPaidReleaseTag,
       name: "Paid downloads",
       body: "Protected downloadable product files managed from the site admin.",
       draft: false,
@@ -75,8 +83,8 @@ async function uploadPaidFileToGitHubRelease(file: File, fileName: string) {
 
   if (existingAsset) {
     const removed = await fetch(
-      `https://api.github.com/repos/${githubOwner}/${githubRepo}/releases/assets/${existingAsset.id}`,
-      { method: "DELETE", headers: githubHeaders() },
+      `https://api.github.com/repos/${githubPaidOwner}/${githubPaidRepo}/releases/assets/${existingAsset.id}`,
+      { method: "DELETE", headers: githubPaidHeaders() },
     );
     if (!removed.ok && removed.status !== 404) {
       throw new Error("Impossible de remplacer l'ancien fichier GitHub Release.");
@@ -87,7 +95,7 @@ async function uploadPaidFileToGitHubRelease(file: File, fileName: string) {
   const uploaded = await fetch(`${uploadUrl}?name=${encodeURIComponent(safeName)}`, {
     method: "POST",
     headers: {
-      ...githubHeaders(),
+      ...githubPaidHeaders(),
       "Content-Type": file.type || "application/octet-stream",
     },
     body: Buffer.from(await file.arrayBuffer()),
@@ -97,22 +105,20 @@ async function uploadPaidFileToGitHubRelease(file: File, fileName: string) {
     throw new Error((await uploaded.text()) || "Echec du televersement GitHub Release.");
   }
 
-  const asset = (await uploaded.json()) as { browser_download_url?: string };
-  if (!asset.browser_download_url) {
-    throw new Error("GitHub n'a pas retourne l'adresse du fichier.");
+  const asset = (await uploaded.json()) as { id?: number; name?: string };
+  if (!asset.id) {
+    throw new Error("GitHub n'a pas retourne l'identifiant prive du fichier.");
   }
-  return asset.browser_download_url;
+  return githubPaidAssetReference(asset.id, asset.name || safeName);
 }
 
 async function deletePaidFileFromGitHubRelease(assetPath: string) {
-  const release = await getOrCreateDownloadRelease();
-  const assetName = decodeURIComponent(new URL(assetPath).pathname.split("/").pop() || "");
-  const asset = release.assets?.find((entry) => entry.name === assetName);
-  if (!asset) return;
+  const parsed = parseGithubPaidAssetReference(assetPath) || await resolveLegacyGithubReleaseAsset(assetPath);
+  if (!parsed) return;
 
   const response = await fetch(
-    `https://api.github.com/repos/${githubOwner}/${githubRepo}/releases/assets/${asset.id}`,
-    { method: "DELETE", headers: githubHeaders() },
+    `https://api.github.com/repos/${githubPaidOwner}/${githubPaidRepo}/releases/assets/${parsed.assetId}`,
+    { method: "DELETE", headers: githubPaidHeaders() },
   );
   if (!response.ok && response.status !== 404) {
     throw new Error("Impossible de supprimer le fichier GitHub Release.");
@@ -288,6 +294,14 @@ async function deleteImageFromGitHub(assetPath: string) {
 }
 
 async function checkPdfExistsInSupabase(assetPath: string) {
+  const privateAsset = parseGithubPaidAssetReference(assetPath) || await resolveLegacyGithubReleaseAsset(assetPath);
+  if (privateAsset) {
+    const response = await fetch(
+      `https://api.github.com/repos/${githubPaidOwner}/${githubPaidRepo}/releases/assets/${privateAsset.assetId}`,
+      { headers: githubPaidHeaders(), cache: "no-store" },
+    );
+    return response.ok;
+  }
   if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(assetPath)) {
     const response = await fetch(assetPath, { method: "HEAD", redirect: "follow", cache: "no-store" });
     return response.ok;
@@ -340,7 +354,7 @@ export async function GET(request: Request) {
         assets.map(async (assetPath) => {
           try {
             const exists = await checkPdfExistsInSupabase(assetPath);
-            return [assetPath, { exists, message: exists ? "已上传到 Supabase" : "未上传到 Supabase" }] as const;
+            return [assetPath, { exists, message: exists ? "付费文件已就绪" : "付费文件尚未上传到私有 GitHub Releases" }] as const;
           } catch (error) {
             const message = error instanceof Error ? error.message : "状态检查失败";
             return [assetPath, { exists: false, message }] as const;
@@ -422,7 +436,7 @@ export async function DELETE(request: Request) {
     }
 
     if (kind === "pdf") {
-      if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(assetPath)) {
+      if (parseGithubPaidAssetReference(assetPath) || /^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(assetPath)) {
         await deletePaidFileFromGitHubRelease(assetPath);
         return NextResponse.json({ ok: true });
       }
@@ -449,7 +463,7 @@ export async function DELETE(request: Request) {
     }
 
     if (kind === "resource-download") {
-      if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(assetPath)) {
+      if (parseGithubPaidAssetReference(assetPath) || /^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(assetPath)) {
         await deletePaidFileFromGitHubRelease(assetPath);
         return NextResponse.json({ ok: true });
       }

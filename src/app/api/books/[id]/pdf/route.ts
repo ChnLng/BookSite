@@ -6,6 +6,7 @@ import { books } from "@/data/books";
 import { bookPdfPath, booksBucketName, isSupabaseBookPdfAsset, normalizeBookPdfAsset } from "@/lib/book-assets";
 import { hasPurchasedBook } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
+import { fetchGithubPaidAsset, parseGithubPaidAssetReference } from "@/lib/github-paid-assets";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -143,18 +144,25 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Fichier PDF introuvable." }, { status: 404 });
   }
 
-  if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(normalizedPdf)) {
-    const response = await fetch(normalizedPdf, {
-      headers: process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : undefined,
-      redirect: "follow",
-      cache: "no-store",
+  if (parseGithubPaidAssetReference(normalizedPdf)) {
+    const asset = await fetchGithubPaidAsset(normalizedPdf);
+    if (!asset?.response.ok || !asset.response.body) {
+      return NextResponse.json({ ok: false, message: "Fichier GitHub prive introuvable." }, { status: 404 });
+    }
+    return new NextResponse(asset.response.body, {
+      status: 200,
+      headers: contentHeaders(asset.fileName, asset.response.headers.get("content-type") || undefined),
     });
-    if (!response.ok || !response.body) {
+  }
+
+  if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(normalizedPdf)) {
+    const asset = await fetchGithubPaidAsset(normalizedPdf);
+    if (!asset?.response.ok || !asset.response.body) {
       return NextResponse.json({ ok: false, message: "Fichier GitHub Release introuvable." }, { status: 404 });
     }
-    return new NextResponse(response.body, {
+    return new NextResponse(asset.response.body, {
       status: 200,
-      headers: contentHeaders(normalizedPdf, response.headers.get("content-type") || undefined),
+      headers: contentHeaders(asset.fileName, asset.response.headers.get("content-type") || undefined),
     });
   }
 

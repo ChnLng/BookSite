@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
+import { getUserFromRequest } from "@/lib/auth-request";
 import { hasPurchasedResource } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
@@ -10,7 +10,6 @@ type RouteContext = {
 export async function GET(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const supabase = getSupabaseServiceClient();
-  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
 
   if (!supabase) {
     return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
@@ -31,12 +30,6 @@ export async function GET(request: Request, context: RouteContext) {
 
   if (!user) {
     return NextResponse.json({ ok: true, hasAccess: false, requiresLogin: true });
-  }
-
-  const admin = await isAdminUser(user, accessToken);
-
-  if (admin) {
-    return NextResponse.json({ ok: true, hasAccess: true, isAdmin: true });
   }
 
   const hasAccess = await hasPurchasedResource(supabase, {
