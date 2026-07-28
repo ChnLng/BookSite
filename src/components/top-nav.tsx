@@ -37,6 +37,7 @@ export function TopNav({
 }: TopNavProps) {
   const { user, isAdmin, signOut } = useAuth();
   const [preferDesktopView, setPreferDesktopView] = useState(false);
+  const [viewPreferenceReady, setViewPreferenceReady] = useState(false);
   const [dynamicCategories, setDynamicCategories] = useState<DynamicNavCategory[]>([]);
   const brandTitle = "Visd AR";
 
@@ -44,27 +45,30 @@ export function TopNav({
   const resolvedSharePanel = sharePanel ?? <SiteShareStrip />;
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (typeof document === "undefined") {
       return;
     }
 
-    setPreferDesktopView(window.localStorage.getItem("visdar-preferred-view") === "desktop");
+    setPreferDesktopView(document.documentElement.dataset.preferredView === "desktop");
+    setViewPreferenceReady(true);
   }, []);
 
   useEffect(() => {
-    if (typeof document === "undefined" || typeof window === "undefined") {
+    if (!viewPreferenceReady || typeof document === "undefined" || typeof window === "undefined") {
       return;
     }
 
     if (preferDesktopView) {
       document.documentElement.dataset.preferredView = "desktop";
       window.localStorage.setItem("visdar-preferred-view", "desktop");
+      window.dispatchEvent(new Event("visdar:view-mode-changed"));
       return;
     }
 
     delete document.documentElement.dataset.preferredView;
     window.localStorage.removeItem("visdar-preferred-view");
-  }, [preferDesktopView]);
+    window.dispatchEvent(new Event("visdar:view-mode-changed"));
+  }, [preferDesktopView, viewPreferenceReady]);
 
   useEffect(() => {
     let cancelled = false;

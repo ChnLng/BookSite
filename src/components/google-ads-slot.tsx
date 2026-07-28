@@ -1,5 +1,6 @@
 "use client";
 
+import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sparkles } from "lucide-react";
@@ -120,6 +121,11 @@ export function GoogleAdsSlot({
 
   return (
     <aside className={className || "panel glass ad-slot-panel"}>
+      <Script
+        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`}
+        strategy="lazyOnload"
+        crossOrigin="anonymous"
+      />
       <div className="section-heading">
         <span className="section-heading-icon" aria-hidden="true">
           <Sparkles size={17} />

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
+import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
@@ -696,6 +697,7 @@ export default function BookDetailPage() {
 
   return (
     <main className="page-shell">
+      <PayPalSdkScript />
       <TopNav
         className="topbar-luxury"
         subtitle="Presentation du livre"

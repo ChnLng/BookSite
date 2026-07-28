@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, ExternalLink } from "lucide-react";
+import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayResources, type DisplayResource } from "@/lib/resources-service";
@@ -696,6 +697,7 @@ export default function ResourceDetailPage() {
 
   return (
     <main className="page-shell">
+      <PayPalSdkScript />
       <TopNav title="Visd AR" subtitle="Hub bilingue 🇨🇳 Chinois - Français 🇫🇷" />
 
       <section className="book-detail-layout resource-detail-layout" style={{ marginTop: 22 }}>

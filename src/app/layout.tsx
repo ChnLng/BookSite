@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Cormorant_Garamond, Nunito } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
-import { siteConfig } from "@/lib/site-config";
 import "./globals.css";
 
 const heading = Cormorant_Garamond({
@@ -45,13 +44,11 @@ export default function RootLayout({
         }}
       >
         <Script
-          src={`https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(siteConfig.paypalClientId)}&components=buttons,hosted-buttons&disable-funding=venmo&currency=EUR`}
-          strategy="afterInteractive"
-        />
-        <Script
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6796254088003500"
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
+          id="visdar-preferred-view-bootstrap"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var root=document.documentElement;var desktopPreference=window.localStorage.getItem("visdar-preferred-view")==="desktop";var isPhone=window.matchMedia("(max-width: 767px)").matches;if(isPhone){delete root.dataset.preferredView;window.localStorage.removeItem("visdar-preferred-view");return;}if(desktopPreference){root.dataset.preferredView="desktop";}else{delete root.dataset.preferredView;}}catch(e){}})();`,
+          }}
         />
         <AuthProvider>{children}</AuthProvider>
       </body>
