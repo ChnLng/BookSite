@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
@@ -16,16 +15,13 @@ import { HomeExpandedSections } from "@/components/home-expanded-sections";
 import { PromoBanner } from "@/components/promo-banner";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
+import { HomeDesktopSidebar } from "@/components/home-desktop-sidebar";
 import { books as staticBooks, defaultRelatedBookIds } from "@/data/books";
 import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-assets";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
 import { siteConfig } from "@/lib/site-config";
 import { infoLinks } from "@/lib/legal-info";
 import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib/promo";
-
-const HomeDesktopSidebar = dynamic(
-  () => import("@/components/home-desktop-sidebar").then((module) => module.HomeDesktopSidebar),
-);
 
 const defaultCarouselBooks: DisplayBook[] = staticBooks.map((book) => {
   const ext = bookAssetExtensions[book.id] || "jpg";
