@@ -413,6 +413,7 @@ export default function ResourceDetailPage() {
             orderId: order?.id || data?.orderID,
             payerEmail,
             amountPaid: finalPrice,
+            captureId: order?.purchase_units?.[0]?.payments?.captures?.[0]?.id,
           }),
         });
 

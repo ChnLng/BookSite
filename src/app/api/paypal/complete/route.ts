@@ -106,6 +106,7 @@ export async function POST(request: Request) {
         orderId?: string;
         payerEmail?: string;
         amountPaid?: number;
+        captureId?: string;
       }
     | null;
 
@@ -114,6 +115,7 @@ export async function POST(request: Request) {
   const orderId = String(payload?.orderId || "").trim();
   const payerEmail = String(payload?.payerEmail || "").trim();
   const amountPaid = Number.isFinite(Number(payload?.amountPaid)) ? Math.max(0, Number(payload?.amountPaid)) : 0;
+  const captureId = String(payload?.captureId || "").trim() || null;
 
   if ((!bookId && !resourceId) || !orderId) {
     return NextResponse.json({ ok: false, message: "Paiement PayPal incomplet." }, { status: 400 });
@@ -164,6 +166,9 @@ export async function POST(request: Request) {
           paypal_order_id: orderId,
           amount_paid: amountPaid,
           currency: "EUR",
+          payment_status: amountPaid > 0 ? "paid" : "free",
+          paid_at: new Date().toISOString(),
+          paypal_capture_id: captureId,
         })
       : await supabase.from("downloads").insert({
           user_id: user?.id || null,
@@ -176,6 +181,9 @@ export async function POST(request: Request) {
           paypal_order_id: orderId,
           amount_paid: amountPaid,
           currency: "EUR",
+          payment_status: amountPaid > 0 ? "paid" : "free",
+          paid_at: new Date().toISOString(),
+          paypal_capture_id: captureId,
         });
 
   if (error) {

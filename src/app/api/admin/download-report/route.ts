@@ -67,10 +67,7 @@ export async function DELETE(request: Request) {
   const ref = String(payload?.ref || "");
   if (!kind || !ref) return NextResponse.json({ ok: false, message: "Produit statistique manquant." }, { status: 400 });
 
-  const deleteHistory = kind === "book"
-    ? await supabase.from("downloads").delete().eq("book_id", ref)
-    : kind === "resource" ? await supabase.from("downloads").delete().eq("resource_id", ref) : { error: null };
-  if (deleteHistory.error) return NextResponse.json({ ok: false, message: deleteHistory.error.message }, { status: 500 });
+  // Purchase history is immutable: removing a product from this report never removes customer orders.
   const { error } = await supabase.from("product_report_catalog").delete().eq("product_kind", kind).eq("product_ref", ref);
   return error ? NextResponse.json({ ok: false, message: error.message }, { status: 500 }) : NextResponse.json({ ok: true });
 }

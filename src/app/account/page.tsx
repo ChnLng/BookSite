@@ -47,6 +47,14 @@ type DownloadRecord = {
   resource_title: string | null;
   download_url: string | null;
   created_at: string | null;
+  amount_paid?: number | null;
+  currency?: string | null;
+  payment_status?: string | null;
+  paid_at?: string | null;
+  refunded_at?: string | null;
+  invoice_number?: string | null;
+  download_count?: number | null;
+  last_downloaded_at?: string | null;
 };
 
 type DonationRecord = {
@@ -64,7 +72,7 @@ export default function AccountPage() {
   const [likedComments, setLikedComments] = useState<LikedCommentRecord[]>([]);
   const [evaluations, setEvaluations] = useState<EvaluationRecord[]>([]);
   const [fetching, setFetching] = useState(true);
-  const [activeTab, setActiveTab] = useState<"comments" | "downloads" | "donations" | "likes" | "evaluations">("comments");
+  const [activeTab, setActiveTab] = useState<"comments" | "purchases" | "downloads" | "donations" | "likes" | "evaluations">("comments");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [editingAuthorName, setEditingAuthorName] = useState("");
@@ -102,9 +110,9 @@ export default function AccountPage() {
         { data: resourceReviewRows },
       ] = await Promise.all([
         supabase.from("comments").select("id, content, author_name, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("downloads").select("id, download_kind, book_id, book_title, resource_id, resource_title, download_url, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("downloads").select("id, download_kind, book_id, book_title, resource_id, resource_title, download_url, created_at, amount_paid, currency, payment_status, paid_at, refunded_at, invoice_number, download_count, last_downloaded_at").eq("user_id", user.id).order("created_at", { ascending: false }),
         email
-          ? supabase.from("downloads").select("id, download_kind, book_id, book_title, resource_id, resource_title, download_url, created_at").eq("user_email", email).order("created_at", { ascending: false })
+          ? supabase.from("downloads").select("id, download_kind, book_id, book_title, resource_id, resource_title, download_url, created_at, amount_paid, currency, payment_status, paid_at, refunded_at, invoice_number, download_count, last_downloaded_at").eq("user_email", email).order("created_at", { ascending: false })
           : Promise.resolve({ data: [] }),
         supabase.from("donations").select("id, amount, note, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("comment_likes").select("id, comment_id").eq("user_id", user.id).order("created_at", { ascending: false }),
@@ -355,6 +363,14 @@ export default function AccountPage() {
     window.open(result.url, "_blank", "noopener,noreferrer");
   };
 
+  const downloadInvoice = async (purchaseId: string, invoiceNumber?: string | null) => {
+    if (!session?.access_token) return;
+    const response = await fetch(`/api/account/purchases/${purchaseId}/invoice`, { headers: { Authorization: `Bearer ${session.access_token}` } });
+    if (!response.ok) return;
+    const url = URL.createObjectURL(await response.blob());
+    const anchor = document.createElement("a"); anchor.href = url; anchor.download = `facture-${invoiceNumber || purchaseId}.pdf`; anchor.click(); URL.revokeObjectURL(url);
+  };
+
   const toggleLikedComment = async (commentId: string) => {
     if (!session?.access_token) {
       return;
@@ -383,6 +399,7 @@ export default function AccountPage() {
     { key: "comments", label: "Commentaires", count: comments.length },
     { key: "likes", label: "J'aime", count: likedComments.length },
     { key: "evaluations", label: "Evaluations", count: evaluations.length },
+    { key: "purchases", label: "Achats", count: downloads.length },
     { key: "downloads", label: "Telechargements", count: downloads.length },
     { key: "donations", label: "Donations", count: donations.length },
   ] as const;
@@ -439,7 +456,7 @@ export default function AccountPage() {
                   key={tab.key}
                   className={activeTab === tab.key ? "account-tab active" : "account-tab"}
                   type="button"
-                  onClick={() => setActiveTab(tab.key as "comments" | "downloads" | "donations" | "likes" | "evaluations")}
+                  onClick={() => setActiveTab(tab.key)}
                 >
                   <span>{tab.label}</span>
                   <strong>{tab.count}</strong>
@@ -614,7 +631,7 @@ export default function AccountPage() {
                   {downloads.length === 0 ? (
                     <p className="muted">Aucun telechargement enregistre.</p>
                   ) : (
-                    downloads.map((download) => {
+                    downloads.filter((download) => Number(download.download_count || 0) > 0 || download.last_downloaded_at).map((download) => {
                       const readBookId = bookIdFromDownload(download);
                       const isResourceDownload = download.download_kind === "resource" && download.resource_id;
 
@@ -653,11 +670,23 @@ export default function AccountPage() {
                             ) : null}
                           </div>
                         </div>
-                        <span className="tiny">{download.created_at ? new Date(download.created_at).toLocaleDateString("fr-FR") : "—"}</span>
+                        <span className="tiny">{download.last_downloaded_at ? new Date(download.last_downloaded_at).toLocaleDateString("fr-FR") : "—"} · {download.download_count || 0}</span>
                       </div>
                       );
                     })
                   )}
+                </div>
+              ) : null}
+
+              {activeTab === "purchases" ? (
+                <div className="account-card">
+                  <div className="split-line"><strong>Historique des achats 购买记录</strong><span>{downloads.length}</span></div>
+                  {downloads.length === 0 ? <p className="muted">Aucun achat enregistré.</p> : downloads.map((purchase) => {
+                    const isResource = purchase.download_kind === "resource" && purchase.resource_id;
+                    const bookId = bookIdFromDownload(purchase);
+                    const downloadable = purchase.payment_status !== "refunded" && purchase.payment_status !== "refund_pending";
+                    return <div key={`purchase-${purchase.id}`} className="split-line" style={{ marginTop: 12, alignItems: "flex-start", gap: 12 }}><div><strong>{isResource ? purchase.resource_title || "Ressource" : purchase.book_title || "Livre"}</strong><p className="tiny">Acheté le {new Date(purchase.paid_at || purchase.created_at || Date.now()).toLocaleString("fr-FR")} · {Number(purchase.amount_paid || 0) > 0 ? "Payé" : "Gratuit"} · {Number(purchase.amount_paid || 0).toFixed(2)} {purchase.currency || "EUR"}</p><div className="actions-row">{downloadable && isResource ? <button className="pill-button" type="button" onClick={() => void handleResourceDownload(purchase.resource_id as string)}>Télécharger</button> : null}{downloadable && !isResource && bookId ? <button className="pill-button" type="button" onClick={() => void handlePdfDownload(bookId)}>Télécharger</button> : null}<button className="pill-button" type="button" onClick={() => void downloadInvoice(purchase.id, purchase.invoice_number)}>Facture PDF</button></div></div></div>;
+                  })}
                 </div>
               ) : null}
 

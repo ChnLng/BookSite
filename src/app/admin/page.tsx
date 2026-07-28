@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { AdminContentSectionsPanel } from "@/components/admin-content-sections-panel";
 import { AdminDownloadReport } from "@/components/admin-download-report";
+import { AdminPurchaseSearch } from "@/components/admin-purchase-search";
 import { AdminGuard } from "@/components/admin-guard";
 import { AdminPartnerLinksPanel } from "@/components/admin-partner-links-panel";
 import { AdminResourcesPanel } from "@/components/admin-resources-panel";
@@ -129,6 +130,7 @@ type PdfStorageStatus = {
 };
 
 const adminSections = [
+  { key: "purchases", label: "🔎 用户购买记录" },
   { key: "categories", label: "类目 Categories" },
   { key: "books", label: "图书 Livres" },
   { key: "resources", label: "资源 Outils" },
@@ -640,6 +642,7 @@ function AdminPageContent() {
       promo: promoCodes.length,
       downloads: downloads.length,
       donations: donations.length,
+      purchases: downloads.length,
     }),
     [books.length, categories.length, resourceCount, partnerCount, promoCodes.length, downloads.length, donations.length],
   );
@@ -2476,6 +2479,8 @@ function AdminPageContent() {
           {activeSection === "downloads" ? (
             <AdminDownloadReport />
           ) : null}
+
+          {activeSection === "purchases" ? <AdminPurchaseSearch /> : null}
 
           {activeSection === "donations" ? (
             <div className="section-block">

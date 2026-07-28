@@ -493,6 +493,7 @@ export default function BookDetailPage() {
             payerEmail,
             payerName,
             amountPaid: finalPrice,
+            captureId: order?.purchase_units?.[0]?.payments?.captures?.[0]?.id,
           }),
         });
 

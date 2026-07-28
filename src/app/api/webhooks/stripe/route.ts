@@ -66,6 +66,9 @@ export async function POST(request: Request) {
           stripe_session_id: session.id,
           amount_paid: Number(session.amount_total || 0) / 100,
           currency: String(session.currency || "eur").toUpperCase(),
+          payment_status: "paid",
+          paid_at: new Date().toISOString(),
+          stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id || null,
         });
       }
     }
@@ -98,6 +101,9 @@ export async function POST(request: Request) {
           stripe_session_id: session.id,
           amount_paid: Number(metadata.finalPrice || session.amount_total || 0) / (metadata.finalPrice ? 1 : 100),
           currency: String(session.currency || "eur").toUpperCase(),
+          payment_status: "paid",
+          paid_at: new Date().toISOString(),
+          stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id || null,
         });
       }
     }
