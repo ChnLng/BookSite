@@ -1402,7 +1402,7 @@ function AdminPageContent() {
               ))}
             </div>
           ) : null}
-          {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
+          {statusMessage ? <p className="admin-action-status" role="alert">{statusMessage}</p> : null}
 
           {activeSection === "categories" ? <AdminContentSectionsPanel /> : null}
 

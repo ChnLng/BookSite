@@ -2464,6 +2464,19 @@ select {
   background: rgba(124, 92, 255, 0.08);
 }
 
+.admin-action-status {
+  position: sticky;
+  top: 94px;
+  z-index: 30;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(124, 92, 255, 0.35);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-glass);
+}
+
 .admin-layout-item-row {
   display: grid;
   grid-template-columns: 1.2fr 0.9fr 1fr 0.9fr auto auto;

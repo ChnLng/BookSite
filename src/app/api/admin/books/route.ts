@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
-import { getSupabaseServiceClient } from "@/lib/supabase-server";
+import { getSupabaseRequestClient, getSupabaseServiceClient } from "@/lib/supabase-server";
 
 type BookPayload = {
   slug: string;
@@ -41,12 +42,12 @@ async function requireAdmin(request: Request) {
   return { user };
 }
 
-async function resolveBookRowId(bookRef: string) {
-  const supabase = getSupabaseServiceClient();
+function getAdminSupabase(request: Request) {
+  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
+  return getSupabaseServiceClient() || getSupabaseRequestClient(accessToken);
+}
 
-  if (!supabase) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY manquant.");
-  }
+async function resolveBookRowId(supabase: SupabaseClient, bookRef: string) {
 
   const query = isUuid(bookRef)
     ? supabase.from("books").select("id, slug").or(`id.eq.${bookRef},slug.eq.${bookRef}`).limit(1).maybeSingle()
@@ -68,10 +69,10 @@ export async function POST(request: Request) {
     return auth.error;
   }
 
-  const supabase = getSupabaseServiceClient();
+  const supabase = getAdminSupabase(request);
 
   if (!supabase) {
-    return NextResponse.json({ ok: false, message: "SUPABASE_SERVICE_ROLE_KEY manquant." }, { status: 503 });
+    return NextResponse.json({ ok: false, message: "Client Supabase admin indisponible." }, { status: 503 });
   }
 
   const payload = (await request.json().catch(() => null)) as { payload?: BookPayload } | null;
@@ -96,10 +97,10 @@ export async function PATCH(request: Request) {
     return auth.error;
   }
 
-  const supabase = getSupabaseServiceClient();
+  const supabase = getAdminSupabase(request);
 
   if (!supabase) {
-    return NextResponse.json({ ok: false, message: "SUPABASE_SERVICE_ROLE_KEY manquant." }, { status: 503 });
+    return NextResponse.json({ ok: false, message: "Client Supabase admin indisponible." }, { status: 503 });
   }
 
   const payload = (await request.json().catch(() => null)) as
@@ -124,7 +125,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ ok: false, message: "Informations du livre incompletes." }, { status: 400 });
       }
 
-      const existingId = await resolveBookRowId(payload.bookId);
+      const existingId = await resolveBookRowId(supabase, payload.bookId);
 
       if (existingId) {
         const { error } = await supabase.from("books").update(payload.payload).eq("id", existingId);
@@ -146,7 +147,7 @@ export async function PATCH(request: Request) {
     }
 
     if (payload.action === "toggleVisibility") {
-      const existingId = await resolveBookRowId(payload.bookId);
+      const existingId = await resolveBookRowId(supabase, payload.bookId);
 
       if (!existingId) {
         return NextResponse.json({ ok: false, message: "Livre introuvable dans la base." }, { status: 404 });
@@ -166,8 +167,8 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ ok: false, message: "Livre cible manquant." }, { status: 400 });
       }
 
-      const currentId = await resolveBookRowId(payload.bookId);
-      const targetId = await resolveBookRowId(payload.targetBookId);
+      const currentId = await resolveBookRowId(supabase, payload.bookId);
+      const targetId = await resolveBookRowId(supabase, payload.targetBookId);
 
       if (!currentId || !targetId) {
         return NextResponse.json({ ok: false, message: "Livre introuvable dans la base." }, { status: 404 });
@@ -189,7 +190,7 @@ export async function PATCH(request: Request) {
     }
 
     if (payload.action === "restore") {
-      const existingId = await resolveBookRowId(payload.bookId);
+      const existingId = await resolveBookRowId(supabase, payload.bookId);
       if (!existingId) {
         return NextResponse.json({ ok: false, message: "Livre supprime introuvable." }, { status: 404 });
       }
@@ -219,10 +220,10 @@ export async function DELETE(request: Request) {
     return auth.error;
   }
 
-  const supabase = getSupabaseServiceClient();
+  const supabase = getAdminSupabase(request);
 
   if (!supabase) {
-    return NextResponse.json({ ok: false, message: "SUPABASE_SERVICE_ROLE_KEY manquant." }, { status: 503 });
+    return NextResponse.json({ ok: false, message: "Client Supabase admin indisponible." }, { status: 503 });
   }
 
   const payload = (await request.json().catch(() => null)) as { bookId?: string } | null;
@@ -232,7 +233,7 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    const existingId = await resolveBookRowId(payload.bookId);
+    const existingId = await resolveBookRowId(supabase, payload.bookId);
 
     if (!existingId) {
       return NextResponse.json({ ok: false, message: "Livre introuvable dans la base." }, { status: 404 });
