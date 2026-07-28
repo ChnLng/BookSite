@@ -9,6 +9,7 @@ import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
+import { loadDisplayResources } from "@/lib/resources-service";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type SectionLayoutItem = {
@@ -55,6 +56,15 @@ type AppliedPromoState = {
   discountPercent: number;
   discountedPrice: number;
   isFreeShare: boolean;
+};
+
+type RelatedProduct = {
+  id: string;
+  href: string;
+  title: string;
+  subtitle: string;
+  priceEur: number;
+  image: string;
 };
 
 type PayPalButtonsInstance = {
@@ -129,7 +139,7 @@ export default function BookDetailPage() {
   const searchParams = useSearchParams();
   const { user, session, profile } = useAuth();
   const [book, setBook] = useState<DisplayBook | null>(null);
-  const [relatedBooks, setRelatedBooks] = useState<DisplayBook[]>([]);
+  const [relatedBooks, setRelatedBooks] = useState<RelatedProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
@@ -290,8 +300,9 @@ export default function BookDetailPage() {
       setReviewsLoading(true);
 
       const cataloguePromise = loadDisplayBooks();
+      const resourcesPromise = loadDisplayResources();
       const reviewsPromise = fetchReviewData(bookId);
-      const catalogueBooks = await cataloguePromise;
+      const [catalogueBooks, catalogueResources] = await Promise.all([cataloguePromise, resourcesPromise]);
       const resolvedBook = catalogueBooks.find((candidate) => candidate.id === bookId || candidate.dbId === bookId) || null;
 
       if (cancelled) {
@@ -308,7 +319,7 @@ export default function BookDetailPage() {
         return;
       }
 
-      const nextRelatedBooks = catalogueBooks.filter((candidate) => {
+      const nextRelatedBooks: RelatedProduct[] = catalogueBooks.filter((candidate) => {
         if (candidate.id === resolvedBook.id) {
           return false;
         }
@@ -316,9 +327,27 @@ export default function BookDetailPage() {
         return resolvedBook.relatedBookIds.some(
           (relatedId) => relatedId === candidate.id || relatedId === candidate.dbId,
         );
-      });
+      }).map((candidate) => ({
+        id: `book:${candidate.id}`,
+        href: `/livres/${candidate.id}`,
+        title: candidate.titleFr,
+        subtitle: candidate.titleZh,
+        priceEur: candidate.priceEur,
+        image: candidate.coverImage,
+      }));
 
-      setRelatedBooks(nextRelatedBooks);
+      const relatedResources: RelatedProduct[] = catalogueResources
+        .filter((resource) => resolvedBook.relatedBookIds.includes(`resource:${resource.slug || resource.id}`))
+        .map((resource) => ({
+          id: `resource:${resource.id}`,
+          href: `/outils/${resource.slug || resource.id}`,
+          title: resource.titleFr,
+          subtitle: resource.summaryFr,
+          priceEur: resource.priceEur,
+          image: resource.coverImageUrl,
+        }));
+
+      setRelatedBooks([...nextRelatedBooks, ...relatedResources]);
       setLoading(false);
 
       const reviewData = await reviewsPromise;
@@ -682,7 +711,7 @@ export default function BookDetailPage() {
 
   const handleBookDownload = async () => {
     if (!book || !session?.access_token) {
-      setPaymentError("Connectez-vous pour telecharger le PDF.");
+      setPaymentError("Connectez-vous pour telecharger le contenu.");
       return;
     }
 
@@ -690,7 +719,7 @@ export default function BookDetailPage() {
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setPaymentError(payload?.message || "Impossible de telecharger le PDF.");
+      setPaymentError(payload?.message || "Impossible de telecharger le contenu.");
       return;
     }
 
@@ -698,7 +727,7 @@ export default function BookDetailPage() {
     const objectUrl = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = objectUrl;
-    anchor.download = `${book.id}_book.pdf`;
+    anchor.download = book.pdfFile.split("/").pop() || `${book.id}_contenu`;
     anchor.click();
     URL.revokeObjectURL(objectUrl);
   };
@@ -745,19 +774,19 @@ export default function BookDetailPage() {
                 <p className="muted">Chargement des suggestions...</p>
               ) : relatedBooks.length > 0 ? (
                 relatedBooks.map((relatedBook) => (
-                  <Link className="book-detail-related-card" href={`/livres/${relatedBook.id}`} key={relatedBook.id}>
+                  <Link className="book-detail-related-card" href={relatedBook.href} key={relatedBook.id}>
                     <div className="book-detail-related-cover">
                       <Image
-                        src={relatedBook.coverImage}
-                        alt={relatedBook.titleFr}
+                        src={relatedBook.image}
+                        alt={relatedBook.title}
                         fill
                         sizes="140px"
                         className="book-cover-image"
                       />
                     </div>
                     <div className="book-detail-related-copy">
-                      <strong>{relatedBook.titleFr}</strong>
-                      <span className="tiny">{relatedBook.titleZh}</span>
+                      <strong>{relatedBook.title}</strong>
+                      <span className="tiny">{relatedBook.subtitle}</span>
                       <span className="tiny">{relatedBook.priceEur.toFixed(2)} EUR</span>
                     </div>
                   </Link>
@@ -948,7 +977,7 @@ export default function BookDetailPage() {
                             Lire maintenant
                           </Link>
                           <button className="cta-button secondary book-buy-button" type="button" onClick={() => void handleBookDownload()}>
-                            Telecharger le PDF
+                            Télécharger le contenu
                           </button>
                         </>
                       ) : (

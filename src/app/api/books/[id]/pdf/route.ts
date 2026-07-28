@@ -16,6 +16,15 @@ type ResolvedBook = {
   pdfFile: string;
 };
 
+function contentHeaders(fileName: string, contentType = "application/octet-stream") {
+  const safeName = path.basename(fileName).replace(/["\\\r\n]/g, "-");
+  return {
+    "Content-Type": contentType,
+    "Content-Disposition": `attachment; filename="${safeName}"`,
+    "Cache-Control": "private, no-store",
+  };
+}
+
 function resolvePublicPdfAbsolutePath(pdfFile: string) {
   const normalized = pdfFile.startsWith("/") ? pdfFile.slice(1) : pdfFile;
   const absolutePath = path.join(process.cwd(), "public", normalized);
@@ -130,11 +139,7 @@ export async function GET(request: Request, context: RouteContext) {
 
       return new NextResponse(fileBuffer, {
         status: 200,
-        headers: {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `inline; filename="${book.id}_book.pdf"`,
-          "Cache-Control": "private, no-store",
-        },
+        headers: contentHeaders(normalizedPdf, data.type),
       });
     }
   }
@@ -151,10 +156,6 @@ export async function GET(request: Request, context: RouteContext) {
 
   return new NextResponse(fileBuffer, {
     status: 200,
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${id}_book.pdf"`,
-      "Cache-Control": "private, no-store",
-    },
+    headers: contentHeaders(absolutePath),
   });
 }

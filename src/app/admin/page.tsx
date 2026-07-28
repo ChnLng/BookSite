@@ -13,6 +13,7 @@ import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-asse
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { bookIdFromDownload } from "@/lib/purchase-access";
 import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib/promo";
+import { loadDisplayResources, type DisplayResource } from "@/lib/resources-service";
 
 type BookRow = {
   id: string;
@@ -342,6 +343,7 @@ function downloadEntryKey(download: DownloadRow) {
 function AdminPageContent() {
   const { session, loading: authLoading } = useAuth();
   const [books, setBooks] = useState<BookRow[]>([]);
+  const [relatedResources, setRelatedResources] = useState<DisplayResource[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [downloads, setDownloads] = useState<DownloadRow[]>([]);
@@ -351,6 +353,7 @@ function AdminPageContent() {
   const [loadWarnings, setLoadWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<AdminSectionKey>("categories");
+  const [bookAdminTab, setBookAdminTab] = useState<"create" | "edit">("create");
   const [form, setForm] = useState<BookFormState>(defaultBookForm);
   const [categoryForm, setCategoryForm] = useState<CategoryFormState>(defaultCategoryForm);
   const [promoForm, setPromoForm] = useState<PromoFormState>(defaultPromoForm);
@@ -553,6 +556,10 @@ function AdminPageContent() {
     }
     void reload();
   }, [authLoading, session?.access_token]);
+
+  useEffect(() => {
+    void loadDisplayResources().then(setRelatedResources).catch(() => setRelatedResources([]));
+  }, []);
 
   useEffect(() => {
     if (!session?.access_token || books.length === 0) {
@@ -792,7 +799,7 @@ function AdminPageContent() {
     const nextForm = { ...form, slug: slugify(form.slug || form.titleFr) };
 
     try {
-      validateBookForm(nextForm, { requireCategory: true });
+      validateBookForm(nextForm, { requireCategory: false });
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "书籍信息不完整。");
       return;
@@ -922,10 +929,11 @@ function AdminPageContent() {
       return;
     }
 
+    const originalExtension = file.name.includes(".") ? `.${file.name.split(".").pop()?.toLowerCase()}` : "";
     const filename =
       kind === "image"
         ? `${draftSlug}_cover.${imageExtensionFromFile(file)}`
-        : `${draftSlug}_book.pdf`;
+        : `${draftSlug}_content${originalExtension || ".bin"}`;
 
     await withBusyState(`create-${kind}`, async () => {
       try {
@@ -982,10 +990,11 @@ function AdminPageContent() {
   const handleExistingAssetUpload = async (book: BookRow, kind: AssetKind, file: File) => {
     const edit = bookEdits[book.id];
     const slug = edit?.slug || book.slug || book.id;
+    const originalExtension = file.name.includes(".") ? `.${file.name.split(".").pop()?.toLowerCase()}` : "";
     const filename =
       kind === "image"
         ? `${slug}_cover.${imageExtensionFromFile(file)}`
-        : `${slug}_book.pdf`;
+        : `${slug}_content${originalExtension || ".bin"}`;
 
     await withBusyState(`upload-${kind}-${book.id}`, async () => {
       try {
@@ -1377,8 +1386,30 @@ function AdminPageContent() {
 
           {activeSection === "books" ? (
             <>
-              <div className="section-block">
-                <h3>Ajouter un livre 新增图书</h3>
+              <div className="admin-category-tabs" role="tablist" aria-label="Gestion des livres">
+                <button
+                  className={`admin-category-tab ${bookAdminTab === "create" ? "active" : ""}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={bookAdminTab === "create"}
+                  onClick={() => setBookAdminTab("create")}
+                >
+                  增加新的商品 Ajouter un produit
+                </button>
+                <button
+                  className={`admin-category-tab ${bookAdminTab === "edit" ? "active" : ""}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={bookAdminTab === "edit"}
+                  onClick={() => setBookAdminTab("edit")}
+                >
+                  编辑已有商品 Modifier les produits
+                </button>
+              </div>
+
+              {bookAdminTab === "create" ? <div className="section-block">
+                <h3>增加新的商品 Ajouter un produit</h3>
+                <p className="tiny">保存并设为显示后，商品会按排序出现在主页图书跑马灯和 Catalogue 页面。</p>
                 <div className="input-group admin-form-grid" style={{ marginTop: 10 }}>
                   <input
                     className="input"
@@ -1442,7 +1473,7 @@ function AdminPageContent() {
                   />
                   <input
                     className="input"
-                    placeholder="PDF Supabase (ex: livre_book.pdf)"
+                    placeholder="付费内容文件 Supabase（PDF、ZIP、EXE、DMG、FBX、GLT 等）"
                     value={form.pdfFile}
                     onChange={(event) => setForm({ ...form, pdfFile: event.target.value })}
                   />
@@ -1474,10 +1505,11 @@ function AdminPageContent() {
                     <span className="tiny">勾选后会显示在商品详情页</span>
                   </div>
                   <div className="admin-related-grid" style={{ marginTop: 12 }}>
-                    {books.length === 0 ? (
+                    {books.length === 0 && relatedResources.length === 0 ? (
                       <p className="tiny">请先创建至少一本其它图书。</p>
                     ) : (
-                      books
+                      <>
+                      {books
                         .filter((book) => relationValueFromBook(book) !== (form.slug || slugify(form.titleFr)))
                         .map((book) => {
                           const relatedValue = relationValueFromBook(book);
@@ -1497,7 +1529,24 @@ function AdminPageContent() {
                               <span>{book.title_zh} {book.title_fr}</span>
                             </label>
                           );
-                        })
+                        })}
+                      {relatedResources.map((resource) => {
+                        const relatedValue = `resource:${resource.slug || resource.id}`;
+                        return (
+                          <label className="admin-related-option" key={`create-related-resource-${resource.id}`}>
+                            <input
+                              type="checkbox"
+                              checked={form.relatedBookIds.includes(relatedValue)}
+                              onChange={() => setForm({
+                                ...form,
+                                relatedBookIds: toggleRelatedBookSelection(form.relatedBookIds, relatedValue),
+                              })}
+                            />
+                            <span>资源 · {resource.titleFr}</span>
+                          </label>
+                        );
+                      })}
+                      </>
                     )}
                   </div>
                 </div>
@@ -1550,15 +1599,14 @@ function AdminPageContent() {
 
                 <div className="section-block" style={{ marginTop: 14 }}>
                   <div className="split-line">
-                    <strong>PDF 上传到 Supabase books</strong>
-                    {form.pdfFile ? <span className="tiny">{form.pdfFile}</span> : <span className="tiny">未上传 PDF</span>}
+                    <strong>付费后下载的内容文件 Supabase</strong>
+                    {form.pdfFile ? <span className="tiny">{form.pdfFile}</span> : <span className="tiny">未上传内容文件</span>}
                   </div>
                   {createUploadStatus.pdf ? <p className="tiny">{createUploadStatus.pdf}</p> : null}
                   <div className="actions-row">
                     <input
                       className="input"
                       type="file"
-                      accept="application/pdf"
                       onChange={(event) => {
                         const file = event.target.files?.[0] || null;
                         setCreateSelectedFiles((current) => ({ ...current, pdf: file }));
@@ -1574,7 +1622,7 @@ function AdminPageContent() {
                       disabled={!createSelectedFiles.pdf || busyKey === "create-pdf"}
                       onClick={() => createSelectedFiles.pdf ? void handleCreateAssetUpload("pdf", createSelectedFiles.pdf) : undefined}
                     >
-                      {busyKey === "create-pdf" ? "Upload..." : "上传 PDF Upload"}
+                      {busyKey === "create-pdf" ? "Upload..." : "上传内容文件 Upload"}
                     </button>
                     {form.pdfFile ? (
                       <button
@@ -1582,7 +1630,7 @@ function AdminPageContent() {
                         type="button"
                         onClick={() => void handleCreateAssetDelete("pdf")}
                       >
-                        删除 PDF
+                        删除内容文件
                       </button>
                     ) : null}
                   </div>
@@ -1598,10 +1646,11 @@ function AdminPageContent() {
                     {busyKey === "create-book" ? "Création..." : "Créer"}
                   </button>
                 </div>
-              </div>
+              </div> : null}
 
-              <div className="section-block">
-                <h3>Livres 图书</h3>
+              {bookAdminTab === "edit" ? <div className="section-block">
+                <h3>编辑已有商品 Modifier les produits</h3>
+                <p className="tiny">这里的从上到下顺序，就是主页跑马灯从左到右和 Catalogue 的展示顺序。</p>
                 {loading ? (
                   <p className="muted">Chargement...</p>
                 ) : books.length === 0 ? (
@@ -1723,7 +1772,7 @@ function AdminPageContent() {
                               />
                               <input
                                 className="input"
-                                placeholder="PDF"
+                                placeholder="付费内容文件（PDF、ZIP、EXE、DMG、FBX、GLT 等）"
                                 value={edit.pdfFile}
                                 onChange={(event) =>
                                   setBookEdits({ ...bookEdits, [book.id]: { ...edit, pdfFile: event.target.value } })
@@ -1787,6 +1836,25 @@ function AdminPageContent() {
                                       </label>
                                     );
                                   })}
+                                {relatedResources.map((resource) => {
+                                  const relatedValue = `resource:${resource.slug || resource.id}`;
+                                  return (
+                                    <label className="admin-related-option" key={`${book.id}-related-resource-${resource.id}`}>
+                                      <input
+                                        type="checkbox"
+                                        checked={edit.relatedBookIds.includes(relatedValue)}
+                                        onChange={() => setBookEdits({
+                                          ...bookEdits,
+                                          [book.id]: {
+                                            ...edit,
+                                            relatedBookIds: toggleRelatedBookSelection(edit.relatedBookIds, relatedValue),
+                                          },
+                                        })}
+                                      />
+                                      <span>资源 · {resource.titleFr}</span>
+                                    </label>
+                                  );
+                                })}
                               </div>
                             </div>
 
@@ -1844,8 +1912,8 @@ function AdminPageContent() {
 
                             <div className="section-block" style={{ marginTop: 14 }}>
                               <div className="split-line">
-                                <strong>PDF Supabase</strong>
-                                {edit.pdfFile ? <span className="tiny">{edit.pdfFile}</span> : <span className="tiny">暂无 PDF</span>}
+                                <strong>付费后下载的内容文件 Supabase</strong>
+                                {edit.pdfFile ? <span className="tiny">{edit.pdfFile}</span> : <span className="tiny">暂无内容文件</span>}
                               </div>
                               <p className="tiny" style={{ marginTop: 8 }}>
                                 当前状态: {pdfStatus ? pdfStatus.message : "检查中..."}
@@ -1855,7 +1923,6 @@ function AdminPageContent() {
                                 <input
                                   className="input"
                                   type="file"
-                                  accept="application/pdf"
                                   onChange={(event) => {
                                     const file = event.target.files?.[0] || null;
                                     setEditSelectedFiles((current) => ({
@@ -1877,7 +1944,7 @@ function AdminPageContent() {
                                   disabled={!editSelectedFiles[book.id]?.pdf || busyKey === `upload-pdf-${book.id}`}
                                   onClick={() => editSelectedFiles[book.id]?.pdf ? void handleExistingAssetUpload(book, "pdf", editSelectedFiles[book.id]!.pdf as File) : undefined}
                                 >
-                                  {busyKey === `upload-pdf-${book.id}` ? "Upload..." : "上传 PDF Upload"}
+                                  {busyKey === `upload-pdf-${book.id}` ? "Upload..." : "上传/覆盖内容文件 Upload"}
                                 </button>
                                 {edit.pdfFile ? (
                                   <button
@@ -1885,7 +1952,7 @@ function AdminPageContent() {
                                     type="button"
                                     onClick={() => void handleExistingAssetDelete(book, "pdf")}
                                   >
-                                    删除 PDF
+                                    删除内容文件
                                   </button>
                                 ) : null}
                               </div>
@@ -1924,7 +1991,7 @@ function AdminPageContent() {
                             disabled={busyKey === `move-book-${book.id}-up`}
                             onClick={() => void moveBook(book.id, "up")}
                           >
-                            Monter
+                            ↑ 上移（跑马灯向左）
                           </button>
                           <button
                             className="pill-button"
@@ -1932,7 +1999,7 @@ function AdminPageContent() {
                             disabled={busyKey === `move-book-${book.id}-down`}
                             onClick={() => void moveBook(book.id, "down")}
                           >
-                            Descendre
+                            ↓ 下移（跑马灯向右）
                           </button>
                           <button className="pill-button" type="button" onClick={() => void deleteBook(book.id)}>
                             Supprimer
@@ -1942,7 +2009,7 @@ function AdminPageContent() {
                     );
                   })
                 )}
-              </div>
+              </div> : null}
             </>
           ) : null}
 

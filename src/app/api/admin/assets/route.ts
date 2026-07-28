@@ -52,8 +52,13 @@ async function ensureBooksBucket() {
 
   await supabase.storage.createBucket(booksBucketName, {
     public: false,
-    fileSizeLimit: 50 * 1024 * 1024,
-    allowedMimeTypes: ["application/pdf"],
+    fileSizeLimit: 500 * 1024 * 1024,
+  });
+
+  await supabase.storage.updateBucket(booksBucketName, {
+    public: false,
+    fileSizeLimit: 500 * 1024 * 1024,
+    allowedMimeTypes: null,
   });
 
   return { error: null, supabase };
@@ -282,10 +287,6 @@ export async function POST(request: Request) {
     }
 
     if (kind === "pdf") {
-      if (!fileName.match(/\.pdf$/i)) {
-        return NextResponse.json({ ok: false, message: "Le document doit etre un PDF." }, { status: 400 });
-      }
-
       const { error, supabase } = await ensureBooksBucket();
 
       if (error || !supabase) {
@@ -301,7 +302,7 @@ export async function POST(request: Request) {
       const { error: uploadError } = await supabase.storage
         .from(booksBucketName)
         .upload(storagePath, file, {
-          contentType: "application/pdf",
+          contentType: file.type || "application/octet-stream",
           upsert: true,
         });
 
