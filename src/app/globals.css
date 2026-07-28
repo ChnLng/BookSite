@@ -756,6 +756,17 @@ select {
   text-align: center;
 }
 
+.donation-amount-field input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.donation-amount-field input[type="number"]::-webkit-inner-spin-button,
+.donation-amount-field input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
 .donation-payment-error {
   margin: 8px 2px 0;
   color: #b44957;

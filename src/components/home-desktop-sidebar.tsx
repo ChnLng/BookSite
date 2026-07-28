@@ -150,8 +150,8 @@ export function HomeDesktopSidebar() {
 
   const startDonationCheckout = async () => {
     const amount = Number(donationAmount);
-    if (!Number.isFinite(amount) || amount < 1) {
-      setDonationPaymentError("Veuillez saisir un montant d'au moins 1 EUR.");
+    if (!Number.isFinite(amount) || amount < 0.01) {
+      setDonationPaymentError("Veuillez saisir un montant d'au moins 0,01 EUR.");
       return;
     }
     setDonationPaymentLoading(true);
@@ -369,7 +369,7 @@ export function HomeDesktopSidebar() {
                 <input
                   id="donation-amount"
                   inputMode="decimal"
-                  min="1"
+                  min="0.01"
                   max="100000"
                   step="0.01"
                   type="number"

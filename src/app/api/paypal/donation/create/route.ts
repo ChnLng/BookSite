@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     ? String(payload?.note)
     : "✨ Soutien libre et spontané";
 
-  if (!Number.isFinite(amount) || amount < 1 || amount > 100000) {
+  if (!Number.isFinite(amount) || amount < 0.01 || amount > 100000) {
     return NextResponse.json({ ok: false, message: "Veuillez saisir un montant valide." }, { status: 400 });
   }
 
@@ -40,7 +40,8 @@ export async function POST(request: Request) {
             experience_context: {
               brand_name: "Visd AR",
               locale: "fr-FR",
-              landing_page: "NO_PREFERENCE",
+              landing_page: "GUEST_CHECKOUT",
+              shipping_preference: "NO_SHIPPING",
               user_action: "PAY_NOW",
               return_url: `${origin}/?donation=approve`,
               cancel_url: `${origin}/?donation=cancelled`,
