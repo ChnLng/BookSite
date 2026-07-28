@@ -284,6 +284,11 @@ export default function ReadBookPage() {
             {pdfDocument ? (
               <div className="reader-book-viewer">
                 <div className="reader-spread" aria-live="polite">
+                  <div className="reader-spread-progress">
+                    {spreadIndex === 0
+                      ? `1 / ${pdfDocument.numPages}`
+                      : `${leftPdfPage}–${Math.min(rightPdfPage, pdfDocument.numPages)} / ${pdfDocument.numPages}`}
+                  </div>
                   {spreadIndex === 0 ? (
                     <div className="reader-page reader-cover-page">
                       <Image src={book.coverImage} alt={`Couverture de ${book.titleFr}`} fill sizes="45vw" />
@@ -301,28 +306,26 @@ export default function ReadBookPage() {
                     <div className="reader-page reader-empty-page" />
                   )}
                 </div>
-                <div className="reader-controls">
-                  <button
-                    className="pill-button"
-                    type="button"
-                    disabled={spreadIndex === 0}
-                    onClick={() => setSpreadIndex((current) => Math.max(0, current - 1))}
-                  >
-                    <ChevronLeft size={18} /> Précédent
-                  </button>
-                  <span>
-                    {spreadIndex === 0 ? "Couverture · 1" : `${leftPdfPage} · ${Math.min(rightPdfPage, pdfDocument.numPages)}`}
-                    {` / ${pdfDocument.numPages}`}
-                  </span>
-                  <button
-                    className="pill-button"
-                    type="button"
-                    disabled={spreadIndex >= spreadCount - 1}
-                    onClick={() => setSpreadIndex((current) => Math.min(spreadCount - 1, current + 1))}
-                  >
-                    Suivant <ChevronRight size={18} />
-                  </button>
-                </div>
+                <button
+                  className="reader-page-turn reader-page-turn-previous"
+                  type="button"
+                  aria-label="Page précédente"
+                  title="Précédent"
+                  disabled={spreadIndex === 0}
+                  onClick={() => setSpreadIndex((current) => Math.max(0, current - 1))}
+                >
+                  <ChevronLeft size={25} />
+                </button>
+                <button
+                  className="reader-page-turn reader-page-turn-next"
+                  type="button"
+                  aria-label="Page suivante"
+                  title="Suivant"
+                  disabled={spreadIndex >= spreadCount - 1}
+                  onClick={() => setSpreadIndex((current) => Math.min(spreadCount - 1, current + 1))}
+                >
+                  <ChevronRight size={25} />
+                </button>
               </div>
             ) : null}
           </div>
