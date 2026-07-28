@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Heart, Mail, MessageCircleHeart, Sparkles, X } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
-import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
 import { useAuth } from "@/components/auth-provider";
 
@@ -61,13 +60,12 @@ export function HomeDesktopSidebar() {
   const [comments, setComments] = useState<CommentItem[]>(sampleComments);
   const [visitorToken, setVisitorToken] = useState("");
   const [donationThankYou, setDonationThankYou] = useState<string | null>(null);
-  const [donationAmount, setDonationAmount] = useState(5);
+  const [donationAmount, setDonationAmount] = useState("");
   const [donationPurpose, setDonationPurpose] = useState(donationPurposes[0]);
   const [donationPaymentError, setDonationPaymentError] = useState("");
-  const donationAmountRef = useRef(donationAmount);
-  const donationPurposeRef = useRef(donationPurpose);
-  const paypalDonationContainerRef = useRef<HTMLDivElement | null>(null);
-  const { user, session } = useAuth();
+  const [donationPaymentLoading, setDonationPaymentLoading] = useState(false);
+  const donationReturnHandledRef = useRef(false);
+  const { user, session, loading: authLoading } = useAuth();
   const defaultCommentName = useMemo(() => user?.email?.split("@")[0] || "", [user?.email]);
 
   useEffect(() => {
@@ -88,15 +86,38 @@ export function HomeDesktopSidebar() {
   }, []);
 
   useEffect(() => {
+    if (authLoading || donationReturnHandledRef.current) return;
     const url = new URL(window.location.href);
-    const returnedFromDonation =
-      url.searchParams.get("donation") === "success" ||
-      url.searchParams.get("st")?.toLowerCase() === "completed";
-    if (!returnedFromDonation) return;
-    setDonationThankYou(donationThankYouMessages[Math.floor(Math.random() * donationThankYouMessages.length)]);
-    ["donation", "st", "tx", "amt", "cc", "cm", "item_number"].forEach((key) => url.searchParams.delete(key));
+    const donationState = url.searchParams.get("donation");
+    if (donationState === "cancelled") {
+      donationReturnHandledRef.current = true;
+      setDonationPaymentError("Paiement annulé. Vous pouvez reprendre quand vous voulez.");
+    } else if (donationState === "approve") {
+      const orderId = url.searchParams.get("token") || "";
+      if (!orderId) return;
+      donationReturnHandledRef.current = true;
+      setDonationPaymentLoading(true);
+      void fetch("/api/paypal/donation/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ orderId }),
+      })
+        .then(async (response) => {
+          const result = await response.json() as { ok?: boolean; message?: string };
+          if (!response.ok || !result.ok) throw new Error(result.message || "La confirmation du don a échoué.");
+          setDonationThankYou(donationThankYouMessages[Math.floor(Math.random() * donationThankYouMessages.length)]);
+        })
+        .catch((error) => setDonationPaymentError(error instanceof Error ? error.message : "La confirmation du don a échoué."))
+        .finally(() => setDonationPaymentLoading(false));
+    } else {
+      return;
+    }
+    ["donation", "token", "PayerID", "st", "tx", "amt", "cc", "cm", "item_number"].forEach((key) => url.searchParams.delete(key));
     window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-  }, []);
+  }, [authLoading, session?.access_token]);
 
   const loadComments = useCallback(async () => {
     if (!visitorToken) {
@@ -127,101 +148,28 @@ export function HomeDesktopSidebar() {
     void loadComments();
   }, [loadComments]);
 
-  useEffect(() => {
-    donationAmountRef.current = donationAmount;
-  }, [donationAmount]);
-
-  useEffect(() => {
-    donationPurposeRef.current = donationPurpose;
-  }, [donationPurpose]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
+  const startDonationCheckout = async () => {
+    const amount = Number(donationAmount);
+    if (!Number.isFinite(amount) || amount < 1) {
+      setDonationPaymentError("Veuillez saisir un montant d'au moins 1 EUR.");
       return;
     }
-
-    const paypalWindow = window as Window & {
-      paypal?: {
-        Buttons?: (config: Record<string, unknown>) => {
-          render: (container: HTMLElement) => Promise<void> | void;
-          close?: () => Promise<void> | void;
-        };
-      };
-    };
-
-    const container = paypalDonationContainerRef.current;
-    if (!container) return;
-
-    let buttons: ReturnType<NonNullable<NonNullable<typeof paypalWindow.paypal>["Buttons"]>> | null = null;
-    let stopped = false;
-
-    const renderDonationButtons = () => {
-      const buttonsFactory = paypalWindow.paypal?.Buttons;
-      if (!buttonsFactory || container.querySelector("iframe")) return false;
-
-      buttons = buttonsFactory({
-        style: { layout: "vertical", shape: "rect", label: "paypal", height: 42 },
-        createOrder: (_data: unknown, actions: any) => {
-          const amount = Math.min(100000, Math.max(1, Number(donationAmountRef.current) || 0));
-          if (amount <= 0) throw new Error("Montant invalide.");
-          return actions.order.create({
-            purchase_units: [
-              {
-                custom_id: "donation-visdar",
-                description: donationPurposeRef.current,
-                amount: { currency_code: "EUR", value: amount.toFixed(2) },
-              },
-            ],
-          });
-        },
-        onApprove: async (data: any, actions: any) => {
-          setDonationPaymentError("");
-          const order = await actions.order.capture();
-          const response = await fetch("/api/paypal/donation/complete", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-            },
-            body: JSON.stringify({
-              orderId: order?.id || data?.orderID,
-              captureId: order?.purchase_units?.[0]?.payments?.captures?.[0]?.id,
-              note: donationPurposeRef.current,
-            }),
-          });
-          const result = (await response.json().catch(() => null)) as { ok?: boolean; message?: string } | null;
-          if (!response.ok || !result?.ok) {
-            throw new Error(result?.message || "Le don a été payé, mais son enregistrement a échoué.");
-          }
-          setDonationThankYou(donationThankYouMessages[Math.floor(Math.random() * donationThankYouMessages.length)]);
-        },
-        onCancel: () => setDonationPaymentError("Paiement annulé. Vous pouvez reprendre quand vous voulez."),
-        onError: () => setDonationPaymentError("PayPal est momentanément indisponible. Veuillez réessayer."),
+    setDonationPaymentLoading(true);
+    setDonationPaymentError("");
+    try {
+      const response = await fetch("/api/paypal/donation/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, note: donationPurpose }),
       });
-
-      Promise.resolve(buttons.render(container)).catch(() => {
-        if (!stopped) setDonationPaymentError("PayPal est momentanément indisponible. Veuillez réessayer.");
-      });
-      return true;
-    };
-
-    if (renderDonationButtons()) return () => { stopped = true; void buttons?.close?.(); };
-    let attempts = 0;
-    const intervalId = window.setInterval(() => {
-      attempts += 1;
-      if (renderDonationButtons() || attempts >= 30) {
-        window.clearInterval(intervalId);
-        if (attempts >= 30 && !container.querySelector("iframe")) {
-          setDonationPaymentError("Le module PayPal ne s'est pas chargé. Veuillez actualiser la page.");
-        }
-      }
-    }, 200);
-    return () => {
-      stopped = true;
-      window.clearInterval(intervalId);
-      void buttons?.close?.();
-    };
-  }, [session?.access_token]);
+      const result = await response.json() as { ok?: boolean; approvalUrl?: string; message?: string };
+      if (!response.ok || !result.ok || !result.approvalUrl) throw new Error(result.message || "PayPal est indisponible.");
+      window.location.assign(result.approvalUrl);
+    } catch (error) {
+      setDonationPaymentLoading(false);
+      setDonationPaymentError(error instanceof Error ? error.message : "PayPal est indisponible.");
+    }
+  };
 
   useEffect(() => {
     if (defaultCommentName && !commentName) {
@@ -405,7 +353,6 @@ export function HomeDesktopSidebar() {
 
   return (
     <>
-      <PayPalSdkScript />
       <aside className="left-column-stack">
         <aside className="panel glass donation-column donation-column-compact" id="donation">
           <div className="section-heading">
@@ -426,8 +373,9 @@ export function HomeDesktopSidebar() {
                   max="100000"
                   step="0.01"
                   type="number"
+                  placeholder=""
                   value={donationAmount}
-                  onChange={(event) => setDonationAmount(Number(event.target.value))}
+                  onChange={(event) => setDonationAmount(event.target.value)}
                 />
                 <span>EUR</span>
               </div>
@@ -440,7 +388,15 @@ export function HomeDesktopSidebar() {
               >
                 {donationPurposes.map((purpose) => <option key={purpose}>{purpose}</option>)}
               </select>
-              <div className="donation-paypal-buttons" ref={paypalDonationContainerRef} />
+              <button
+                className="donation-paypal-checkout"
+                type="button"
+                disabled={donationPaymentLoading}
+                onClick={() => void startDonationCheckout()}
+              >
+                {donationPaymentLoading ? "Ouverture..." : <><strong>Pay</strong><em>Pal</em></>}
+              </button>
+              <p className="donation-payment-methods">PayPal ou carte bancaire</p>
               {donationPaymentError ? <p className="donation-payment-error">{donationPaymentError}</p> : null}
             </div>
             <SecurePaymentNote compact />

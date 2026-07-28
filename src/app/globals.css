@@ -652,6 +652,38 @@ select {
   min-height: 88px;
 }
 
+.donation-paypal-checkout {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 14px;
+  border: 0;
+  border-radius: 5px;
+  background: #ffc439;
+  color: #003087;
+  cursor: pointer;
+  font-size: 1.15rem;
+  font-style: italic;
+  box-shadow: 0 6px 14px rgba(0, 48, 135, 0.12);
+}
+
+.donation-paypal-checkout em {
+  color: #0070ba;
+  font-style: italic;
+  font-weight: 800;
+}
+
+.donation-paypal-checkout:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.donation-payment-methods {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
 .donation-payment-error {
   margin: 8px 2px 0;
   color: #b44957;
