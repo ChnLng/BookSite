@@ -201,18 +201,7 @@ export function AdminCategoryEnginePanel({
         .order("created_at", { ascending: true }),
     ]);
 
-    let categoryRows = (categoriesResult.data || []) as Array<Record<string, unknown>>;
-
-    if (categoriesResult.error) {
-      const fallback = await supabase
-        .from("categories")
-        .select("id, slug, title_fr, title_zh, kind, homepage_visible, homepage_sort_order, homepage_pinned, icon_name, intro_fr")
-        .order("homepage_sort_order", { ascending: true });
-      categoryRows = (fallback.data || []) as Array<Record<string, unknown>>;
-      if (fallback.error) setStatusMessage(`读取类目失败 Lecture impossible : ${fallback.error.message}`);
-    }
-
-    const nextCategories = categoryRows.map((row) => ({
+    const nextCategories = ((categoriesResult.data || []) as Array<Record<string, unknown>>).map((row) => ({
       id: String(row.id),
       slug: String(row.slug || row.id),
       titleFr: String(row.title_fr || "Categorie"),
