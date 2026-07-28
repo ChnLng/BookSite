@@ -29,12 +29,14 @@ type PartnerLinksSectionProps = {
   links?: PartnerLinkItem[];
   sectionId?: string;
   title?: string;
+  order?: number;
 };
 
 export function PartnerLinksSection({
   links: providedLinks,
   sectionId = "liens-partenaires",
   title = "Liens partenaires",
+  order,
 }: PartnerLinksSectionProps) {
   const [links, setLinks] = useState<PartnerLinkItem[]>(providedLinks && providedLinks.length > 0 ? providedLinks : fallbackLinks);
 
@@ -83,7 +85,7 @@ export function PartnerLinksSection({
   }, [providedLinks]);
 
   return (
-    <section className="panel glass home-section-panel" id={sectionId}>
+    <section className="panel glass home-section-panel" id={sectionId} style={{ order }}>
       <div className="section-heading">
         <span className="section-heading-icon" aria-hidden="true">
           <Link2 size={17} />

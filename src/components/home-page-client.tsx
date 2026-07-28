@@ -55,6 +55,7 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
   const [booksSectionPinned, setBooksSectionPinned] = useState(false);
+  const [booksSectionOrder, setBooksSectionOrder] = useState(0);
   const { signInWithPassword, signUpWithPassword } = useAuth();
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
@@ -73,13 +74,14 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
 
       const { data } = await supabase
         .from("categories")
-        .select("homepage_pinned")
+        .select("homepage_pinned, homepage_sort_order")
         .eq("kind", "book")
         .eq("homepage_visible", true)
         .limit(1)
         .maybeSingle();
 
       setBooksSectionPinned(Boolean(data?.homepage_pinned));
+      setBooksSectionOrder(Number(data?.homepage_sort_order || 0));
     };
 
     void loadBooksPin();
@@ -226,7 +228,7 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
         </div>
 
         <div className="home-main-flow">
-          <section className="panel glass carousel-stage" id="scene">
+          <section className="panel glass carousel-stage" id="scene" style={{ order: booksSectionOrder }}>
             <div className="section-heading">
               <span className="section-heading-icon" aria-hidden="true">
                 <BookOpenText size={17} />

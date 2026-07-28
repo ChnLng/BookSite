@@ -17,9 +17,9 @@ create unique index if not exists categories_single_homepage_pin_idx
 
 with seed_categories (slug, title_fr, kind, sort_order, icon_name, intro_fr) as (
   values
-    ('livres', 'Livres', 'book', 0, 'library', 'Albums illustrés bilingues chinois-français.'),
-    ('outils', 'Outils', 'resource', 10, 'gamepad', 'Jeux, outils numériques et ressources à télécharger.'),
-    ('liens', 'Liens', 'custom', 1000, 'links', 'Liens partenaires du site.')
+    ('livres', 'Albums illustrés bilingues 🇨🇳 chinois-français 🇫🇷', 'book', 0, 'library', 'Albums illustrés bilingues chinois-français.'),
+    ('outils', 'Coin ludique', 'resource', 10, 'gamepad', 'Jeux, outils numériques et ressources à télécharger.'),
+    ('liens', 'Liens partenaires', 'custom', 1000, 'links', 'Liens partenaires du site.')
 )
 update public.categories as category
 set
@@ -31,9 +31,9 @@ where category.slug = seed.slug;
 
 with seed_categories (slug, title_fr, kind, sort_order, icon_name, intro_fr) as (
   values
-    ('livres', 'Livres', 'book', 0, 'library', 'Albums illustrés bilingues chinois-français.'),
-    ('outils', 'Outils', 'resource', 10, 'gamepad', 'Jeux, outils numériques et ressources à télécharger.'),
-    ('liens', 'Liens', 'custom', 1000, 'links', 'Liens partenaires du site.')
+    ('livres', 'Albums illustrés bilingues 🇨🇳 chinois-français 🇫🇷', 'book', 0, 'library', 'Albums illustrés bilingues chinois-français.'),
+    ('outils', 'Coin ludique', 'resource', 10, 'gamepad', 'Jeux, outils numériques et ressources à télécharger.'),
+    ('liens', 'Liens partenaires', 'custom', 1000, 'links', 'Liens partenaires du site.')
 )
 insert into public.categories (
   name,
@@ -64,8 +64,7 @@ where not exists (
 );
 
 update public.categories
-set homepage_sort_order = 1000,
-    homepage_pinned = false
+set homepage_pinned = false
 where slug = 'liens';
 
 insert into storage.buckets (id, name, public, file_size_limit)

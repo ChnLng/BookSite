@@ -156,7 +156,13 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-export function AdminCategoryEnginePanel({ requestedCategoryId = "" }: { requestedCategoryId?: string }) {
+export function AdminCategoryEnginePanel({
+  requestedCategoryId = "",
+  onManageBuiltIn,
+}: {
+  requestedCategoryId?: string;
+  onManageBuiltIn?: (section: "books" | "resources" | "partners") => void;
+}) {
   const [activeTab, setActiveTab] = useState<"new" | "existing">("new");
   const [categories, setCategories] = useState<HomeCategory[]>([]);
   const [rulesByCategory, setRulesByCategory] = useState<Record<string, RuleDraft[]>>({});
@@ -242,7 +248,11 @@ export function AdminCategoryEnginePanel({ requestedCategoryId = "" }: { request
       {},
     );
 
-    const homepageCategories = nextCategories.filter((category) => category.homepageVisible);
+    const homepageCategories = nextCategories.filter(
+      (category) =>
+        category.homepageVisible &&
+        (["livres", "outils", "liens"].includes(category.slug) || category.kind === "custom"),
+    );
     setCategories(homepageCategories);
     setRulesByCategory(nextRulesByCategory);
     setEntriesByCategory(nextEntriesByCategory);
@@ -494,7 +504,7 @@ export function AdminCategoryEnginePanel({ requestedCategoryId = "" }: { request
 
   const moveCategory = async (categoryId: string, direction: "up" | "down") => {
     const supabase = getSupabaseBrowserClient();
-    const movable = categories.filter((category) => category.slug !== "liens");
+    const movable = categories;
     const index = movable.findIndex((category) => category.id === categoryId);
     const targetIndex = direction === "up" ? index - 1 : index + 1;
 
@@ -653,8 +663,20 @@ export function AdminCategoryEnginePanel({ requestedCategoryId = "" }: { request
                 </button>
                 {category.homepagePinned ? <span className="admin-pin-badge" title="Épinglée">📌</span> : null}
                 <div className="actions-row">
-                  <button className="pill-button" type="button" disabled={isLinks || index === 0 || busyKey !== null} onClick={() => void moveCategory(category.id, "up")}>↑ Monter</button>
-                  <button className="pill-button" type="button" disabled={isLinks || index === categories.length - 1 || busyKey !== null} onClick={() => void moveCategory(category.id, "down")}>↓ Descendre</button>
+                  <button
+                    className="pill-button"
+                    type="button"
+                    onClick={() => {
+                      if (category.slug === "livres") onManageBuiltIn?.("books");
+                      else if (category.slug === "outils") onManageBuiltIn?.("resources");
+                      else if (category.slug === "liens") onManageBuiltIn?.("partners");
+                      else setSelectedCategoryId(category.id);
+                    }}
+                  >
+                    管理内容 Gérer
+                  </button>
+                  <button className="pill-button" type="button" disabled={index === 0 || busyKey !== null} onClick={() => void moveCategory(category.id, "up")}>↑ Monter</button>
+                  <button className="pill-button" type="button" disabled={index === categories.length - 1 || busyKey !== null} onClick={() => void moveCategory(category.id, "down")}>↓ Descendre</button>
                   <button className="pill-button" type="button" disabled={isLinks || busyKey !== null} onClick={() => void togglePinnedCategory(category)}>
                     {category.homepagePinned ? "Retirer 📌" : "Épingler 📌"}
                   </button>

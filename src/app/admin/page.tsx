@@ -45,6 +45,7 @@ type CategoryRow = {
   description_fr: string | null;
   description_zh: string | null;
   homepage_visible?: boolean | null;
+  kind?: string | null;
   created_at?: string | null;
 };
 
@@ -421,7 +422,7 @@ function AdminPageContent() {
     const categoriesQuery = await supabase
       .from("categories")
       .select(
-        "id, slug, title_fr, title_zh, base_price_eur, attribute_label_fr, attribute_label_zh, description_fr, description_zh, homepage_visible, created_at",
+        "id, slug, title_fr, title_zh, base_price_eur, attribute_label_fr, attribute_label_zh, description_fr, description_zh, homepage_visible, kind, created_at",
       )
       .order("created_at", { ascending: false });
 
@@ -449,7 +450,11 @@ function AdminPageContent() {
         warnings.push("类目表仍是旧结构，建议执行新的 categories migration。");
       }
     } else {
-      nextCategories = ((categoriesQuery.data || []) as CategoryRow[]).filter((category) => category.homepage_visible !== false);
+      nextCategories = ((categoriesQuery.data || []) as CategoryRow[]).filter(
+        (category) =>
+          category.homepage_visible !== false &&
+          (["livres", "outils", "liens"].includes(category.slug || "") || category.kind === "custom"),
+      );
     }
 
     let nextPromos: PromoCode[] = [];
@@ -1386,7 +1391,12 @@ function AdminPageContent() {
           ) : null}
           {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
 
-          {activeSection === "categories" ? <AdminCategoryEnginePanel requestedCategoryId={requestedCategoryId} /> : null}
+          {activeSection === "categories" ? (
+            <AdminCategoryEnginePanel
+              requestedCategoryId={requestedCategoryId}
+              onManageBuiltIn={(section) => setActiveSection(section)}
+            />
+          ) : null}
 
           {activeSection === "resources" ? <AdminResourcesPanel /> : null}
 

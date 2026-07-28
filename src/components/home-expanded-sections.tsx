@@ -50,6 +50,7 @@ type RenderedSection =
       category: HomeCategory | null;
       resources: ResourceItem[];
       pinned: boolean;
+      order: number;
     }
   | {
       id: string;
@@ -59,11 +60,13 @@ type RenderedSection =
       categoryRules: CategoryFieldRule[];
       categoryEntries: CategoryEntry[];
       pinned: boolean;
+      order: number;
     }
   | {
       id: string;
       label: string;
       kind: "partner";
+      order: number;
     };
 
 function getHeaderOffset() {
@@ -245,6 +248,7 @@ export function HomeExpandedSections() {
           category,
           resources: categoryResources,
           pinned: category.homepagePinned,
+          order: category.homepageSortOrder,
         });
         return;
       }
@@ -255,6 +259,7 @@ export function HomeExpandedSections() {
         kind: "custom",
         category,
         pinned: category.homepagePinned,
+        order: category.homepageSortOrder,
         categoryRules: fieldRules
           .filter((rule) => rule.categoryId === category.id && rule.showInCard)
           .sort((left, right) => left.sortOrder - right.sortOrder),
@@ -272,17 +277,20 @@ export function HomeExpandedSections() {
         category: null,
         resources: uncategorizedResources,
         pinned: false,
+        order: 10,
       });
     }
 
+    const linksCategory = categories.find((category) => category.slug === "liens");
     sections.push({
       id: "liens-partenaires",
-      label: "Liens partenaires",
+      label: linksCategory?.titleFr || "Liens partenaires",
       kind: "partner",
+      order: linksCategory?.homepageSortOrder ?? 1000,
     });
 
-    return sections;
-  }, [customCategories, entries, fieldRules, resourceCategories, resources, uncategorizedResources]);
+    return sections.sort((left, right) => left.order - right.order);
+  }, [categories, customCategories, entries, fieldRules, resourceCategories, resources, uncategorizedResources]);
 
   const floatingLinks = useMemo<FloatingSectionLink[]>(() => {
     return [
@@ -456,7 +464,7 @@ export function HomeExpandedSections() {
       {renderedSections.map((section) => {
         if (section.kind === "resource") {
           return (
-            <section className="panel glass home-section-panel" id={section.id} key={section.id}>
+            <section className="panel glass home-section-panel" id={section.id} key={section.id} style={{ order: section.order }}>
               <div className="section-heading">
                 <span className="section-heading-icon" aria-hidden="true">
                   <Gamepad2 size={17} />
@@ -519,7 +527,7 @@ export function HomeExpandedSections() {
           const CategoryIcon = resolveCategoryIcon(section.category.iconName);
 
           return (
-            <section className="panel glass home-section-panel" id={section.id} key={section.id}>
+            <section className="panel glass home-section-panel" id={section.id} key={section.id} style={{ order: section.order }}>
               <div className="section-heading">
                 <span className="section-heading-icon" aria-hidden="true">
                   <CategoryIcon size={17} />
@@ -578,7 +586,7 @@ export function HomeExpandedSections() {
           );
         }
 
-        return <PartnerLinksSection key={section.id} sectionId={section.id} title={section.label} />;
+        return <PartnerLinksSection key={section.id} sectionId={section.id} title={section.label} order={section.order} />;
       })}
     </>
   );
