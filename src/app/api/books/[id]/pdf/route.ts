@@ -129,6 +129,21 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Fichier PDF introuvable." }, { status: 404 });
   }
 
+  if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(normalizedPdf)) {
+    const response = await fetch(normalizedPdf, {
+      headers: process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : undefined,
+      redirect: "follow",
+      cache: "no-store",
+    });
+    if (!response.ok || !response.body) {
+      return NextResponse.json({ ok: false, message: "Fichier GitHub Release introuvable." }, { status: 404 });
+    }
+    return new NextResponse(response.body, {
+      status: 200,
+      headers: contentHeaders(normalizedPdf, response.headers.get("content-type") || undefined),
+    });
+  }
+
   if (serviceClient && isSupabaseBookPdfAsset(normalizedPdf)) {
     const { data, error } = await serviceClient.storage
       .from(booksBucketName)

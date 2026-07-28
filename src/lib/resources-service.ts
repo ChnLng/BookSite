@@ -18,8 +18,8 @@ type ResourceItemFileRow = {
   resource_id: string;
   platform: string | null;
   label_fr: string | null;
-  file_url: string | null;
-  file_path: string | null;
+  file_url?: string | null;
+  file_path?: string | null;
   external_url: string | null;
   sort_order: number | null;
 };
@@ -141,7 +141,7 @@ function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) 
           id: fileRow.id,
           platform: fileRow.platform || "通用",
           labelFr: fileRow.label_fr || "Telecharger",
-          filePath: fileRow.file_path || fileRow.file_url || "",
+          filePath: fileRow.file_path || fileRow.file_url || "protected",
           externalUrl: fileRow.external_url || "",
           sortOrder: fileRow.sort_order ?? 0,
         }))
@@ -185,7 +185,7 @@ async function fetchDisplayResources() {
       .order("created_at", { ascending: true }),
     supabase
       .from("resource_item_files")
-      .select("id, resource_id, platform, label_fr, file_url, file_path, external_url, sort_order")
+      .select("id, resource_id, platform, label_fr, external_url, sort_order")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true }),
   ]);
@@ -247,7 +247,7 @@ export async function resolveDisplayResourceById(idOrSlug: string) {
       .maybeSingle(),
     supabase
       .from("resource_item_files")
-      .select("id, resource_id, platform, label_fr, file_url, file_path, external_url, sort_order")
+      .select("id, resource_id, platform, label_fr, external_url, sort_order")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true }),
   ]);

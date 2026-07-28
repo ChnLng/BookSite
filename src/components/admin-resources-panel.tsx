@@ -341,7 +341,7 @@ export function AdminResourcesPanel() {
           entryIndex === index ? { ...entry, filePath: assetPath } : entry,
         ),
       }));
-      setStatusMessage("Fichier multi-plateforme telecharge.");
+      setStatusMessage("付费文件已上传到统一的 GitHub Release。保存商品后生效。");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Upload impossible.");
     } finally {
@@ -522,7 +522,7 @@ export function AdminResourcesPanel() {
               />
               <input
                 className="input"
-                placeholder="URL du fichier ZIP"
+                placeholder="GitHub Release 付费文件地址"
                 value={entry.filePath}
                 onChange={(event) =>
                   setDraft((current) => ({

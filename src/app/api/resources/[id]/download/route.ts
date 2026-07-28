@@ -77,7 +77,12 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: true, url: resolvedFileRow.external_url });
   }
 
-  const storagePath = normalizeResourceAssetPath(resolvedFileRow.file_path || resolvedFileRow.file_url);
+  const rawFilePath = resolvedFileRow.file_path || resolvedFileRow.file_url || "";
+  if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(rawFilePath)) {
+    return NextResponse.json({ ok: true, url: rawFilePath });
+  }
+
+  const storagePath = normalizeResourceAssetPath(rawFilePath);
 
   if (!storagePath || /^https?:\/\//i.test(storagePath)) {
     return NextResponse.json({ ok: false, message: "Chemin de telechargement invalide." }, { status: 404 });

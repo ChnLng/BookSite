@@ -12,7 +12,7 @@ export type BookRow = {
   visible: boolean;
   price_eur: number | null;
   cover_image: string | null;
-  pdf_file: string | null;
+  pdf_file?: string | null;
   synopsis_fr: string | null;
   synopsis_zh: string | null;
   amazon_ebook_url: string | null;
@@ -31,7 +31,7 @@ export type DisplayBook = Book & {
 };
 
 export const BOOK_PUBLIC_SELECT =
-  "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, related_book_ids, created_at";
+  "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, related_book_ids, created_at";
 
 const BOOK_CACHE_TTL_MS = 60_000;
 const bookListCache = new Map<boolean, { expiresAt: number; data: DisplayBook[] }>();

@@ -956,7 +956,7 @@ function AdminPageContent() {
           ...current,
           [kind]: kind === "image" ? "封面上传成功，等待保存图书。" : "PDF 上传成功，等待保存图书。",
         }));
-        setStatusMessage(kind === "image" ? "封面已上传到 GitHub images。" : "PDF 已上传到 Supabase books bucket。");
+        setStatusMessage(kind === "image" ? "封面已上传到 GitHub images。" : "内容文件已上传到 GitHub Releases。");
       } catch (error) {
         setCreateUploadStatus((current) => ({ ...current, [kind]: error instanceof Error ? error.message : "资源上传失败。" }));
         setStatusMessage(error instanceof Error ? error.message : "资源上传失败。");
@@ -1028,7 +1028,7 @@ function AdminPageContent() {
             [kind]: kind === "image" ? "封面已上传，点击 Enregistrer 生效。" : "PDF 已上传，点击 Enregistrer 生效。",
           },
         }));
-        setStatusMessage(kind === "image" ? "封面已上传到 GitHub，等待保存。" : "PDF 已上传到 Supabase，等待保存。");
+        setStatusMessage(kind === "image" ? "封面已上传到 GitHub，等待保存。" : "内容文件已上传到 GitHub Releases，等待保存。");
       } catch (error) {
         setEditUploadStatus((current) => ({
           ...current,
@@ -1599,7 +1599,7 @@ function AdminPageContent() {
 
                 <div className="section-block" style={{ marginTop: 14 }}>
                   <div className="split-line">
-                    <strong>付费后下载的内容文件 Supabase</strong>
+                    <strong>付费后下载的内容文件 GitHub Releases</strong>
                     {form.pdfFile ? <span className="tiny">{form.pdfFile}</span> : <span className="tiny">未上传内容文件</span>}
                   </div>
                   {createUploadStatus.pdf ? <p className="tiny">{createUploadStatus.pdf}</p> : null}
@@ -1912,7 +1912,7 @@ function AdminPageContent() {
 
                             <div className="section-block" style={{ marginTop: 14 }}>
                               <div className="split-line">
-                                <strong>付费后下载的内容文件 Supabase</strong>
+                                <strong>付费后下载的内容文件 GitHub Releases</strong>
                                 {edit.pdfFile ? <span className="tiny">{edit.pdfFile}</span> : <span className="tiny">暂无内容文件</span>}
                               </div>
                               <p className="tiny" style={{ marginTop: 8 }}>
