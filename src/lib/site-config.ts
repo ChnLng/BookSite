@@ -6,6 +6,9 @@ export const siteConfig = {
   paypalClientId:
     process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ||
     "BAAAjG_eMcFuTZWbLVaucPb7Mt-fRc34Mp74pcWAcyhxMa7xug7dcAJF-KghS9svmEh6l0kNpmv5uNTHCQ",
+  paypalHostedClientId:
+    process.env.NEXT_PUBLIC_PAYPAL_HOSTED_CLIENT_ID ||
+    "BAAAjG_eMcFuTZWbLVaucPb7Mt-fRc34Mp74pcWAcyhxMa7xug7dcAJF-KghS9svmEh6l0kNpmv5uNTHCQ",
   stripePublishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
 };
 

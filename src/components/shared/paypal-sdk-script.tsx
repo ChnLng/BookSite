@@ -16,7 +16,7 @@ export function PayPalHostedButtonScript() {
   return (
     <Script
       id="paypal-hosted-button-sdk"
-      src={`https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(siteConfig.paypalClientId)}&components=hosted-buttons&currency=EUR`}
+      src={`https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(siteConfig.paypalHostedClientId)}&components=hosted-buttons&currency=EUR`}
       strategy="afterInteractive"
       data-namespace="paypalHosted"
     />
