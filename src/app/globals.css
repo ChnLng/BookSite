@@ -554,6 +554,7 @@ select {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .admin-table-empty { padding: 28px 10px !important; text-align: center !important; color: var(--text-muted); }
 .admin-donations-table .donation-col-name { width: 12%; }
 .admin-donations-table .donation-col-email { width: 19%; }
@@ -3468,4 +3469,79 @@ select {
   html:not([data-preferred-view="desktop"]) .home-desktop-sidebar-wrapper {
     display: none !important;
   }
+}
+
+/* Final interaction palette: controls stay clearly visible in every state. */
+.cta-button:hover:not(:disabled) {
+  color: #fff;
+  background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 18px 34px rgba(79, 70, 229, 0.28), 0 4px 10px rgba(147, 51, 234, 0.14);
+  transform: translateY(-2px);
+}
+
+.cta-button:active:not(:disabled) {
+  color: #fff;
+  background: linear-gradient(135deg, #4338ca 0%, #7e22ce 100%);
+  box-shadow: 0 7px 16px rgba(67, 56, 202, 0.24);
+  transform: translateY(1px) scale(0.985);
+}
+
+.cta-button.secondary:hover:not(:disabled) {
+  color: #3730a3;
+  background: linear-gradient(145deg, #eef2ff, #ddd6fe);
+  border-color: rgba(99, 102, 241, 0.24);
+  box-shadow: 0 14px 28px rgba(99, 102, 241, 0.16);
+}
+
+.cta-button.secondary:active:not(:disabled) {
+  color: #312e81;
+  background: linear-gradient(145deg, #e0e7ff, #c4b5fd);
+}
+
+.nav-links a:hover,
+.nav-button:hover:not(:disabled),
+.pill-button:hover:not(:disabled) {
+  color: #3730a3;
+  background: linear-gradient(145deg, #f0f3ff, #dfe5f5);
+  border-color: rgba(99, 102, 241, 0.18);
+  box-shadow: 9px 9px 20px rgba(129, 140, 175, 0.2), -6px -6px 15px rgba(255, 255, 255, 0.94);
+  transform: translateY(-1px);
+}
+
+.nav-links a:active,
+.nav-button:active:not(:disabled),
+.pill-button:active:not(:disabled) {
+  color: #312e81;
+  background: linear-gradient(145deg, #dbe2f4, #f1f4fb);
+  box-shadow: inset 3px 3px 8px rgba(129, 140, 175, 0.18), inset -3px -3px 8px rgba(255, 255, 255, 0.82);
+  transform: translateY(1px) scale(0.985);
+}
+
+.share-icon-button:active,
+.reader-page-turn:active:not(:disabled),
+.coin-ludique-download-button:active,
+.partner-link-button:active {
+  background: #e0e7ff;
+  color: #3730a3;
+  transform: translateY(1px) scale(0.97);
+}
+
+.donation-paypal-checkout:hover:not(:disabled) {
+  background: #ffcf5c;
+  color: #002c78;
+  box-shadow: 0 9px 20px rgba(0, 48, 135, 0.2);
+  transform: translateY(-1px);
+}
+
+.donation-paypal-checkout:active:not(:disabled) {
+  background: #f2b827;
+  color: #001f5b;
+  box-shadow: 0 4px 10px rgba(0, 48, 135, 0.18);
+  transform: translateY(1px) scale(0.99);
+}
+
+:is(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.38);
+  outline-offset: 3px;
 }
