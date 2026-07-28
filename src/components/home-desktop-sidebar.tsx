@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Heart, Mail, MessageCircleHeart, Sparkles, X } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
-import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
+import { PayPalHostedButtonScript } from "@/components/shared/paypal-sdk-script";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
 import { useAuth } from "@/components/auth-provider";
 
@@ -122,7 +122,7 @@ export function HomeDesktopSidebar() {
     if (!container) return;
 
     const paypalWindow = window as Window & {
-      paypal?: {
+      paypalHosted?: {
         HostedButtons?: (config: { hostedButtonId: string }) => { render: (selector: string) => Promise<void> | void };
       };
     };
@@ -159,7 +159,7 @@ export function HomeDesktopSidebar() {
     observer.observe(container, { childList: true, subtree: true });
 
     const renderHostedButton = () => {
-      const hostedButtons = paypalWindow.paypal?.HostedButtons;
+      const hostedButtons = paypalWindow.paypalHosted?.HostedButtons;
       if (!hostedButtons || container.querySelector("iframe")) return false;
       Promise.resolve(hostedButtons({ hostedButtonId: "D3LVZA49QZ4VE" }).render(`#${containerId}`)).catch(() => {
         if (!stopped) setDonationPaymentError("Le module PayPal ne s'est pas chargé. Veuillez actualiser la page.");
@@ -369,7 +369,7 @@ export function HomeDesktopSidebar() {
 
   return (
     <>
-      <PayPalSdkScript />
+      <PayPalHostedButtonScript />
       <aside className="left-column-stack">
         <aside className="panel glass donation-column donation-column-compact" id="donation">
           <div className="section-heading">
