@@ -127,7 +127,6 @@ type PdfStorageStatus = {
 
 const adminSections = [
   { key: "categories", label: "类目 Categories" },
-  { key: "engine", label: "引擎 Moteur" },
   { key: "books", label: "图书 Livres" },
   { key: "resources", label: "资源 Outils" },
   { key: "partners", label: "友链 Liens" },
@@ -1379,7 +1378,7 @@ function AdminPageContent() {
           ) : null}
           {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
 
-          {activeSection === "engine" ? <AdminCategoryEnginePanel /> : null}
+          {activeSection === "categories" ? <AdminCategoryEnginePanel /> : null}
 
           {activeSection === "resources" ? <AdminResourcesPanel /> : null}
 
@@ -1956,7 +1955,7 @@ function AdminPageContent() {
             </>
           ) : null}
 
-          {activeSection === "categories" ? (
+          {false ? (
             <>
               <div className="section-block">
                 <h3>Créer une catégorie 新增类目</h3>

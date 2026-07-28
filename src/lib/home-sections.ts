@@ -9,6 +9,7 @@ export type HomeCategory = {
   kind: "book" | "resource" | "custom";
   homepageVisible: boolean;
   homepageSortOrder: number;
+  homepagePinned: boolean;
   iconName: string;
   introFr: string;
   allowedFileTypes: string[];
@@ -24,6 +25,7 @@ export type CategoryFieldRule = {
   required: boolean;
   showInCard: boolean;
   placeholderFr: string;
+  acceptedFileTypes: string[];
 };
 
 export type CategoryEntry = {
@@ -80,6 +82,7 @@ type CategoryRow = {
   kind?: string | null;
   homepage_visible?: boolean | null;
   homepage_sort_order?: number | null;
+  homepage_pinned?: boolean | null;
   icon_name?: string | null;
   intro_fr?: string | null;
   allowed_file_types?: string[] | null;
@@ -95,6 +98,7 @@ type CategoryFieldRuleRow = {
   required: boolean | null;
   show_in_card: boolean | null;
   placeholder_fr: string | null;
+  accepted_file_types?: string[] | null;
 };
 
 type CategoryEntryRow = {
@@ -151,6 +155,7 @@ function mapCategory(row: CategoryRow): HomeCategory {
     kind: row.kind === "resource" || row.kind === "custom" ? row.kind : "book",
     homepageVisible: Boolean(row.homepage_visible),
     homepageSortOrder: row.homepage_sort_order ?? 999,
+    homepagePinned: Boolean(row.homepage_pinned),
     iconName: row.icon_name || "sparkles",
     introFr: row.intro_fr || "",
     allowedFileTypes: row.allowed_file_types || [],
@@ -178,6 +183,7 @@ function mapRule(row: CategoryFieldRuleRow): CategoryFieldRule {
     required: Boolean(row.required),
     showInCard: Boolean(row.show_in_card),
     placeholderFr: row.placeholder_fr || "",
+    acceptedFileTypes: row.accepted_file_types || [],
   };
 }
 
@@ -252,13 +258,14 @@ export async function loadExpandedHomeData() {
     await Promise.all([
       supabase
         .from("categories")
-        .select("id, slug, title_fr, title_zh, kind, homepage_visible, homepage_sort_order, icon_name, intro_fr, allowed_file_types")
+        .select("id, slug, title_fr, title_zh, kind, homepage_visible, homepage_sort_order, homepage_pinned, icon_name, intro_fr, allowed_file_types")
         .eq("homepage_visible", true)
+        .order("homepage_pinned", { ascending: false })
         .order("homepage_sort_order", { ascending: true })
         .order("created_at", { ascending: true }),
       supabase
         .from("category_field_rules")
-        .select("id, category_id, field_key, label_fr, field_type, sort_order, required, show_in_card, placeholder_fr")
+        .select("id, category_id, field_key, label_fr, field_type, sort_order, required, show_in_card, placeholder_fr, accepted_file_types")
         .order("sort_order", { ascending: true }),
       supabase
         .from("category_entries")

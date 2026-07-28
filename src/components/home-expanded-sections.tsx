@@ -8,6 +8,7 @@ import {
   Gamepad2,
   LibraryBig,
   Link2,
+  Pin,
   Rocket,
   Sparkles,
   Wrench,
@@ -48,6 +49,7 @@ type RenderedSection =
       kind: "resource";
       category: HomeCategory | null;
       resources: ResourceItem[];
+      pinned: boolean;
     }
   | {
       id: string;
@@ -56,6 +58,7 @@ type RenderedSection =
       category: HomeCategory;
       categoryRules: CategoryFieldRule[];
       categoryEntries: CategoryEntry[];
+      pinned: boolean;
     }
   | {
       id: string;
@@ -224,14 +227,39 @@ export function HomeExpandedSections() {
   const renderedSections = useMemo<RenderedSection[]>(() => {
     const sections: RenderedSection[] = [];
 
-    resourceCategories.forEach((category) => {
-      const categoryResources = resources.filter((resource) => resource.categoryId === category.id);
+    const orderedHomepageCategories = [...resourceCategories, ...customCategories]
+      .filter((category) => category.slug !== "liens")
+      .sort((left, right) =>
+        Number(right.homepagePinned) - Number(left.homepagePinned) ||
+        left.homepageSortOrder - right.homepageSortOrder,
+      );
+
+    orderedHomepageCategories.forEach((category) => {
+      if (category.kind === "resource") {
+        const categoryResources = resources.filter((resource) => resource.categoryId === category.id);
+        sections.push({
+          id: `resource-${category.slug}`,
+          label: category.titleFr || "Outils",
+          kind: "resource",
+          category,
+          resources: categoryResources,
+          pinned: category.homepagePinned,
+        });
+        return;
+      }
+
       sections.push({
-        id: `resource-${category.slug}`,
-        label: category.titleFr || "Outils",
-        kind: "resource",
+        id: `category-${category.slug}`,
+        label: category.titleFr || "Section",
+        kind: "custom",
         category,
-        resources: categoryResources,
+        pinned: category.homepagePinned,
+        categoryRules: fieldRules
+          .filter((rule) => rule.categoryId === category.id && rule.showInCard)
+          .sort((left, right) => left.sortOrder - right.sortOrder),
+        categoryEntries: entries
+          .filter((entry) => entry.categoryId === category.id && entry.visible)
+          .sort((left, right) => left.sortOrder - right.sortOrder),
       });
     });
 
@@ -242,6 +270,7 @@ export function HomeExpandedSections() {
         kind: "resource",
         category: null,
         resources: uncategorizedResources,
+        pinned: false,
       });
     }
 
@@ -249,21 +278,6 @@ export function HomeExpandedSections() {
       id: "liens-partenaires",
       label: "Liens partenaires",
       kind: "partner",
-    });
-
-    customCategories.forEach((category) => {
-      sections.push({
-        id: `category-${category.slug}`,
-        label: category.titleFr || "Section",
-        kind: "custom",
-        category,
-        categoryRules: fieldRules
-          .filter((rule) => rule.categoryId === category.id && rule.showInCard)
-          .sort((left, right) => left.sortOrder - right.sortOrder),
-        categoryEntries: entries
-          .filter((entry) => entry.categoryId === category.id && entry.visible)
-          .sort((left, right) => left.sortOrder - right.sortOrder),
-      });
     });
 
     return sections;
@@ -447,6 +461,7 @@ export function HomeExpandedSections() {
                   <Gamepad2 size={17} />
                 </span>
                 <h2 className="section-heading-text">{section.label}</h2>
+                {section.pinned ? <Pin className="home-section-pin" size={19} aria-label="Section épinglée" /> : null}
               </div>
               <p className="section-caption">
                 {section.category?.introFr ||
@@ -509,6 +524,7 @@ export function HomeExpandedSections() {
                   <CategoryIcon size={17} />
                 </span>
                 <h2 className="section-heading-text">{section.label}</h2>
+                {section.pinned ? <Pin className="home-section-pin" size={19} aria-label="Section épinglée" /> : null}
               </div>
               <p className="section-caption">
                 {section.category.introFr || "Une nouvelle categorie modulable, pilotee depuis l'administration."}

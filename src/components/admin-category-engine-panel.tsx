@@ -13,6 +13,7 @@ type CategoryDraft = {
   kind: "book" | "resource" | "custom";
   homepageVisible: boolean;
   homepageSortOrder: string;
+  homepagePinned: boolean;
   iconName: string;
   introFr: string;
   allowedFileTypes: string;
@@ -26,6 +27,7 @@ type RuleDraft = {
   required: boolean;
   showInCard: boolean;
   placeholderFr: string;
+  acceptedFileTypes: string;
   sortOrder: string;
 };
 
@@ -62,20 +64,30 @@ const defaultCategoryDraft: CategoryDraft = {
   kind: "custom",
   homepageVisible: true,
   homepageSortOrder: "20",
+  homepagePinned: false,
   iconName: "sparkles",
   introFr: "",
   allowedFileTypes: "",
 };
 
-const defaultRuleDraft = (): RuleDraft => ({
+const defaultRuleDraft = (overrides: Partial<RuleDraft> = {}): RuleDraft => ({
   fieldKey: "",
   labelFr: "",
   fieldType: "text",
   required: false,
   showInCard: true,
   placeholderFr: "",
+  acceptedFileTypes: "",
   sortOrder: "10",
+  ...overrides,
 });
+
+const initialRuleDrafts = (): RuleDraft[] => [
+  defaultRuleDraft({ fieldKey: "nom", labelFr: "Nom", fieldType: "text", sortOrder: "10" }),
+  defaultRuleDraft({ fieldKey: "image", labelFr: "Image", fieldType: "image", acceptedFileTypes: ".jpg, .jpeg, .png, .webp", sortOrder: "20" }),
+  defaultRuleDraft({ fieldKey: "modele", labelFr: "Modèle 3D", fieldType: "file", acceptedFileTypes: ".fbx, .gltf, .glb", sortOrder: "30" }),
+  defaultRuleDraft({ fieldKey: "document", labelFr: "Document", fieldType: "file", acceptedFileTypes: ".doc, .docx, .xls, .xlsx, .pdf", sortOrder: "40" }),
+];
 
 const defaultEntryDraft: EntryDraft = {
   titleFr: "",
@@ -100,12 +112,13 @@ function slugify(value: string) {
 }
 
 export function AdminCategoryEnginePanel() {
+  const [activeTab, setActiveTab] = useState<"new" | "existing">("new");
   const [categories, setCategories] = useState<HomeCategory[]>([]);
   const [rulesByCategory, setRulesByCategory] = useState<Record<string, RuleDraft[]>>({});
   const [entriesByCategory, setEntriesByCategory] = useState<Record<string, CategoryEntryRow[]>>({});
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [categoryDraft, setCategoryDraft] = useState<CategoryDraft>(defaultCategoryDraft);
-  const [ruleDrafts, setRuleDrafts] = useState<RuleDraft[]>([defaultRuleDraft()]);
+  const [ruleDrafts, setRuleDrafts] = useState<RuleDraft[]>(initialRuleDrafts());
   const [entryDraft, setEntryDraft] = useState<EntryDraft>(defaultEntryDraft);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
@@ -122,12 +135,13 @@ export function AdminCategoryEnginePanel() {
     const [categoriesResult, rulesResult, entriesResult] = await Promise.all([
       supabase
         .from("categories")
-        .select("id, slug, title_fr, title_zh, kind, homepage_visible, homepage_sort_order, icon_name, intro_fr, allowed_file_types")
+        .select("id, slug, title_fr, title_zh, kind, homepage_visible, homepage_sort_order, homepage_pinned, icon_name, intro_fr, allowed_file_types")
+        .order("homepage_pinned", { ascending: false })
         .order("homepage_sort_order", { ascending: true })
         .order("created_at", { ascending: true }),
       supabase
         .from("category_field_rules")
-        .select("id, category_id, field_key, label_fr, field_type, required, show_in_card, placeholder_fr, sort_order")
+        .select("id, category_id, field_key, label_fr, field_type, required, show_in_card, placeholder_fr, accepted_file_types, sort_order")
         .order("sort_order", { ascending: true }),
       supabase
         .from("category_entries")
@@ -144,6 +158,7 @@ export function AdminCategoryEnginePanel() {
       kind: row.kind === "book" || row.kind === "resource" ? row.kind : "custom",
       homepageVisible: Boolean(row.homepage_visible),
       homepageSortOrder: Number(row.homepage_sort_order || 0),
+      homepagePinned: Boolean(row.homepage_pinned),
       iconName: String(row.icon_name || "sparkles"),
       introFr: String(row.intro_fr || ""),
       allowedFileTypes: Array.isArray(row.allowed_file_types) ? (row.allowed_file_types as string[]) : [],
@@ -161,6 +176,7 @@ export function AdminCategoryEnginePanel() {
           required: Boolean(row.required),
           showInCard: Boolean(row.show_in_card),
           placeholderFr: String(row.placeholder_fr || ""),
+          acceptedFileTypes: Array.isArray(row.accepted_file_types) ? (row.accepted_file_types as string[]).join(", ") : "",
           sortOrder: String(row.sort_order || 0),
         });
         return accumulator;
@@ -206,11 +222,12 @@ export function AdminCategoryEnginePanel() {
       kind: category.kind,
       homepageVisible: category.homepageVisible,
       homepageSortOrder: String(category.homepageSortOrder),
+      homepagePinned: category.homepagePinned,
       iconName: category.iconName,
       introFr: category.introFr,
       allowedFileTypes: category.allowedFileTypes.join(", "),
     });
-    setRuleDrafts(rulesByCategory[category.id]?.length ? rulesByCategory[category.id] : [defaultRuleDraft()]);
+    setRuleDrafts(rulesByCategory[category.id]?.length ? rulesByCategory[category.id] : initialRuleDrafts());
     setEntryDraft(defaultEntryDraft);
     setEditingEntryId(null);
   };
@@ -237,6 +254,16 @@ export function AdminCategoryEnginePanel() {
     setBusyKey("save-category-engine");
 
     try {
+      if (categoryDraft.homepagePinned) {
+        let clearPinnedQuery = supabase.from("categories").update({ homepage_pinned: false });
+        if (categoryDraft.id) clearPinnedQuery = clearPinnedQuery.neq("id", categoryDraft.id);
+        const { error } = await clearPinnedQuery;
+        if (error) {
+          setStatusMessage(error.message);
+          return;
+        }
+      }
+
       let categoryId = categoryDraft.id || "";
       const payload = {
         slug: normalizedSlug,
@@ -245,6 +272,7 @@ export function AdminCategoryEnginePanel() {
         kind: categoryDraft.kind,
         homepage_visible: categoryDraft.homepageVisible,
         homepage_sort_order: Number(categoryDraft.homepageSortOrder || 0),
+        homepage_pinned: categoryDraft.homepagePinned,
         icon_name: categoryDraft.iconName.trim() || "sparkles",
         intro_fr: categoryDraft.introFr.trim() || null,
         allowed_file_types: categoryDraft.allowedFileTypes
@@ -282,6 +310,7 @@ export function AdminCategoryEnginePanel() {
           required: rule.required,
           show_in_card: rule.showInCard,
           placeholder_fr: rule.placeholderFr.trim() || null,
+          accepted_file_types: rule.acceptedFileTypes.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean),
           sort_order: Number(rule.sortOrder || index * 10),
         }));
 
@@ -303,7 +332,7 @@ export function AdminCategoryEnginePanel() {
   const startNewCategory = () => {
     setSelectedCategoryId("");
     setCategoryDraft(defaultCategoryDraft);
-    setRuleDrafts([defaultRuleDraft()]);
+    setRuleDrafts(initialRuleDrafts());
     setEntryDraft(defaultEntryDraft);
     setEditingEntryId(null);
   };
@@ -403,23 +432,109 @@ export function AdminCategoryEnginePanel() {
     }
   };
 
+  const moveCategory = async (categoryId: string, direction: "up" | "down") => {
+    const supabase = getSupabaseBrowserClient();
+    const movable = categories.filter((category) => category.slug !== "liens");
+    const index = movable.findIndex((category) => category.id === categoryId);
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+    if (!supabase || index < 0 || targetIndex < 0 || targetIndex >= movable.length) return;
+
+    setBusyKey(`move-category-${categoryId}`);
+    try {
+      const current = movable[index];
+      const target = movable[targetIndex];
+      const currentOrder = current.homepageSortOrder;
+      const targetOrder = target.homepageSortOrder;
+      const [currentResult, targetResult] = await Promise.all([
+        supabase.from("categories").update({ homepage_sort_order: targetOrder }).eq("id", current.id),
+        supabase.from("categories").update({ homepage_sort_order: currentOrder }).eq("id", target.id),
+      ]);
+      const error = currentResult.error || targetResult.error;
+
+      if (error) {
+        setStatusMessage(error.message);
+        return;
+      }
+      setStatusMessage(direction === "up" ? "Catégorie déplacée vers le haut." : "Catégorie déplacée vers le bas.");
+      await loadData();
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
+  const togglePinnedCategory = async (category: HomeCategory) => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase || category.slug === "liens") return;
+
+    setBusyKey(`pin-category-${category.id}`);
+    try {
+      if (!category.homepagePinned) {
+        const { error: clearError } = await supabase.from("categories").update({ homepage_pinned: false }).neq("id", category.id);
+        if (clearError) {
+          setStatusMessage(clearError.message);
+          return;
+        }
+      }
+
+      const { error } = await supabase
+        .from("categories")
+        .update({ homepage_pinned: !category.homepagePinned })
+        .eq("id", category.id);
+
+      if (error) {
+        setStatusMessage(error.message);
+        return;
+      }
+      setStatusMessage(category.homepagePinned ? "Catégorie désépinglée." : "Catégorie épinglée en tête de l’accueil.");
+      await loadData();
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
   return (
     <div className="section-block">
       <div className="split-line">
         <div>
-          <h3>Moteur de categories 动态类目引擎</h3>
+          <h3>Gestion des catégories 类目管理</h3>
           <p className="tiny" style={{ marginTop: 6 }}>
             Creez des categories flexibles, definissez leurs champs et ajoutez ensuite des contenus relies.
           </p>
         </div>
-        <button className="pill-button" type="button" onClick={startNewCategory}>
-          Nouvelle categorie
-        </button>
       </div>
 
       {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
 
-      <div className="section-block">
+      <div className="admin-category-tabs" role="tablist" aria-label="Gestion des catégories">
+        <button
+          className={activeTab === "new" ? "admin-category-tab active" : "admin-category-tab"}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "new"}
+          onClick={() => {
+            setActiveTab("new");
+            startNewCategory();
+          }}
+        >
+          Ajouter une catégorie 新增类目
+        </button>
+        <button
+          className={activeTab === "existing" ? "admin-category-tab active" : "admin-category-tab"}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "existing"}
+          onClick={() => {
+            setActiveTab("existing");
+            const firstCategory = categories[0];
+            if (firstCategory) setSelectedCategoryId(firstCategory.id);
+          }}
+        >
+          Catégories existantes 现有类目
+        </button>
+      </div>
+
+      {activeTab === "existing" ? <div className="section-block">
         <label className="tiny" htmlFor="engine-category-select">
           Categories existantes
         </label>
@@ -436,7 +551,27 @@ export function AdminCategoryEnginePanel() {
             </option>
           ))}
         </select>
-      </div>
+        <div className="admin-category-order-list">
+          {categories.map((category, index) => {
+            const isLinks = category.slug === "liens";
+            return (
+              <div className={category.homepagePinned ? "admin-category-order-row pinned" : "admin-category-order-row"} key={category.id}>
+                <button className="admin-category-name-button" type="button" onClick={() => setSelectedCategoryId(category.id)}>
+                  {category.titleFr} <span className="tiny">({category.kind})</span>
+                </button>
+                {category.homepagePinned ? <span className="admin-pin-badge" title="Épinglée">📌</span> : null}
+                <div className="actions-row">
+                  <button className="pill-button" type="button" disabled={isLinks || index === 0 || busyKey !== null} onClick={() => void moveCategory(category.id, "up")}>↑ Monter</button>
+                  <button className="pill-button" type="button" disabled={isLinks || index === categories.length - 1 || busyKey !== null} onClick={() => void moveCategory(category.id, "down")}>↓ Descendre</button>
+                  <button className="pill-button" type="button" disabled={isLinks || busyKey !== null} onClick={() => void togglePinnedCategory(category)}>
+                    {category.homepagePinned ? "Retirer 📌" : "Épingler 📌"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div> : null}
 
       <div className="input-group admin-form-grid">
         <input
@@ -477,6 +612,15 @@ export function AdminCategoryEnginePanel() {
           value={categoryDraft.homepageSortOrder}
           onChange={(event) => setCategoryDraft({ ...categoryDraft, homepageSortOrder: event.target.value })}
         />
+        <label className="tiny">
+          <input
+            type="checkbox"
+            checked={categoryDraft.homepagePinned}
+            disabled={categoryDraft.slug === "liens"}
+            onChange={() => setCategoryDraft({ ...categoryDraft, homepagePinned: !categoryDraft.homepagePinned })}
+          />{" "}
+          Épingler en haut de l&apos;accueil 📌
+        </label>
         <input
           className="input"
           placeholder="Icone lucide (sparkles, gamepad, tools...)"
@@ -569,6 +713,20 @@ export function AdminCategoryEnginePanel() {
                 <option value="number">Nombre</option>
                 <option value="boolean">Oui / Non</option>
               </select>
+              {(rule.fieldType === "file" || rule.fieldType === "image") ? (
+                <input
+                  className="input"
+                  placeholder="Extensions autorisées: .jpg, .png, .pdf..."
+                  value={rule.acceptedFileTypes}
+                  onChange={(event) =>
+                    setRuleDrafts((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, acceptedFileTypes: event.target.value } : item,
+                      ),
+                    )
+                  }
+                />
+              ) : null}
               <input
                 className="input"
                 placeholder="Placeholder FR"
@@ -709,7 +867,10 @@ export function AdminCategoryEnginePanel() {
             <div className="admin-dynamic-stack">
               {selectedRules.map((rule) => (
                 <div className="input-group" key={rule.fieldKey}>
-                  <label className="tiny">{rule.labelFr}</label>
+                  <label className="tiny">
+                    {rule.labelFr}
+                    {rule.acceptedFileTypes ? ` · ${rule.acceptedFileTypes}` : ""}
+                  </label>
                   {rule.fieldType === "textarea" ? (
                     <textarea
                       className="textarea"

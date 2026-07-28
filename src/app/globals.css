@@ -2333,6 +2333,75 @@ select {
   scrollbar-width: thin;
 }
 
+.home-section-pin {
+  margin-left: auto;
+  color: #e11d48;
+  fill: rgba(251, 113, 133, 0.24);
+  filter: drop-shadow(0 4px 7px rgba(225, 29, 72, 0.25));
+}
+
+.admin-category-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0;
+  padding: 5px;
+  border-radius: 18px;
+  background: rgba(226, 232, 240, 0.68);
+}
+
+.admin-category-tab {
+  flex: 1;
+  min-height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.admin-category-tab.active {
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--accent-primary);
+  box-shadow: var(--shadow-glass);
+}
+
+.admin-category-order-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.admin-category-order-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
+  flex-wrap: wrap;
+}
+
+.admin-category-order-row.pinned {
+  border-color: rgba(225, 29, 72, 0.28);
+  background: rgba(255, 241, 242, 0.86);
+}
+
+.admin-category-name-button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  cursor: pointer;
+  text-align: left;
+  font-weight: 700;
+}
+
+.admin-pin-badge {
+  font-size: 1.2rem;
+}
+
 .home-resource-marquee-shell {
   margin-top: 18px;
   padding-bottom: 4px;

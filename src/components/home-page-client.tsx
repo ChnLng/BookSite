@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   BookOpenText,
   Ticket,
+  Pin,
   X,
 } from "lucide-react";
 import { HomeExpandedSections } from "@/components/home-expanded-sections";
@@ -53,6 +54,7 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
   const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>(defaultCarouselBooks);
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
+  const [booksSectionPinned, setBooksSectionPinned] = useState(false);
   const { signInWithPassword, signUpWithPassword } = useAuth();
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
@@ -61,6 +63,26 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
     void loadDisplayBooks().then((books) => {
       setDisplayBooks(books.length > 0 ? books : defaultCarouselBooks);
     });
+  }, []);
+
+  useEffect(() => {
+    const loadBooksPin = async () => {
+      const { getSupabaseBrowserClient } = await import("@/lib/supabase-browser");
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return;
+
+      const { data } = await supabase
+        .from("categories")
+        .select("homepage_pinned")
+        .eq("kind", "book")
+        .eq("homepage_visible", true)
+        .limit(1)
+        .maybeSingle();
+
+      setBooksSectionPinned(Boolean(data?.homepage_pinned));
+    };
+
+    void loadBooksPin();
   }, []);
 
   useEffect(() => {
@@ -210,6 +232,7 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
                 <BookOpenText size={17} />
               </span>
               <h2 className="section-heading-text">Albums illustrés bilingues 🇨🇳 chinois-français 🇫🇷</h2>
+              {booksSectionPinned ? <Pin className="home-section-pin" size={19} aria-label="Section épinglée" /> : null}
             </div>
 
             <div className="marquee-shell">
