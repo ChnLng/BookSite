@@ -2498,14 +2498,12 @@ function AdminPageContent() {
 
           {activeSection === "donations" ? (
             <div className="section-block">
-              <h3>Dons Donations</h3>
-              {donations.length === 0 ? (
-                <p className="muted">Aucune donation enregistrée.</p>
-              ) : (
-                <div className="admin-table-wrap"><table className="admin-data-table"><thead><tr><th>用户名</th><th>邮箱</th><th>付款日期时间</th><th>金额</th><th>Propos</th><th>状态 / 退款日期</th><th>操作</th></tr></thead><tbody>{donations.map((donation) => (
+              <h3>赞助记录 Donations</h3>
+              <div className="admin-table-wrap"><table className="admin-data-table admin-donations-table"><colgroup><col className="donation-col-name"/><col className="donation-col-email"/><col className="donation-col-date"/><col className="donation-col-amount"/><col className="donation-col-note"/><col className="donation-col-status"/><col className="donation-col-action"/></colgroup><thead><tr><th>用户名</th><th>邮箱</th><th>付款日期时间</th><th>金额</th><th>Propos</th><th>状态 / 退款日期</th><th>操作</th></tr></thead><tbody>{donations.length === 0 ? (
+                  <tr><td className="admin-table-empty" colSpan={7}>暂无赞助记录 · Aucune donation enregistrée.</td></tr>
+                ) : donations.map((donation) => (
                   <tr key={donation.id}><td>{donation.user_name || donation.user_email?.split("@")[0] || "—"}</td><td>{donation.user_email || "—"}</td><td>{donation.paid_at || donation.created_at ? new Date(donation.paid_at || donation.created_at || "").toLocaleString("fr-FR") : "—"}</td><td>{Number(donation.amount || 0).toFixed(2)} {donation.currency || "EUR"}</td><td>{donation.note || "Donation"}</td><td>{donation.payment_status === "refunded" ? `Remboursé · ${donation.refunded_at ? new Date(donation.refunded_at).toLocaleString("fr-FR") : "—"}` : "Payé"}</td><td>{donation.payment_status !== "refunded" ? <button className="pill-button" type="button" onClick={() => void refundDonation(donation)}>申请退款</button> : "—"}</td></tr>
                 ))}</tbody></table></div>
-              )}
             </div>
           ) : null}
         </section>
