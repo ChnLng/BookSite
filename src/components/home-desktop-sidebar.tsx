@@ -128,6 +128,20 @@ export function HomeDesktopSidebar() {
     };
     let stopped = false;
 
+    const commitDonationAmount = (event: Event) => {
+      const field = event.target;
+      if (!(field instanceof HTMLInputElement) || field.type !== "number") return;
+
+      setDonationPaymentError("");
+      window.setTimeout(() => {
+        if (!stopped && field.isConnected) {
+          field.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      }, 0);
+    };
+
+    container.addEventListener("input", commitDonationAmount, true);
+
     const selectFirstDonationPurpose = () => {
       const select = container.querySelector("select") as HTMLSelectElement | null;
       if (select && select.options.length > 0) {
@@ -169,7 +183,11 @@ export function HomeDesktopSidebar() {
     };
 
     selectFirstDonationPurpose();
-    if (renderHostedButton()) return () => { stopped = true; observer.disconnect(); };
+    if (renderHostedButton()) return () => {
+      stopped = true;
+      observer.disconnect();
+      container.removeEventListener("input", commitDonationAmount, true);
+    };
     let attempts = 0;
     const intervalId = window.setInterval(() => {
       attempts += 1;
@@ -184,6 +202,7 @@ export function HomeDesktopSidebar() {
       stopped = true;
       window.clearInterval(intervalId);
       observer.disconnect();
+      container.removeEventListener("input", commitDonationAmount, true);
     };
   }, []);
 

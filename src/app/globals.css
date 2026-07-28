@@ -686,6 +686,14 @@ select {
   min-height: 210px;
 }
 
+.donation-hosted-button iframe,
+.donation-hosted-button iframe:focus,
+.donation-hosted-button iframe:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
 .donation-payment-error {
   margin: 8px 2px 0;
   color: #b44957;
@@ -1260,6 +1268,74 @@ select {
   gap: 8px;
 }
 
+.book-commerce-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.book-commerce-toolbar .book-promo-row {
+  flex: 1 1 170px;
+  min-width: 0;
+}
+
+.book-commerce-toolbar .book-promo-input {
+  width: 100%;
+  min-width: 82px;
+  max-width: none;
+}
+
+.book-commerce-toolbar .book-buy-row {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.book-commerce-toolbar .book-buy-button,
+.book-commerce-toolbar .pill-button {
+  width: auto;
+  min-width: 0;
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.resource-commerce-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.resource-commerce-toolbar .resource-promo-row {
+  flex: 1 1 170px;
+  min-width: 0;
+}
+
+.resource-commerce-toolbar .resource-promo-input {
+  width: 100%;
+  min-width: 82px;
+  max-width: none;
+}
+
+.resource-commerce-toolbar .resource-buy-row {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.resource-commerce-toolbar .resource-buy-button,
+.resource-commerce-toolbar .pill-button {
+  width: auto;
+  min-width: 0;
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
 .book-promo-input,
 .resource-promo-input {
   width: 12rem;
@@ -1280,6 +1356,27 @@ select {
   min-width: 14rem;
   width: auto;
   flex: 0 1 16rem;
+}
+
+@media (max-width: 760px) {
+  .book-commerce-toolbar,
+  .resource-commerce-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .book-commerce-toolbar .book-promo-row,
+  .book-commerce-toolbar .book-buy-row,
+  .resource-commerce-toolbar .resource-promo-row,
+  .resource-commerce-toolbar .resource-buy-row {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+
+  .book-commerce-toolbar .book-buy-row > *,
+  .resource-commerce-toolbar .resource-buy-row > * {
+    flex: 1 1 0;
+  }
 }
 
 .book-detail-facts,

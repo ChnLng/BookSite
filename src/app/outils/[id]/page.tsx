@@ -855,59 +855,61 @@ export default function ResourceDetailPage() {
             </div>
 
             <div className="resource-inline-promo">
-              <div className="resource-promo-row">
-                <input
-                  type="text"
-                  className="input resource-promo-input"
-                  value={promoCode}
-                  onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
-                  placeholder="Code promo"
-                  title="Optionnel"
-                  maxLength={8}
-                  autoComplete="off"
-                  spellCheck={false}
-                  name="promo-code-input"
-                />
-                <button
-                  type="button"
-                  className="pill-button shrink-0 px-5"
-                  disabled={promoBusy}
-                  onClick={() => void handleApplyPromo()}
-                >
-                  {promoBusy ? "..." : "Appliquer"}
-                </button>
+              <div className="resource-commerce-toolbar">
+                <div className="resource-promo-row">
+                  <input
+                    type="text"
+                    className="input resource-promo-input"
+                    value={promoCode}
+                    onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
+                    placeholder="Code promo"
+                    title="Optionnel"
+                    maxLength={8}
+                    autoComplete="off"
+                    spellCheck={false}
+                    name="promo-code-input"
+                  />
+                  <button
+                    type="button"
+                    className="pill-button shrink-0 px-5"
+                    disabled={promoBusy}
+                    onClick={() => void handleApplyPromo()}
+                  >
+                    {promoBusy ? "..." : "Appliquer"}
+                  </button>
+                </div>
+
+                <div className="resource-buy-row">
+                  <button
+                    type="button"
+                    className="cta-button resource-buy-button"
+                    disabled={actionBusy || effectiveHasAccess}
+                    onClick={() => void handleCheckout()}
+                  >
+                    {effectiveHasAccess
+                      ? "Acces deja debloque"
+                      : actionBusy
+                        ? "Ouverture..."
+                        : promoUnlocksFreeAccess
+                          ? "Partager pour deverrouiller"
+                          : "Acheter cet outil"}
+                  </button>
+
+                  {resource.externalUrl ? (
+                    <a
+                      href={resource.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="pill-button shrink-0 flex items-center gap-2"
+                    >
+                      <ExternalLink size={14} />
+                      <span>Lien externe</span>
+                    </a>
+                  ) : null}
+                </div>
               </div>
 
               {promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
-
-              <div className="resource-buy-row">
-                <button
-                  type="button"
-                  className="cta-button resource-buy-button"
-                    disabled={actionBusy || effectiveHasAccess}
-                  onClick={() => void handleCheckout()}
-                >
-                    {effectiveHasAccess
-                    ? "Acces deja debloque"
-                    : actionBusy
-                      ? "Ouverture..."
-                      : promoUnlocksFreeAccess
-                        ? "Partager pour deverrouiller"
-                        : "Acheter cet outil"}
-                </button>
-
-                {resource.externalUrl ? (
-                  <a
-                    href={resource.externalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pill-button shrink-0 flex items-center gap-2"
-                  >
-                    <ExternalLink size={16} />
-                    <span>Voir aussi le lien externe</span>
-                  </a>
-                ) : null}
-              </div>
             </div>
           </div>
 

@@ -963,32 +963,31 @@ export default function BookDetailPage() {
 
                 <div className="promo-panel book-detail-cta-panel" style={moduleStyle("commerce", 30)}>
                   <div className="book-detail-cta-stack">
-                    <div className="book-promo-row">
-                      <input
-                        type="text"
-                        className="input book-promo-input"
-                        value={promoCode}
-                        onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
-                        placeholder="Code promo"
-                        title="Optionnel"
-                        maxLength={8}
-                        autoComplete="off"
-                        spellCheck={false}
-                        name="promo-code-input"
-                      />
-                      <button
-                        type="button"
-                        className="pill-button shrink-0 px-5"
-                        disabled={promoBusy}
-                        onClick={() => void handleApplyPromo()}
-                      >
-                        {promoBusy ? "..." : "Appliquer"}
-                      </button>
-                    </div>
+                    <div className="book-commerce-toolbar">
+                      <div className="book-promo-row">
+                        <input
+                          type="text"
+                          className="input book-promo-input"
+                          value={promoCode}
+                          onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
+                          placeholder="Code promo"
+                          title="Optionnel"
+                          maxLength={8}
+                          autoComplete="off"
+                          spellCheck={false}
+                          name="promo-code-input"
+                        />
+                        <button
+                          type="button"
+                          className="pill-button shrink-0 px-5"
+                          disabled={promoBusy}
+                          onClick={() => void handleApplyPromo()}
+                        >
+                          {promoBusy ? "..." : "Appliquer"}
+                        </button>
+                      </div>
 
-                    {promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
-
-                    <div className="book-buy-row">
+                      <div className="book-buy-row">
                       {effectiveHasAccess ? (
                         <>
                           <Link className="cta-button book-buy-button" href={`/read/${book.id}`}>
@@ -1000,7 +999,7 @@ export default function BookDetailPage() {
                         </>
                       ) : (
                         <button className="cta-button book-buy-button" type="button" onClick={() => void handleBookCheckout()}>
-                          {promoUnlocksFreeAccess ? "Partager pour deverrouiller" : "Acheter ce livre"}
+                          {promoUnlocksFreeAccess ? "Partager pour déverrouiller" : "Acheter le livre numérique"}
                         </button>
                       )}
 
@@ -1012,14 +1011,17 @@ export default function BookDetailPage() {
                           className="pill-button shrink-0 flex items-center gap-2"
                           title="Ce bouton ouvre la page Amazon correspondante."
                         >
-                          <span>Amazon broche</span>
+                          <span>Amazon broché</span>
                         </a>
                       ) : (
                         <button className="pill-button shrink-0 flex items-center gap-2" type="button" disabled>
-                          <span>Amazon broche</span>
+                          <span>Amazon broché</span>
                         </button>
                       )}
+                      </div>
                     </div>
+
+                    {promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
                   </div>
 
                   {promoSuccess ? <p className="tiny promo-message success">{promoSuccess}</p> : null}
