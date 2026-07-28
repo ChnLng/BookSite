@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   if (!supabase) return NextResponse.json({ ok: false }, { status: 503 });
   const q = new URL(request.url).searchParams.get("q")?.trim().toLowerCase() || "";
   const [{ data, error }, { data: profiles }] = await Promise.all([
-    supabase.from("downloads").select("id, user_id, user_email, download_kind, book_id, book_title, resource_id, resource_title, amount_paid, currency, payment_status, paid_at, refunded_at, refund_amount, refund_reason, paypal_order_id, paypal_capture_id, stripe_session_id, stripe_payment_intent_id, invoice_number, download_count, last_downloaded_at, created_at").order("created_at", { ascending: false }),
+    supabase.from("downloads").select("id, user_id, user_email, download_kind, book_id, book_title, resource_id, resource_title, amount_paid, currency, payment_status, paid_at, refunded_at, refund_amount, refund_reason, paypal_order_id, paypal_capture_id, stripe_session_id, stripe_payment_intent_id, invoice_number, download_count, last_downloaded_at, created_at").order("paid_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }),
     supabase.from("profiles").select("id, email, display_name"),
   ]);
   if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });

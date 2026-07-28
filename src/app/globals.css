@@ -483,6 +483,77 @@ select {
 .admin-data-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .admin-data-table th, .admin-data-table td { padding: 10px 8px; text-align: left; vertical-align: top; overflow-wrap: anywhere; border-bottom: 1px solid var(--surface-border); }
 .admin-data-table th { color: var(--text-muted); font-size: .78rem; }
+
+.admin-purchase-section {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-purchase-table-wrap {
+  margin-top: 14px;
+  border: 1px solid rgba(25, 52, 68, 0.06);
+  border-radius: 20px;
+}
+
+.admin-purchase-table {
+  font-size: 0.78rem;
+}
+
+.admin-purchase-table th,
+.admin-purchase-table td {
+  padding: 10px 7px;
+  line-height: 1.28;
+  overflow: hidden;
+}
+
+.admin-purchase-table .purchase-col-product { width: 21%; }
+.admin-purchase-table .purchase-col-user { width: 19%; }
+.admin-purchase-table .purchase-col-status { width: 13%; }
+.admin-purchase-table .purchase-col-dates { width: 25%; }
+.admin-purchase-table .purchase-col-count { width: 7%; }
+.admin-purchase-table .purchase-col-payment { width: 15%; }
+
+.purchase-cell-line {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.purchase-cell-muted {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.purchase-cell-clamp {
+  display: -webkit-box;
+  overflow: hidden;
+  font-weight: 700;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.purchase-amount {
+  font-weight: 700;
+}
+
+.purchase-refund-button {
+  display: block;
+  max-width: 100%;
+  margin-top: 3px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: #b42318;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .admin-table-empty { padding: 28px 10px !important; text-align: center !important; color: var(--text-muted); }
 .admin-donations-table .donation-col-name { width: 12%; }
 .admin-donations-table .donation-col-email { width: 19%; }
