@@ -78,17 +78,14 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
 
       <section className="catalog-grid" id="catalogue-scene">
         <aside className="catalogue-sidebar">
-          <div className="panel glass">
+          <div className="panel glass catalogue-search-panel">
             <div className="section-block">
               <label className="section-heading" htmlFor="catalog-search">
                 <span className="section-heading-icon" aria-hidden="true">
                   <Search size={17} />
                 </span>
-                <span className="section-heading-text">Rechercher par titre</span>
+                <span className="section-heading-text">Rechercher par&nbsp;titre</span>
               </label>
-              <p className="tiny" style={{ marginTop: 8, marginBottom: 10 }}>
-                Entrez un titre en francais ou en chinois pour afficher le produit correspondant.
-              </p>
               <input
                 id="catalog-search"
                 className="input"
@@ -96,6 +93,9 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
+              <p className="tiny" style={{ marginTop: 10, marginBottom: 0 }}>
+                Entrez un titre en francais ou en chinois pour afficher le produit correspondant.
+              </p>
             </div>
           </div>
           <GoogleAdsSlot

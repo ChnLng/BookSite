@@ -413,6 +413,14 @@ select {
   padding: 14px;
 }
 
+.catalogue-search-panel {
+  padding-top: 14px;
+}
+
+.catalogue-search-panel .section-block {
+  margin-top: 0;
+}
+
 .catalogue-product-card .book-meta {
   gap: 7px;
 }
