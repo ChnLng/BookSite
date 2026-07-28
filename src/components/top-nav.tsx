@@ -112,12 +112,7 @@ export function TopNav({
   const dynamicLinks = dynamicCategories.map((category) => ({
     id: category.id,
     label: category.titleFr,
-    href:
-      category.slug === "liens"
-        ? "/#liens-partenaires"
-        : category.kind === "resource"
-          ? `/#resource-${category.slug}`
-          : `/#category-${category.slug}`,
+    href: category.kind === "resource" ? `/#resource-${category.slug}` : `/#category-${category.slug}`,
   }));
 
   return (

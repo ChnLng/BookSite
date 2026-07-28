@@ -8,7 +8,6 @@ import {
   Gamepad2,
   LibraryBig,
   Link2,
-  Pin,
   Rocket,
   Sparkles,
   Wrench,
@@ -49,8 +48,6 @@ type RenderedSection =
       kind: "resource";
       category: HomeCategory | null;
       resources: ResourceItem[];
-      pinned: boolean;
-      order: number;
     }
   | {
       id: string;
@@ -59,14 +56,11 @@ type RenderedSection =
       category: HomeCategory;
       categoryRules: CategoryFieldRule[];
       categoryEntries: CategoryEntry[];
-      pinned: boolean;
-      order: number;
     }
   | {
       id: string;
       label: string;
       kind: "partner";
-      order: number;
     };
 
 function getHeaderOffset() {
@@ -117,7 +111,6 @@ function resolveCategoryIcon(iconName?: string) {
 
 function renderEntryField(rule: CategoryFieldRule, entry: CategoryEntry) {
   const value = entry.payload?.[rule.fieldKey];
-  const positionClass = `field-position-${rule.displayPosition}`;
 
   if (value == null || value === "") {
     return null;
@@ -125,7 +118,7 @@ function renderEntryField(rule: CategoryFieldRule, entry: CategoryEntry) {
 
   if (rule.fieldType === "boolean") {
     return (
-      <li key={rule.id} className={`tiny ${positionClass}`}>
+      <li key={rule.id} className="tiny">
         <strong>{rule.labelFr} :</strong> {value ? "Oui" : "Non"}
       </li>
     );
@@ -135,7 +128,7 @@ function renderEntryField(rule: CategoryFieldRule, entry: CategoryEntry) {
     return (
       <a
         key={rule.id}
-        className={`pill-button ${positionClass}`}
+        className="pill-button"
         href={String(value)}
         target="_blank"
         rel="noreferrer"
@@ -146,7 +139,7 @@ function renderEntryField(rule: CategoryFieldRule, entry: CategoryEntry) {
   }
 
   return (
-    <li key={rule.id} className={`tiny ${positionClass}`}>
+    <li key={rule.id} className="tiny">
       <strong>{rule.labelFr} :</strong> {String(value)}
     </li>
   );
@@ -231,41 +224,14 @@ export function HomeExpandedSections() {
   const renderedSections = useMemo<RenderedSection[]>(() => {
     const sections: RenderedSection[] = [];
 
-    const orderedHomepageCategories = [...resourceCategories, ...customCategories]
-      .filter((category) => category.slug !== "liens")
-      .sort((left, right) =>
-        Number(right.homepagePinned) - Number(left.homepagePinned) ||
-        left.homepageSortOrder - right.homepageSortOrder,
-      );
-
-    orderedHomepageCategories.forEach((category) => {
-      if (category.kind === "resource") {
-        const categoryResources = resources.filter((resource) => resource.categoryId === category.id);
-        sections.push({
-          id: `resource-${category.slug}`,
-          label: category.titleFr || "Outils",
-          kind: "resource",
-          category,
-          resources: categoryResources,
-          pinned: category.homepagePinned,
-          order: category.homepageSortOrder,
-        });
-        return;
-      }
-
+    resourceCategories.forEach((category) => {
+      const categoryResources = resources.filter((resource) => resource.categoryId === category.id);
       sections.push({
-        id: `category-${category.slug}`,
-        label: category.titleFr || "Section",
-        kind: "custom",
+        id: `resource-${category.slug}`,
+        label: category.titleFr || "Outils",
+        kind: "resource",
         category,
-        pinned: category.homepagePinned,
-        order: category.homepageSortOrder,
-        categoryRules: fieldRules
-          .filter((rule) => rule.categoryId === category.id && rule.showInCard)
-          .sort((left, right) => left.sortOrder - right.sortOrder),
-        categoryEntries: entries
-          .filter((entry) => entry.categoryId === category.id && entry.visible)
-          .sort((left, right) => left.sortOrder - right.sortOrder),
+        resources: categoryResources,
       });
     });
 
@@ -276,21 +242,32 @@ export function HomeExpandedSections() {
         kind: "resource",
         category: null,
         resources: uncategorizedResources,
-        pinned: false,
-        order: 10,
       });
     }
 
-    const linksCategory = categories.find((category) => category.slug === "liens");
     sections.push({
       id: "liens-partenaires",
-      label: linksCategory?.titleFr || "Liens partenaires",
+      label: "Liens partenaires",
       kind: "partner",
-      order: linksCategory?.homepageSortOrder ?? 1000,
     });
 
-    return sections.sort((left, right) => left.order - right.order);
-  }, [categories, customCategories, entries, fieldRules, resourceCategories, resources, uncategorizedResources]);
+    customCategories.forEach((category) => {
+      sections.push({
+        id: `category-${category.slug}`,
+        label: category.titleFr || "Section",
+        kind: "custom",
+        category,
+        categoryRules: fieldRules
+          .filter((rule) => rule.categoryId === category.id && rule.showInCard)
+          .sort((left, right) => left.sortOrder - right.sortOrder),
+        categoryEntries: entries
+          .filter((entry) => entry.categoryId === category.id && entry.visible)
+          .sort((left, right) => left.sortOrder - right.sortOrder),
+      });
+    });
+
+    return sections;
+  }, [customCategories, entries, fieldRules, resourceCategories, resources, uncategorizedResources]);
 
   const floatingLinks = useMemo<FloatingSectionLink[]>(() => {
     return [
@@ -464,13 +441,12 @@ export function HomeExpandedSections() {
       {renderedSections.map((section) => {
         if (section.kind === "resource") {
           return (
-            <section className="panel glass home-section-panel" id={section.id} key={section.id} style={{ order: section.order }}>
+            <section className="panel glass home-section-panel" id={section.id} key={section.id}>
               <div className="section-heading">
                 <span className="section-heading-icon" aria-hidden="true">
                   <Gamepad2 size={17} />
                 </span>
                 <h2 className="section-heading-text">{section.label}</h2>
-                {section.pinned ? <Pin className="home-section-pin" size={19} aria-label="Section épinglée" /> : null}
               </div>
               <p className="section-caption">
                 {section.category?.introFr ||
@@ -527,13 +503,12 @@ export function HomeExpandedSections() {
           const CategoryIcon = resolveCategoryIcon(section.category.iconName);
 
           return (
-            <section className="panel glass home-section-panel" id={section.id} key={section.id} style={{ order: section.order }}>
+            <section className="panel glass home-section-panel" id={section.id} key={section.id}>
               <div className="section-heading">
                 <span className="section-heading-icon" aria-hidden="true">
                   <CategoryIcon size={17} />
                 </span>
                 <h2 className="section-heading-text">{section.label}</h2>
-                {section.pinned ? <Pin className="home-section-pin" size={19} aria-label="Section épinglée" /> : null}
               </div>
               <p className="section-caption">
                 {section.category.introFr || "Une nouvelle categorie modulable, pilotee depuis l'administration."}
@@ -586,7 +561,7 @@ export function HomeExpandedSections() {
           );
         }
 
-        return <PartnerLinksSection key={section.id} sectionId={section.id} title={section.label} order={section.order} />;
+        return <PartnerLinksSection key={section.id} sectionId={section.id} title={section.label} />;
       })}
     </>
   );

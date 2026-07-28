@@ -44,8 +44,6 @@ type CategoryRow = {
   attribute_label_zh: string | null;
   description_fr: string | null;
   description_zh: string | null;
-  homepage_visible?: boolean | null;
-  kind?: string | null;
   created_at?: string | null;
 };
 
@@ -129,6 +127,7 @@ type PdfStorageStatus = {
 
 const adminSections = [
   { key: "categories", label: "类目 Categories" },
+  { key: "engine", label: "引擎 Moteur" },
   { key: "books", label: "图书 Livres" },
   { key: "resources", label: "资源 Outils" },
   { key: "partners", label: "友链 Liens" },
@@ -342,7 +341,7 @@ function downloadEntryKey(download: DownloadRow) {
 }
 
 function AdminPageContent() {
-  const { session, loading: authLoading } = useAuth();
+  const { profile, session, loading: authLoading } = useAuth();
   const [books, setBooks] = useState<BookRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
@@ -353,7 +352,6 @@ function AdminPageContent() {
   const [loadWarnings, setLoadWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<AdminSectionKey>("categories");
-  const [requestedCategoryId, setRequestedCategoryId] = useState("");
   const [form, setForm] = useState<BookFormState>(defaultBookForm);
   const [categoryForm, setCategoryForm] = useState<CategoryFormState>(defaultCategoryForm);
   const [promoForm, setPromoForm] = useState<PromoFormState>(defaultPromoForm);
@@ -422,7 +420,7 @@ function AdminPageContent() {
     const categoriesQuery = await supabase
       .from("categories")
       .select(
-        "id, slug, title_fr, title_zh, base_price_eur, attribute_label_fr, attribute_label_zh, description_fr, description_zh, homepage_visible, kind, created_at",
+        "id, slug, title_fr, title_zh, base_price_eur, attribute_label_fr, attribute_label_zh, description_fr, description_zh, created_at",
       )
       .order("created_at", { ascending: false });
 
@@ -450,11 +448,7 @@ function AdminPageContent() {
         warnings.push("类目表仍是旧结构，建议执行新的 categories migration。");
       }
     } else {
-      nextCategories = ((categoriesQuery.data || []) as CategoryRow[]).filter(
-        (category) =>
-          category.homepage_visible !== false &&
-          (["livres", "outils", "liens"].includes(category.slug || "") || category.kind === "custom"),
-      );
+      nextCategories = (categoriesQuery.data || []) as CategoryRow[];
     }
 
     let nextPromos: PromoCode[] = [];
@@ -627,6 +621,8 @@ function AdminPageContent() {
       controller.abort();
     };
   }, [books, session?.access_token]);
+
+  const title = useMemo(() => profile?.displayName || profile?.email || "Admin", [profile]);
 
   const sectionCounts = useMemo(
     () => ({
@@ -1364,24 +1360,16 @@ function AdminPageContent() {
                 <span className="admin-sidebar-count">{sectionCounts[section.key]}</span>
               </button>
             ))}
-            {categories.map((category) => (
-              <button
-                key={`category-nav-${category.id}`}
-                className={activeSection === "categories" && requestedCategoryId === category.id ? "admin-sidebar-item active" : "admin-sidebar-item"}
-                type="button"
-                onClick={() => {
-                  setRequestedCategoryId(category.id);
-                  setActiveSection("categories");
-                }}
-              >
-                <span className="admin-sidebar-item-line" />
-                <span>↳ {displayCategoryName(category)}</span>
-              </button>
-            ))}
           </div>
         </aside>
 
         <section className="panel glass">
+          <h1 className="section-title" style={{ fontFamily: "var(--font-heading), serif" }}>
+            管理后台 Admin bilingue
+          </h1>
+          <p className="section-caption">
+            Bienvenue {title} - 后台现在可管理书籍、PDF、封面、类目、优惠码、下载记录与主页飘屏。
+          </p>
           {loadWarnings.length > 0 ? (
             <div className="section-block" style={{ marginTop: 12 }}>
               {loadWarnings.map((warning) => (
@@ -1391,12 +1379,7 @@ function AdminPageContent() {
           ) : null}
           {statusMessage ? <p className="tiny">{statusMessage}</p> : null}
 
-          {activeSection === "categories" ? (
-            <AdminCategoryEnginePanel
-              requestedCategoryId={requestedCategoryId}
-              onManageBuiltIn={(section) => setActiveSection(section)}
-            />
-          ) : null}
+          {activeSection === "engine" ? <AdminCategoryEnginePanel /> : null}
 
           {activeSection === "resources" ? <AdminResourcesPanel /> : null}
 
@@ -1973,7 +1956,7 @@ function AdminPageContent() {
             </>
           ) : null}
 
-          {false ? (
+          {activeSection === "categories" ? (
             <>
               <div className="section-block">
                 <h3>Créer une catégorie 新增类目</h3>
