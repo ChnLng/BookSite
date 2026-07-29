@@ -1379,6 +1379,94 @@ select {
   transform: translateX(-50%) translateY(0);
 }
 
+.account-evaluation-row {
+  display: grid;
+  grid-template-columns: 44px minmax(130px, 1.15fr) auto minmax(130px, 0.9fr) minmax(150px, 1.5fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 10px;
+  padding: 9px 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.account-evaluation-cover {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.account-evaluation-product {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-main);
+  font-weight: 750;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-evaluation-product:hover,
+.account-evaluation-product:focus-visible {
+  color: #6d5dfc;
+}
+
+.account-evaluation-rating,
+.account-evaluation-text,
+.account-evaluation-date,
+.account-evaluation-kind {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.account-evaluation-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 900px) {
+  .account-evaluation-row {
+    grid-template-columns: 40px minmax(110px, 0.8fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      "cover product product date"
+      "cover rating text text";
+    gap: 5px 9px;
+  }
+
+  .account-evaluation-cover {
+    grid-area: cover;
+    width: 40px;
+    height: 40px;
+  }
+
+  .account-evaluation-product {
+    grid-area: product;
+  }
+
+  .account-evaluation-date {
+    grid-area: date;
+  }
+
+  .account-evaluation-kind {
+    display: none;
+  }
+
+  .account-evaluation-rating {
+    grid-area: rating;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .account-evaluation-text {
+    grid-area: text;
+  }
+}
+
 .resource-commerce-toolbar .resource-buy-row {
   flex: 0 0 auto;
   flex-wrap: nowrap;

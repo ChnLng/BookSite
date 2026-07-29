@@ -145,13 +145,11 @@ export default function AccountPage() {
           ? supabase
               .from("books")
               .select("id, slug, title_fr, cover_image")
-              .in("id", Array.from(new Set((bookReviewRows || []).map((row) => row.book_id).filter(Boolean))))
           : Promise.resolve({ data: [] }),
         (resourceReviewRows || []).length > 0
           ? supabase
               .from("resource_items")
               .select("id, slug, title_fr, cover_image_url, qr_image_url")
-              .in("id", Array.from(new Set((resourceReviewRows || []).map((row) => row.resource_id).filter(Boolean))))
           : Promise.resolve({ data: [] }),
       ]);
 
@@ -168,22 +166,29 @@ export default function AccountPage() {
         createdAt: row.created_at,
       }));
 
-      const bookMetaById = new Map(
-        ((bookRows || []) as Array<{ id: string; slug: string | null; title_fr: string | null; cover_image: string | null }>).map((row) => [
-          row.id,
-          row,
-        ]),
-      );
+      const bookMetaById = new Map<string, { id: string; slug: string | null; title_fr: string | null; cover_image: string | null }>();
+      ((bookRows || []) as Array<{ id: string; slug: string | null; title_fr: string | null; cover_image: string | null }>).forEach((row) => {
+        bookMetaById.set(row.id, row);
+        if (row.slug) bookMetaById.set(row.slug, row);
+      });
 
-      const resourceMetaById = new Map(
-        ((resourceRows || []) as Array<{
+      const resourceMetaById = new Map<string, {
+        id: string;
+        slug: string | null;
+        title_fr: string | null;
+        cover_image_url: string | null;
+        qr_image_url: string | null;
+      }>();
+      ((resourceRows || []) as Array<{
           id: string;
           slug: string | null;
           title_fr: string | null;
           cover_image_url: string | null;
           qr_image_url: string | null;
-        }>).map((row) => [row.id, row]),
-      );
+        }>).forEach((row) => {
+          resourceMetaById.set(row.id, row);
+          if (row.slug) resourceMetaById.set(row.slug, row);
+        });
 
       const mergedEvaluations: EvaluationRecord[] = [
         ...((bookReviewRows || []) as Array<{
@@ -582,53 +587,36 @@ export default function AccountPage() {
                   {evaluations.length === 0 ? (
                     <p className="muted">Aucune evaluation publiee pour le moment.</p>
                   ) : (
-                    evaluations.map((evaluation) => (
-                      <div key={`${evaluation.kind}-${evaluation.id}`} className="split-line" style={{ marginTop: 10, alignItems: "flex-start", gap: 12 }}>
-                        <div style={{ display: "flex", gap: 12, flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              position: "relative",
-                              width: 68,
-                              height: 68,
-                              borderRadius: 20,
-                              overflow: "hidden",
-                              flexShrink: 0,
-                              background: "rgba(255,255,255,0.58)",
-                            }}
-                          >
+                    evaluations.map((evaluation) => {
+                      const itemHref = evaluation.kind === "book" ? `/livres/${evaluation.slug}` : `/outils/${evaluation.slug}`;
+                      return (
+                        <div key={`${evaluation.kind}-${evaluation.id}`} className="account-evaluation-row">
+                          <div className="account-evaluation-cover">
                             <Image
                               src={evaluation.imageUrl}
                               alt={evaluation.title}
                               fill
-                              sizes="68px"
+                              sizes="44px"
                               style={{ objectFit: "cover" }}
                             />
                           </div>
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div className="split-line" style={{ gap: 10, alignItems: "center" }}>
-                              <strong style={{ minWidth: 0 }}>{evaluation.title}</strong>
-                              <span className="tiny">{evaluation.kind === "book" ? "Livre" : "Outil"}</span>
-                            </div>
-                            <div className="tiny" style={{ marginTop: 4 }}>
-                              {renderStars(evaluation.rating)}
-                              {evaluation.authorName ? `  •  ${evaluation.authorName}` : ""}
-                            </div>
-                            <p className="tiny" style={{ marginTop: 6, marginBottom: 0 }}>
-                              {evaluation.reviewText || "Evaluation sans texte."}
-                            </p>
-                            <div className="actions-row" style={{ marginTop: 8, marginBottom: 0 }}>
-                              <Link
-                                className="pill-button"
-                                href={evaluation.kind === "book" ? `/livres/${evaluation.slug}` : `/outils/${evaluation.slug}`}
-                              >
-                                Voir la fiche
-                              </Link>
-                            </div>
-                          </div>
+                          <Link className="account-evaluation-product" href={itemHref}>
+                            {evaluation.title}
+                          </Link>
+                          <span className="account-evaluation-kind tiny">{evaluation.kind === "book" ? "Livre" : "Outil"}</span>
+                          <span className="account-evaluation-rating tiny">
+                            {renderStars(evaluation.rating)}
+                            {evaluation.authorName ? ` · ${evaluation.authorName}` : ""}
+                          </span>
+                          <span className="account-evaluation-text tiny">
+                            {evaluation.reviewText || "Evaluation sans texte."}
+                          </span>
+                          <span className="account-evaluation-date tiny">
+                            {evaluation.createdAt ? new Date(evaluation.createdAt).toLocaleDateString("fr-FR") : "—"}
+                          </span>
                         </div>
-                        <span className="tiny">{evaluation.createdAt ? new Date(evaluation.createdAt).toLocaleDateString("fr-FR") : "—"}</span>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               ) : null}
