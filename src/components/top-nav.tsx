@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { AuthModal } from "@/components/auth-modal";
 import { useAuth } from "@/components/auth-provider";
 import { SiteShareStrip } from "@/components/site-share-strip";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
@@ -39,6 +40,7 @@ export function TopNav({
   const [preferDesktopView, setPreferDesktopView] = useState(false);
   const [viewPreferenceReady, setViewPreferenceReady] = useState(false);
   const [dynamicCategories, setDynamicCategories] = useState<DynamicNavCategory[]>([]);
+  const [globalAuthOpen, setGlobalAuthOpen] = useState(false);
   const brandTitle = "Visd AR";
 
   const headerClassName = ["topbar", "glass", className].filter(Boolean).join(" ");
@@ -159,15 +161,14 @@ export function TopNav({
                 </button>
               ) : null}
             </>
-          ) : onLoginClick ? (
-            <button className="nav-button" type="button" onClick={onLoginClick}>
+          ) : (
+            <button className="nav-button" type="button" onClick={onLoginClick || (() => setGlobalAuthOpen(true))}>
               Connexion
             </button>
-          ) : (
-            <Link href="/">Connexion</Link>
           )}
         </nav>
       </header>
+      <AuthModal open={globalAuthOpen} onClose={() => setGlobalAuthOpen(false)} />
     </>
   );
 }
