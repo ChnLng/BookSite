@@ -34,8 +34,11 @@ as $$
   );
 $$;
 
-revoke all on function public.is_admin() from public, anon;
-grant execute on function public.is_admin() to authenticated, service_role;
+revoke all on function public.is_admin() from public;
+-- Public RLS policies coexist with administrator policies that call is_admin().
+-- Anonymous sessions must be allowed to evaluate it; they receive false because
+-- auth.uid() and the authenticated email claim are absent.
+grant execute on function public.is_admin() to anon, authenticated, service_role;
 
 -- Ensure the allowlisted account has the database role used by every API check.
 update public.profiles

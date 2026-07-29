@@ -6,6 +6,7 @@
 begin;
 
 grant usage on schema public to anon, authenticated;
+grant execute on function public.is_admin() to anon, authenticated;
 
 alter table public.books enable row level security;
 alter table public.categories enable row level security;
