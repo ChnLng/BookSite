@@ -1571,7 +1571,83 @@ button,
   text-overflow: ellipsis;
 }
 
+.account-comment-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.55fr) minmax(260px, 2.4fr) minmax(90px, 0.55fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.account-comment-row:last-of-type {
+  border-bottom: 0;
+}
+
+.account-comment-author,
+.account-comment-date,
+.account-comment-content {
+  min-width: 0;
+}
+
+.account-comment-author,
+.account-comment-date {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-comment-content > span {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.account-comment-actions {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+.account-comment-actions .pill-button {
+  padding: 9px 13px;
+}
+
+.account-comment-row.is-editing {
+  align-items: start;
+}
+
 @media (max-width: 900px) {
+  .account-comment-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "author date"
+      "content content"
+      "actions actions";
+    gap: 7px 10px;
+  }
+
+  .account-comment-author {
+    grid-area: author;
+  }
+
+  .account-comment-date {
+    grid-area: date;
+  }
+
+  .account-comment-content {
+    grid-area: content;
+  }
+
+  .account-comment-actions {
+    grid-area: actions;
+    justify-content: flex-end;
+  }
+
   .account-evaluation-row {
     grid-template-columns: 40px minmax(110px, 0.8fr) minmax(0, 1fr) auto;
     grid-template-areas:

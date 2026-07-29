@@ -241,7 +241,13 @@ export default function AccountPage() {
         return rightTime - leftTime;
       });
 
-      setComments((commentData || []) as CommentRecord[]);
+      setComments(
+        ([...(commentData || [])] as CommentRecord[]).sort((left, right) => {
+          const leftTime = left.created_at ? new Date(left.created_at).getTime() : 0;
+          const rightTime = right.created_at ? new Date(right.created_at).getTime() : 0;
+          return rightTime - leftTime;
+        }),
+      );
       setDownloads(mergedDownloads);
       setDonations((donationData || []) as DonationRecord[]);
       setLikedComments(likedCommentRecords);
@@ -491,11 +497,14 @@ export default function AccountPage() {
                     <p className="muted">Aucun commentaire pour le moment. Laissez-en un depuis l&apos;accueil.</p>
                   ) : (
                     comments.map((comment) => (
-                      <div key={comment.id} className="split-line" style={{ marginTop: 8, alignItems: "flex-start" }}>
-                        <div style={{ flex: 1 }}>
-                          {comment.author_name ? (
-                            <div className="tiny" style={{ marginBottom: 4 }}>{comment.author_name}</div>
-                          ) : null}
+                      <div
+                        key={comment.id}
+                        className={`account-comment-row${editingCommentId === comment.id ? " is-editing" : ""}`}
+                      >
+                        <div className="account-comment-author tiny">
+                          {comment.author_name || "—"}
+                        </div>
+                        <div className="account-comment-content">
                           {editingCommentId === comment.id ? (
                             <>
                               <input
@@ -515,11 +524,11 @@ export default function AccountPage() {
                           ) : (
                             <span>{comment.content || "Commentaire"}</span>
                           )}
-                          <div className="tiny" style={{ marginTop: 6 }}>
-                            {comment.created_at ? new Date(comment.created_at).toLocaleDateString("fr-FR") : "—"}
-                          </div>
                         </div>
-                        <div className="actions-row" style={{ marginTop: 0, flexShrink: 0 }}>
+                        <div className="account-comment-date tiny">
+                          {comment.created_at ? new Date(comment.created_at).toLocaleDateString("fr-FR") : "—"}
+                        </div>
+                        <div className="actions-row account-comment-actions">
                           {editingCommentId === comment.id ? (
                             <>
                               <button className="pill-button" type="button" onClick={() => void saveComment(comment.id)}>
