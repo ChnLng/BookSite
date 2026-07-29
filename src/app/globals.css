@@ -563,6 +563,67 @@ select {
   white-space: nowrap;
 }
 
+.account-purchase-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.45fr) minmax(220px, 1.25fr) auto auto auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 10px;
+  padding: 11px 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+}
+
+.account-purchase-title,
+.account-purchase-date {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-purchase-date,
+.account-purchase-status {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.account-purchase-amount {
+  white-space: nowrap;
+}
+
+.account-purchase-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.account-purchase-actions .pill-button {
+  padding: 8px 12px;
+}
+
+@media (max-width: 900px) {
+  .account-purchase-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .account-purchase-date {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+
+  .account-purchase-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
 .admin-table-empty { padding: 28px 10px !important; text-align: center !important; color: var(--text-muted); }
 .admin-donations-table .donation-col-name { width: 12%; }
 .admin-donations-table .donation-col-email { width: 19%; }

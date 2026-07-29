@@ -414,9 +414,9 @@ export default function AccountPage() {
   const tabs = [
     { key: "comments", label: "Commentaires", count: comments.length },
     { key: "likes", label: "J'aime", count: likedComments.length },
-    { key: "evaluations", label: "Evaluations", count: evaluations.length },
+    { key: "evaluations", label: "Évaluations", count: evaluations.length },
     { key: "purchases", label: "Achats", count: downloads.length },
-    { key: "downloads", label: "Telechargements", count: downloads.length },
+    { key: "downloads", label: "Téléchargements", count: downloads.length },
     { key: "donations", label: "Donations", count: donations.length },
   ] as const;
 
@@ -684,7 +684,17 @@ export default function AccountPage() {
                     const isResource = purchase.download_kind === "resource" && purchase.resource_id;
                     const bookId = bookIdFromDownload(purchase);
                     const downloadable = purchase.payment_status !== "refunded" && purchase.payment_status !== "refund_pending";
-                    return <div key={`purchase-${purchase.id}`} className="split-line" style={{ marginTop: 12, alignItems: "flex-start", gap: 12 }}><div><strong>{isResource ? purchase.resource_title || "Ressource" : purchase.book_title || "Livre"}</strong><p className="tiny">Acheté le {new Date(purchase.paid_at || purchase.created_at || Date.now()).toLocaleString("fr-FR")} · {Number(purchase.amount_paid || 0) > 0 ? "Payé" : "Gratuit"} · {Number(purchase.amount_paid || 0).toFixed(2)} {purchase.currency || "EUR"}</p><div className="actions-row">{downloadable && isResource ? <button className="pill-button" type="button" onClick={() => void handleResourceDownload(purchase.resource_id as string)}>Télécharger</button> : null}{downloadable && !isResource && bookId ? <button className="pill-button" type="button" onClick={() => void handlePdfDownload(bookId)}>Télécharger</button> : null}<button className="pill-button" type="button" onClick={() => void downloadInvoice(purchase.id, purchase.invoice_number)}>Facture PDF</button></div></div></div>;
+                    return <div key={`purchase-${purchase.id}`} className="account-purchase-row">
+                      <strong className="account-purchase-title">{isResource ? purchase.resource_title || "Ressource" : purchase.book_title || "Livre"}</strong>
+                      <span className="account-purchase-date">Acheté le {new Date(purchase.paid_at || purchase.created_at || Date.now()).toLocaleString("fr-FR")}</span>
+                      <span className="account-purchase-status">{Number(purchase.amount_paid || 0) > 0 ? "Payé" : "Gratuit"}</span>
+                      <strong className="account-purchase-amount">{Number(purchase.amount_paid || 0).toFixed(2)} {purchase.currency || "EUR"}</strong>
+                      <div className="account-purchase-actions">
+                        {downloadable && isResource ? <button className="pill-button" type="button" onClick={() => void handleResourceDownload(purchase.resource_id as string)}>Télécharger</button> : null}
+                        {downloadable && !isResource && bookId ? <button className="pill-button" type="button" onClick={() => void handlePdfDownload(bookId)}>Télécharger</button> : null}
+                        <button className="pill-button" type="button" onClick={() => void downloadInvoice(purchase.id, purchase.invoice_number)}>Facture PDF</button>
+                      </div>
+                    </div>;
                   })}
                 </div>
               ) : null}
