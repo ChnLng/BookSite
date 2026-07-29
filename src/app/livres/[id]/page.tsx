@@ -149,6 +149,7 @@ export default function BookDetailPage() {
   const [book, setBook] = useState<DisplayBook | null>(null);
   const [relatedBooks, setRelatedBooks] = useState<RelatedProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [relatedLoading, setRelatedLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
   const [reviewSummary, setReviewSummary] = useState<ReviewSummary>({
@@ -298,6 +299,7 @@ export default function BookDetailPage() {
   useEffect(() => {
     if (!bookId) {
       setLoading(false);
+      setRelatedLoading(false);
       setBook(null);
       setRelatedBooks([]);
       setReviews([]);
@@ -310,12 +312,15 @@ export default function BookDetailPage() {
 
     const loadBookPage = async () => {
       setLoading(true);
+      setRelatedLoading(true);
       setReviewsLoading(true);
 
       const cataloguePromise = loadDisplayBooks();
       const resourcesPromise = loadDisplayResources();
       const reviewsPromise = fetchReviewData(bookId);
-      const [catalogueBooks, catalogueResources] = await Promise.all([cataloguePromise, resourcesPromise]);
+      // The resource catalogue is considerably heavier than the book query. Do
+      // not block the main product page while related resource suggestions load.
+      const catalogueBooks = await cataloguePromise;
       const resolvedBook = catalogueBooks.find((candidate) => candidate.id === bookId || candidate.dbId === bookId) || null;
 
       if (cancelled) {
@@ -329,6 +334,7 @@ export default function BookDetailPage() {
       if (!resolvedBook) {
         setRelatedBooks([]);
         setLoading(false);
+        setRelatedLoading(false);
         return;
       }
 
@@ -349,6 +355,12 @@ export default function BookDetailPage() {
         image: candidate.coverImage,
       }));
 
+      setRelatedBooks(nextRelatedBooks);
+      setLoading(false);
+
+      const catalogueResources = await resourcesPromise;
+      if (cancelled) return;
+
       const relatedResources: RelatedProduct[] = catalogueResources
         .filter((resource) => resolvedBook.relatedBookIds.includes(`resource:${resource.slug || resource.id}`))
         .map((resource) => ({
@@ -361,7 +373,7 @@ export default function BookDetailPage() {
         }));
 
       setRelatedBooks([...nextRelatedBooks, ...relatedResources]);
-      setLoading(false);
+      setRelatedLoading(false);
 
       const reviewData = await reviewsPromise;
 
@@ -530,7 +542,7 @@ export default function BookDetailPage() {
           | null;
 
         if (!response.ok || !result?.ok) {
-          throw new Error(result?.message || "Paiement valide, mais enregistrement impossible.");
+          throw new Error(result?.message || "Paiement validé, mais enregistrement impossible.");
         }
 
         setPaymentSuccess({
@@ -800,7 +812,7 @@ export default function BookDetailPage() {
               <span className="section-heading-text">Produits associés</span>
             </div>
             <div className="book-detail-related-list">
-              {loading ? (
+              {relatedLoading ? (
                 <p className="muted">Chargement des suggestions...</p>
               ) : relatedBooks.length > 0 ? (
                 relatedBooks.map((relatedBook) => (
@@ -816,13 +828,13 @@ export default function BookDetailPage() {
                     </div>
                     <div className="book-detail-related-copy">
                       <strong>{relatedBook.title}</strong>
-                      <span className="tiny">{relatedBook.subtitle}</span>
+                      <span className="tiny" lang={/[\u3400-\u9fff]/u.test(relatedBook.subtitle) ? "zh-Hans" : "fr"}>{relatedBook.subtitle}</span>
                       <span className="tiny">{relatedBook.priceEur.toFixed(2)} EUR</span>
                     </div>
                   </Link>
                 ))
               ) : (
-                <p className="muted">Aucun produit associe pour le moment.</p>
+                <p className="muted">Aucun produit associé pour le moment.</p>
               )}
             </div>
           </div>

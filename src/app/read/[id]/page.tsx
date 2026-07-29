@@ -246,7 +246,7 @@ export default function ReadBookPage() {
         {readerState === "login" ? (
           <div className="reader-gate">
             <p className="section-caption">
-              Connectez-vous pour lire ce livre en ligne. Si vous avez deja achete ce titre, votre acces sera restaure automatiquement.
+              Connectez-vous pour lire ce livre en ligne. Si vous avez déjà acheté ce titre, votre accès sera restauré automatiquement.
             </p>
             <div className="actions-row">
               <Link className="cta-button" href="/">
@@ -262,7 +262,7 @@ export default function ReadBookPage() {
         {readerState === "paywall" ? (
           <div className="reader-gate">
             <p className="section-caption">
-              Ce livre est reserve aux lecteurs qui l&apos;ont achete. Achetez-le pour debloquer la lecture en ligne et le telechargement PDF.
+              Ce livre est réservé aux lecteurs qui l&apos;ont acheté. Achetez-le pour débloquer la lecture en ligne et le téléchargement PDF.
             </p>
             <div className="actions-row">
               <button className="cta-button" type="button" disabled={paying} onClick={() => void handleCheckout()}>

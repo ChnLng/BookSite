@@ -20,7 +20,7 @@ export function AdminPurchaseSearch() {
     if (!window.confirm(`Confirmer le remboursement de ${row.book_title || row.resource_title || "ce produit"} ?`)) return;
     const reason = window.prompt("Motif du remboursement (optionnel)") || "";
     const response = await fetch(`/api/admin/purchases/${row.id}/refund`, { method: "POST", headers: { Authorization: `Bearer ${session?.access_token}`, "Content-Type": "application/json" }, body: JSON.stringify({ reason }) });
-    const data = await response.json(); setMessage(data.ok ? "Remboursement confirme par le prestataire." : data.message); if (data.ok) void load();
+    const data = await response.json(); setMessage(data.ok ? "Remboursement confirmé par le prestataire." : data.message); if (data.ok) void load();
   };
   const formatDate = (value: string | null) => value ? new Date(value).toLocaleString("fr-FR") : "—";
 

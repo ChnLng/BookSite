@@ -94,7 +94,7 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
               <p className="tiny" style={{ marginTop: 10, marginBottom: 0 }}>
-                Entrez un titre en francais ou en chinois pour afficher le produit correspondant.
+                Entrez un titre en français ou en chinois pour afficher le produit correspondant.
               </p>
             </div>
           </div>

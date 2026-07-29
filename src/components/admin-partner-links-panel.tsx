@@ -407,7 +407,7 @@ export function AdminPartnerLinksPanel() {
         <div>
           <h4 style={{ margin: 0 }}>Liste des liens existants</h4>
           <p className="tiny" style={{ marginTop: 6 }}>
-            Les liens deja presents dans la base sont rendus ci-dessous avec Modifier / Supprimer.
+            Les liens déjà présents dans la base sont affichés ci-dessous avec Modifier / Supprimer.
           </p>
         </div>
       </div>

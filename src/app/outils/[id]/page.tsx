@@ -345,7 +345,7 @@ export default function ResourceDetailPage() {
       setActionMessage("Paiement confirmé. Vos téléchargements sont maintenant débloqués.");
       void refreshAccess();
     } else if (purchaseCanceled) {
-      setActionMessage("Paiement annule. Vous pouvez reprendre quand vous voulez.");
+      setActionMessage("Paiement annulé. Vous pouvez reprendre quand vous le souhaitez.");
     }
   }, [purchaseCanceled, purchaseSucceeded, refreshAccess]);
 
@@ -436,7 +436,7 @@ export default function ResourceDetailPage() {
           | null;
 
         if (!response.ok || !result?.ok) {
-          throw new Error(result?.message || "Paiement valide, mais enregistrement impossible.");
+          throw new Error(result?.message || "Paiement validé, mais enregistrement impossible.");
         }
 
         setPaymentSuccess({
@@ -491,7 +491,7 @@ export default function ResourceDetailPage() {
       setOptimisticSharedUnlock(true);
       setShareUnlockPending(false);
       setShareUnlockBusy(true);
-      setActionMessage("La ressource est maintenant debloquee.");
+      setActionMessage("La ressource est maintenant débloquée.");
 
       try {
         const response = await authorizedFetch(`/api/resources/${resource.slug || resource.id}/claim`, {
@@ -511,7 +511,7 @@ export default function ResourceDetailPage() {
           return;
         }
 
-        setActionMessage(result.message || "La ressource est maintenant debloquee.");
+        setActionMessage(result.message || "La ressource est maintenant débloquée.");
         await refreshAccess();
       } finally {
         setShareUnlockBusy(false);
@@ -639,7 +639,7 @@ export default function ResourceDetailPage() {
     }
 
     if (!user || !session?.access_token) {
-      setActionMessage("Connectez-vous d'abord pour debloquer cette ressource.");
+      setActionMessage("Connectez-vous d'abord pour débloquer cette ressource.");
       return;
     }
 
@@ -676,7 +676,7 @@ export default function ResourceDetailPage() {
         const blobUrl = URL.createObjectURL(await response.blob());
         const anchor = document.createElement("a");
         anchor.href = blobUrl;
-        anchor.download = resource.downloads.find((entry) => entry.id === fileId)?.labelFr || "telechargement";
+        anchor.download = resource.downloads.find((entry) => entry.id === fileId)?.labelFr || "téléchargement";
         anchor.click();
         URL.revokeObjectURL(blobUrl);
         return;
@@ -944,7 +944,7 @@ export default function ResourceDetailPage() {
 
           <div className="resource-download-panel">
             <div className="split-line">
-              <strong>Telechargements disponibles</strong>
+              <strong>Téléchargements disponibles</strong>
               <span>{resource.downloads.length}</span>
             </div>
 
@@ -966,7 +966,7 @@ export default function ResourceDetailPage() {
 
             {!effectiveHasAccess ? (
               <p className="tiny" style={{ marginTop: 12 }}>
-                Connectez-vous puis validez le paiement pour debloquer ces fichiers.
+                Connectez-vous puis validez le paiement pour débloquer ces fichiers.
               </p>
             ) : null}
           </div>
@@ -1036,7 +1036,7 @@ export default function ResourceDetailPage() {
             ) : (
               <>
                 <p className="muted" style={{ marginTop: 16 }}>
-                  Reglez ici avec PayPal. Une fois la transaction validee, les telechargements seront debloques automatiquement.
+                  Réglez ici avec PayPal. Une fois la transaction validée, les téléchargements seront débloqués automatiquement.
                 </p>
                 <div className="book-payment-shell">
                   <div ref={paypalContainerRef} />

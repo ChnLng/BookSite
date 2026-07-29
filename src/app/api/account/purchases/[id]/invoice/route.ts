@@ -14,6 +14,6 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     return NextResponse.json({ message: "Facture introuvable." }, { status: 404 });
   const number = data.invoice_number || `VISD-${String(data.id).slice(0, 8).toUpperCase()}`;
   const title = data.resource_title || data.book_title || "Produit numerique";
-  const pdf = createInvoicePdf(["VISD AR - FACTURE", `Facture: ${number}`, `Date: ${new Date(data.paid_at || data.created_at).toLocaleDateString("fr-FR")}`, `Client: ${data.user_email || user.email || ""}`, `Produit: ${title}`, `Statut: ${data.payment_status === "refunded" ? "Rembourse" : "Paye"}`, `Total: ${Number(data.amount_paid || 0).toFixed(2)} ${data.currency || "EUR"}`]);
+  const pdf = createInvoicePdf(["VISD AR - FACTURE", `Facture : ${number}`, `Date : ${new Date(data.paid_at || data.created_at).toLocaleDateString("fr-FR")}`, `Client : ${data.user_email || user.email || ""}`, `Produit : ${title}`, `Statut : ${data.payment_status === "refunded" ? "Remboursé" : "Payé"}`, `Total : ${Number(data.amount_paid || 0).toFixed(2)} ${data.currency || "EUR"}`]);
   return new NextResponse(pdf, { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="facture-${number}.pdf"` } });
 }

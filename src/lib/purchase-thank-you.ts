@@ -1,6 +1,6 @@
 export const purchaseThankYouMessages = [
-  "🌸  Oh, trės bon choix ! Paiement réussi.",
-  "Trės bon choix. Passez une excellente journée. ☕",
+  "🌸 Oh, très bon choix ! Paiement réussi.",
+  "Très bon choix. Passez une excellente journée. ☕",
 ] as const;
 
 export function randomPurchaseThankYouMessage() {

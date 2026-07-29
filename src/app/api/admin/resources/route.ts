@@ -102,7 +102,7 @@ export async function GET(request: Request) {
     } else {
       categories = ((fallbackCategoriesResult.data || []) as LegacyCategoryRow[]).map((item) => ({
         id: item.id,
-        titleFr: item.title_fr || item.title_zh || item.name || "Categorie",
+        titleFr: item.title_fr || item.title_zh || item.name || "Catégorie",
         kind: "resource",
       }));
     }
@@ -111,7 +111,7 @@ export async function GET(request: Request) {
       .filter((item) => !item.kind || item.kind === "resource" || item.kind === "custom")
       .map((item) => ({
         id: item.id,
-        titleFr: item.title_fr || item.title_zh || item.name || "Categorie",
+        titleFr: item.title_fr || item.title_zh || item.name || "Catégorie",
         kind: item.kind || "resource",
       }));
   }

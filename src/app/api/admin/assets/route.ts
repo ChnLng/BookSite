@@ -71,7 +71,7 @@ async function getOrCreateDownloadRelease() {
   });
 
   if (!created.ok) {
-    throw new Error((await created.text()) || "Impossible de creer la GitHub Release.");
+    throw new Error((await created.text()) || "Impossible de créer la publication GitHub.");
   }
 
   return (await created.json()) as GitHubRelease;

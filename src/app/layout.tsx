@@ -47,7 +47,7 @@ export default function RootLayout({
       <body
         className={`${heading.variable} ${body.variable}`}
         style={{
-          fontFamily: "var(--font-body), sans-serif",
+          fontFamily: '"Visdar Chinese Kai", var(--font-body), sans-serif',
         }}
       >
         <Script

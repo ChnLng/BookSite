@@ -141,7 +141,7 @@ function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) 
         .map<DisplayResourceDownload>((fileRow) => ({
           id: fileRow.id,
           platform: fileRow.platform || "通用",
-          labelFr: fileRow.label_fr || "Telecharger",
+          labelFr: fileRow.label_fr || "Télécharger",
           filePath: fileRow.file_path || fileRow.file_url || "protected",
           externalUrl: fileRow.external_url || "",
           sortOrder: fileRow.sort_order ?? 0,

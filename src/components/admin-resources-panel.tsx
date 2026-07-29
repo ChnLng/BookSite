@@ -420,7 +420,7 @@ export function AdminResourcesPanel() {
         <div>
           <h3>Coin ludique & Outils</h3>
           <p className="tiny" style={{ marginTop: 6 }}>
-            {resourceCount} ressource(s) geree(s), avec versions telechargeables illimitees.
+            {resourceCount} ressource(s) gérée(s), avec versions téléchargeables illimitées.
           </p>
         </div>
       </div>
@@ -456,7 +456,7 @@ export function AdminResourcesPanel() {
           value={draft.categoryId}
           onChange={(event) => setDraft({ ...draft, categoryId: event.target.value })}
         >
-          <option value="">Categorie de rattachement</option>
+          <option value="">Catégorie de rattachement</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.titleFr} · {category.kind}
@@ -501,7 +501,7 @@ export function AdminResourcesPanel() {
         />
         <input
           className="input"
-          placeholder="Lien externe de telechargement"
+          placeholder="Lien externe de téléchargement"
           value={draft.externalUrl}
           onChange={(event) => setDraft({ ...draft, externalUrl: event.target.value })}
         />
@@ -515,7 +515,7 @@ export function AdminResourcesPanel() {
         </label>
         <textarea
           className="textarea"
-          placeholder="Resume chaleureux"
+          placeholder="Résumé chaleureux"
           value={draft.summaryFr}
           onChange={(event) => setDraft({ ...draft, summaryFr: event.target.value })}
         />
@@ -565,7 +565,7 @@ export function AdminResourcesPanel() {
 
       <div className="section-block">
         <div className="split-line">
-          <strong>Versions telechargeables 多系统上传槽位</strong>
+          <strong>Versions téléchargeables 多系统上传槽位</strong>
           <button
             className="pill-button"
             type="button"
@@ -707,7 +707,7 @@ export function AdminResourcesPanel() {
         <div>
           <h4 style={{ margin: 0 }}>Liste des outils existants</h4>
           <p className="tiny" style={{ marginTop: 6 }}>
-            Les donnees chargees depuis Supabase apparaissent ici avec les boutons Modifier / Supprimer.
+            Les données chargées depuis Supabase apparaissent ici avec les boutons Modifier / Supprimer.
           </p>
         </div>
       </div>

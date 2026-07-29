@@ -7,7 +7,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request: Request) {
   if (!stripeSecretKey) {
-    return NextResponse.json({ ok: false, message: "Stripe non configure." }, { status: 500 });
+    return NextResponse.json({ ok: false, message: "Stripe non configuré." }, { status: 500 });
   }
 
   const stripe = new Stripe(stripeSecretKey);

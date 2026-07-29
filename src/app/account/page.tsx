@@ -364,7 +364,7 @@ export default function AccountPage() {
       const blobUrl = URL.createObjectURL(await response.blob());
       const anchor = document.createElement("a");
       anchor.href = blobUrl;
-      anchor.download = "telechargement";
+      anchor.download = "téléchargement";
       anchor.click();
       URL.revokeObjectURL(blobUrl);
       return;
@@ -448,7 +448,7 @@ export default function AccountPage() {
           ) : null}
         </div>
         <p className="section-caption">
-          Votre espace lecteur affiche vos commentaires, vos telechargements et vos donations dans un seul panneau.
+          Votre espace lecteur affiche vos commentaires, vos téléchargements et vos donations dans un seul panneau.
         </p>
 
         {loading || fetching ? (
@@ -628,7 +628,7 @@ export default function AccountPage() {
                     <span>{downloads.length}</span>
                   </div>
                   {downloads.length === 0 ? (
-                    <p className="muted">Aucun telechargement enregistre.</p>
+                    <p className="muted">Aucun téléchargement enregistré.</p>
                   ) : (
                     downloads.filter((download) => Number(download.download_count || 0) > 0 || download.last_downloaded_at).map((download) => {
                       const readBookId = bookIdFromDownload(download);
@@ -650,7 +650,7 @@ export default function AccountPage() {
                                 type="button"
                                 onClick={() => void handleResourceDownload(download.resource_id as string)}
                               >
-                                Telecharger
+                                Télécharger
                               </button>
                             ) : null}
                             {!isResourceDownload && readBookId ? (
@@ -664,7 +664,7 @@ export default function AccountPage() {
                                 type="button"
                                 onClick={() => void handlePdfDownload(readBookId)}
                               >
-                                Telecharger le PDF
+                                Télécharger le PDF
                               </button>
                             ) : null}
                           </div>

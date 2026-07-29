@@ -342,7 +342,7 @@ function promoEditFromCode(promo: PromoCode): PromoEditState {
 }
 
 function displayCategoryName(category: CategoryRow) {
-  return category.title_zh || category.title_fr || category.slug || "Categorie";
+  return category.title_zh || category.title_fr || category.slug || "Catégorie";
 }
 
 function downloadEntryKind(download: DownloadRow) {
@@ -1505,7 +1505,7 @@ function AdminPageContent() {
                     value={form.categoryId}
                     onChange={(event) => setForm({ ...form, categoryId: event.target.value })}
                   >
-                    <option value="">Choisir une categorie 选择类目</option>
+                    <option value="">Choisir une catégorie 选择类目</option>
                     {categories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {displayCategoryName(category)}
@@ -1590,7 +1590,7 @@ function AdminPageContent() {
 
                 <div className="section-block" style={{ marginTop: 14 }}>
                   <div className="split-line">
-                    <strong>关联商品 Produits associes</strong>
+                    <strong>关联商品 Produits associés</strong>
                     <span className="tiny">勾选后会显示在商品详情页</span>
                   </div>
                   <div className="admin-related-grid" style={{ marginTop: 12 }}>
@@ -1801,7 +1801,7 @@ function AdminPageContent() {
                             <div className="tiny">排序 Sort: {bookSortValue(book, books.findIndex((entry) => entry.id === book.id))}</div>
                             <div className="tiny">Slug: {book.slug || book.id}</div>
                             <div className="tiny">
-                              类目 Categorie: {categories.find((category) => category.id === (edit?.categoryId || book.category_id || "")) ? displayCategoryName(categories.find((category) => category.id === (edit?.categoryId || book.category_id || ""))!) : "未设置"}
+                              类目 Catégorie : {categories.find((category) => category.id === (edit?.categoryId || book.category_id || "")) ? displayCategoryName(categories.find((category) => category.id === (edit?.categoryId || book.category_id || ""))!) : "未设置"}
                             </div>
                             <div className="tiny">Downloads 下载次数: {downloadCount}</div>
                             <div className="tiny">{book.visible ? "已上架 Visible" : "已隐藏 Hidden"}</div>
@@ -1829,7 +1829,7 @@ function AdminPageContent() {
                                   setBookEdits({ ...bookEdits, [book.id]: { ...edit, categoryId: event.target.value } })
                                 }
                               >
-                                <option value="">Choisir une categorie 选择类目</option>
+                                <option value="">Choisir une catégorie 选择类目</option>
                                 {categories.map((category) => (
                                   <option key={category.id} value={category.id}>
                                     {displayCategoryName(category)}
@@ -1938,7 +1938,7 @@ function AdminPageContent() {
 
                             <div className="section-block" style={{ marginTop: 14 }}>
                               <div className="split-line">
-                                <strong>关联商品 Produits associes</strong>
+                                <strong>关联商品 Produits associés</strong>
                                 <span className="tiny">详情页左侧会显示这些商品</span>
                               </div>
                               <div className="admin-related-grid" style={{ marginTop: 12 }}>
@@ -2179,7 +2179,7 @@ function AdminPageContent() {
                 <div className="input-group admin-form-grid" style={{ marginTop: 10 }}>
                   <input
                     className="input"
-                    placeholder="Slug categorie"
+                    placeholder="Slug de catégorie"
                     value={categoryForm.slug}
                     onChange={(event) => setCategoryForm({ ...categoryForm, slug: slugify(event.target.value) })}
                   />

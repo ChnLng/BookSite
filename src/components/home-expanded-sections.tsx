@@ -491,7 +491,7 @@ export function HomeExpandedSections() {
               </p>
 
               {section.resources.length === 0 ? (
-                <p className="tiny">Cette categorie est prete. Ajoutez maintenant ses premiers outils dans l&apos;admin.</p>
+                <p className="tiny">Cette catégorie est prête. Ajoutez maintenant ses premiers outils dans l&apos;administration.</p>
               ) : (
                 <div className="marquee-shell home-resource-marquee-shell" role="list">
                   <div className="marquee-inner home-resource-marquee-inner">
@@ -555,7 +555,7 @@ export function HomeExpandedSections() {
               </p>
 
               {section.categoryEntries.length === 0 ? (
-                <p className="tiny">Cette categorie est prete. Ajoutez maintenant ses premiers contenus dans l&apos;admin.</p>
+                <p className="tiny">Cette catégorie est prête. Ajoutez maintenant ses premiers contenus dans l&apos;administration.</p>
               ) : (
                 <div className="home-custom-grid">
                   {section.categoryEntries.map((entry) => (
@@ -588,7 +588,7 @@ export function HomeExpandedSections() {
                           ) : null}
                           {entry.fileUrl ? (
                             <a className="pill-button" href={entry.fileUrl} target="_blank" rel="noreferrer">
-                              Telecharger
+                              Télécharger
                             </a>
                           ) : null}
                         </div>

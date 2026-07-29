@@ -115,7 +115,7 @@ export function AdminCategoryEnginePanel() {
     const supabase = getSupabaseBrowserClient();
 
     if (!hasSupabaseConfig || !supabase) {
-      setStatusMessage("Supabase non configure pour le moteur de categories.");
+      setStatusMessage("Supabase non configuré pour le moteur de catégories.");
       return;
     }
 
@@ -139,7 +139,7 @@ export function AdminCategoryEnginePanel() {
     const nextCategories = ((categoriesResult.data || []) as Array<Record<string, unknown>>).map((row) => ({
       id: String(row.id),
       slug: String(row.slug || row.id),
-      titleFr: String(row.title_fr || "Categorie"),
+      titleFr: String(row.title_fr || "Catégorie"),
       titleZh: String(row.title_zh || ""),
       kind: row.kind === "book" || row.kind === "resource" ? row.kind : "custom",
       homepageVisible: Boolean(row.homepage_visible),
@@ -230,7 +230,7 @@ export function AdminCategoryEnginePanel() {
 
     const normalizedSlug = slugify(categoryDraft.slug || categoryDraft.titleFr || categoryDraft.titleZh);
     if (!normalizedSlug || !categoryDraft.titleFr.trim()) {
-      setStatusMessage("Renseignez au minimum le titre FR et le slug de la categorie.");
+      setStatusMessage("Renseignez au minimum le titre FR et le slug de la catégorie.");
       return;
     }
 
@@ -263,7 +263,7 @@ export function AdminCategoryEnginePanel() {
       } else {
         const { data, error } = await supabase.from("categories").insert(payload).select("id").single();
         if (error || !data?.id) {
-          setStatusMessage(error?.message || "Creation de categorie impossible.");
+          setStatusMessage(error?.message || "Création de catégorie impossible.");
           return;
         }
         categoryId = data.id as string;
@@ -293,7 +293,7 @@ export function AdminCategoryEnginePanel() {
         }
       }
 
-      setStatusMessage("Categorie et regles enregistrees.");
+      setStatusMessage("Catégorie et règles enregistrées.");
       await loadData();
     } finally {
       setBusyKey(null);
@@ -313,7 +313,7 @@ export function AdminCategoryEnginePanel() {
     const categoryId = categoryDraft.id || selectedCategoryId;
 
     if (!supabase || !categoryId) {
-      setStatusMessage("Choisissez d'abord une categorie.");
+      setStatusMessage("Choisissez d'abord une catégorie.");
       return;
     }
 
@@ -354,7 +354,7 @@ export function AdminCategoryEnginePanel() {
 
       setEntryDraft(defaultEntryDraft);
       setEditingEntryId(null);
-      setStatusMessage("Contenu de categorie enregistre.");
+      setStatusMessage("Contenu de catégorie enregistré.");
       await loadData();
     } finally {
       setBusyKey(null);
@@ -407,13 +407,13 @@ export function AdminCategoryEnginePanel() {
     <div className="section-block">
       <div className="split-line">
         <div>
-          <h3>Moteur de categories 动态类目引擎</h3>
+          <h3>Moteur de catégories 动态类目引擎</h3>
           <p className="tiny" style={{ marginTop: 6 }}>
-            Creez des categories flexibles, definissez leurs champs et ajoutez ensuite des contenus relies.
+            Créez des catégories flexibles, définissez leurs champs et ajoutez ensuite des contenus associés.
           </p>
         </div>
         <button className="pill-button" type="button" onClick={startNewCategory}>
-          Nouvelle categorie
+          Nouvelle catégorie
         </button>
       </div>
 
@@ -421,7 +421,7 @@ export function AdminCategoryEnginePanel() {
 
       <div className="section-block">
         <label className="tiny" htmlFor="engine-category-select">
-          Categories existantes
+          Catégories existantes
         </label>
         <select
           id="engine-category-select"
@@ -429,7 +429,7 @@ export function AdminCategoryEnginePanel() {
           value={selectedCategoryId}
           onChange={(event) => setSelectedCategoryId(event.target.value)}
         >
-          <option value="">Choisir une categorie</option>
+          <option value="">Choisir une catégorie</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.titleFr} · {category.kind}
@@ -469,7 +469,7 @@ export function AdminCategoryEnginePanel() {
         >
           <option value="book">Livres</option>
           <option value="resource">Ressources</option>
-          <option value="custom">Categorie libre</option>
+          <option value="custom">Catégorie libre</option>
         </select>
         <input
           className="input"
@@ -637,7 +637,7 @@ export function AdminCategoryEnginePanel() {
 
       <div className="actions-row">
         <button className="cta-button" type="button" disabled={busyKey === "save-category-engine"} onClick={() => void saveCategory()}>
-          {busyKey === "save-category-engine" ? "Enregistrement..." : "Enregistrer la categorie"}
+          {busyKey === "save-category-engine" ? "Enregistrement..." : "Enregistrer la catégorie"}
         </button>
       </div>
 
@@ -647,7 +647,7 @@ export function AdminCategoryEnginePanel() {
             <div>
               <strong>Contenus dynamiques 条目内容</strong>
               <p className="tiny" style={{ marginTop: 6 }}>
-                Ajoutez ici les cartes qui alimenteront la page d&apos;accueil pour cette categorie.
+                Ajoutez ici les cartes qui alimenteront la page d&apos;accueil pour cette catégorie.
               </p>
             </div>
           </div>
@@ -699,7 +699,7 @@ export function AdminCategoryEnginePanel() {
             </label>
             <textarea
               className="textarea"
-              placeholder="Resume FR"
+              placeholder="Résumé FR"
               value={entryDraft.summaryFr}
               onChange={(event) => setEntryDraft({ ...entryDraft, summaryFr: event.target.value })}
             />

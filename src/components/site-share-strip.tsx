@@ -60,7 +60,7 @@ export function SiteShareStrip() {
             ? `${href}?url=${encodedUrl}&text=${encodedText}`
             : platform === "whatsapp"
               ? `${href}?text=${encodeURIComponent(`${randomText} ${shareUrl}`)}`
-              : `mailto:?subject=${encodeURIComponent("Decouverte Visd AR")}&body=${encodeURIComponent(`${randomText}\n\n${shareUrl}`)}`;
+              : `mailto:?subject=${encodeURIComponent("Découverte Visd AR")}&body=${encodeURIComponent(`${randomText}\n\n${shareUrl}`)}`;
 
     if (platform === "email") {
       window.location.href = sharePayload;
@@ -72,7 +72,7 @@ export function SiteShareStrip() {
 
   return (
     <div className="share-strip">
-      <span className="share-strip-label">Partagez cette decouverte</span>
+      <span className="share-strip-label">Partagez cette découverte</span>
       <div className="share-strip-actions share-strip-actions-second-line">
         {socialLinks.map(({ label, href, icon: Icon, platform, mobileOnly }) => (
           <button
