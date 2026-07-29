@@ -238,7 +238,8 @@ async function uploadImageToSupabase(file: File, fileName: string) {
   });
   if (uploadError) throw new Error(uploadError.message);
 
-  return supabase.storage.from(siteMediaBucketName).getPublicUrl(storagePath).data.publicUrl;
+  const publicUrl = supabase.storage.from(siteMediaBucketName).getPublicUrl(storagePath).data.publicUrl;
+  return `${publicUrl}?v=${Date.now()}`;
 }
 
 function siteMediaPathFromUrl(assetPath: string) {

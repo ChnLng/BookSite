@@ -1,6 +1,5 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { books as staticBooks } from "@/data/books";
 import {
@@ -27,7 +26,7 @@ function createSupabaseServerClient() {
   });
 }
 
-async function loadPublicDisplayBooksRaw(): Promise<DisplayBook[]> {
+export async function loadCachedPublicDisplayBooks(): Promise<DisplayBook[]> {
   const supabase = createSupabaseServerClient();
 
   if (!supabase) {
@@ -50,8 +49,3 @@ async function loadPublicDisplayBooksRaw(): Promise<DisplayBook[]> {
     return mapBookRow(row, fallback);
   });
 }
-
-export const loadCachedPublicDisplayBooks = unstable_cache(loadPublicDisplayBooksRaw, ["public-display-books"], {
-  revalidate: 300,
-  tags: ["books"],
-});
