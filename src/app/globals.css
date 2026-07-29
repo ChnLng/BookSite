@@ -1623,7 +1623,7 @@ button,
 
 .account-download-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto minmax(105px, auto);
+  grid-template-columns: minmax(180px, 1fr) auto minmax(260px, auto);
   align-items: center;
   gap: 14px;
   width: 100%;
@@ -1658,7 +1658,7 @@ button,
 
 .account-download-meta {
   text-align: right;
-  white-space: nowrap;
+  line-height: 1.45;
 }
 
 .account-donation-table {

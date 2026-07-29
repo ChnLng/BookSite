@@ -659,7 +659,7 @@ export default function AccountPage() {
                 <div className="account-card">
                   <div className="split-line">
                     <strong>Historique des téléchargements</strong>
-                    <span>{downloads.length}</span>
+                    <span className="tiny">Produits téléchargés : {downloads.length}</span>
                   </div>
                   {downloads.length === 0 ? (
                     <p className="muted">Aucun téléchargement enregistré.</p>
@@ -704,7 +704,8 @@ export default function AccountPage() {
                             ) : null}
                         </div>
                         <span className="account-download-meta tiny">
-                          {download.last_downloaded_at ? new Date(download.last_downloaded_at).toLocaleDateString("fr-FR") : "—"} · {download.download_count || 0}
+                          Date d&apos;achat : {download.paid_at || download.created_at ? new Date(download.paid_at || download.created_at || "").toLocaleDateString("fr-FR") : "—"}
+                          {` · Téléchargements au total : ${download.download_count || 0}`}
                         </span>
                       </div>
                       );
