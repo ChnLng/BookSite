@@ -14,14 +14,18 @@ type ItemRow = {
   display_position: string;
   show_on_user_page: boolean;
   sort_order: number;
+  settings: {
+    onsite_purchase_label?: string;
+    external_purchase_label?: string;
+  } | null;
 };
 
 const positionOptions = ["left-1", "left-2", "left-3", "right-top-1", "right-top-2", "right-top-3", "right-middle-1", "right-middle-2", "right-bottom-1"];
 const defaultNewItems = (): ItemRow[] => [
-  { section_id: "", admin_label: "商品标题", source_key: "title", content_type: "string", module_type: null, display_position: "right-top-1", show_on_user_page: true, sort_order: 10 },
-  { section_id: "", admin_label: "封面／主图", source_key: "cover_image", content_type: "image", module_type: null, display_position: "left-1", show_on_user_page: true, sort_order: 20 },
-  { section_id: "", admin_label: "可下载文件", source_key: "download", content_type: "file", module_type: null, display_position: "right-middle-1", show_on_user_page: true, sort_order: 30 },
-  { section_id: "", admin_label: "站外链接", source_key: "external_url", content_type: "file", module_type: null, display_position: "right-bottom-1", show_on_user_page: true, sort_order: 40 },
+  { section_id: "", admin_label: "商品标题", source_key: "title", content_type: "string", module_type: null, display_position: "right-top-1", show_on_user_page: true, sort_order: 10, settings: null },
+  { section_id: "", admin_label: "封面／主图", source_key: "cover_image", content_type: "image", module_type: null, display_position: "left-1", show_on_user_page: true, sort_order: 20, settings: null },
+  { section_id: "", admin_label: "可下载文件", source_key: "download", content_type: "file", module_type: null, display_position: "right-middle-1", show_on_user_page: true, sort_order: 30, settings: null },
+  { section_id: "", admin_label: "站外链接", source_key: "external_url", content_type: "file", module_type: null, display_position: "right-bottom-1", show_on_user_page: true, sort_order: 40, settings: null },
 ];
 
 function slugify(value: string) {
@@ -44,7 +48,7 @@ export function AdminContentSectionsPanel() {
     if (!supabase) return;
     const [sectionResult, itemResult] = await Promise.all([
       supabase.from("content_sections").select("id, section_key, title, section_type, sort_order, visible").order("sort_order"),
-      supabase.from("content_section_items").select("id, section_id, admin_label, source_key, content_type, module_type, display_position, show_on_user_page, sort_order").order("sort_order"),
+      supabase.from("content_section_items").select("id, section_id, admin_label, source_key, content_type, module_type, display_position, show_on_user_page, sort_order, settings").order("sort_order"),
     ]);
     if (sectionResult.error) {
       setMessage(`请先运行 content section SQL：${sectionResult.error.message}`);
@@ -112,6 +116,7 @@ export function AdminContentSectionsPanel() {
       display_position: item.display_position,
       show_on_user_page: item.show_on_user_page,
       sort_order: (index + 1) * 10,
+      settings: item.content_type === "module" ? item.settings : null,
     })));
     if (itemError) { setMessage(itemError.message); setBusy(false); return; }
     setNewTitle(""); setNewType("catalog"); setNewItems(defaultNewItems()); setSelectedId(data.id); setActiveTab("edit"); setBusy(false);
@@ -162,6 +167,7 @@ export function AdminContentSectionsPanel() {
         display_position: item.display_position,
         show_on_user_page: item.show_on_user_page,
         sort_order: (index + 1) * 10,
+        settings: item.content_type === "module" ? item.settings : null,
       })));
       if (error) { setMessage(error.message); setBusy(false); return; }
     }
@@ -186,7 +192,7 @@ export function AdminContentSectionsPanel() {
             <option value="catalog">商品目录 Catalog</option><option value="links">链接 Liens</option><option value="custom">自定义 Custom</option>
           </select>
         </div>
-        <div className="split-line"><strong>商品详情页初始项目</strong><button className="pill-button" type="button" onClick={() => setNewItems((current) => [...current, { section_id: "", admin_label: "新项目", source_key: `custom_${Date.now()}`, content_type: "string", module_type: null, display_position: "right-middle-1", show_on_user_page: true, sort_order: current.length * 10 + 10 }])}>添加项目</button></div>
+        <div className="split-line"><strong>商品详情页初始项目</strong><button className="pill-button" type="button" onClick={() => setNewItems((current) => [...current, { section_id: "", admin_label: "新项目", source_key: `custom_${Date.now()}`, content_type: "string", module_type: null, display_position: "right-middle-1", show_on_user_page: true, sort_order: current.length * 10 + 10, settings: null }])}>添加项目</button></div>
         <div className="admin-dynamic-stack">
           {newItems.map((item, index) => <div className="admin-inline-card admin-layout-item-row" key={`${item.source_key}-${index}`}>
             <input className="input" value={item.admin_label} onChange={(event) => setNewItems((current) => current.map((entry, itemIndex) => itemIndex === index ? { ...entry, admin_label: event.target.value, source_key: slugify(event.target.value) || entry.source_key } : entry))} placeholder="管理员填写指示" />
@@ -197,6 +203,10 @@ export function AdminContentSectionsPanel() {
             <select className="input" value={item.display_position} onChange={(event) => setNewItems((current) => current.map((entry, itemIndex) => itemIndex === index ? { ...entry, display_position: event.target.value } : entry))}>{positionOptions.map((position) => <option value={position} key={position}>{position}</option>)}</select>
             <label className="tiny"><input type="checkbox" checked={item.show_on_user_page} onChange={() => setNewItems((current) => current.map((entry, itemIndex) => itemIndex === index ? { ...entry, show_on_user_page: !entry.show_on_user_page } : entry))} /> 用户页显示</label>
             <button className="pill-button" type="button" onClick={() => setNewItems((current) => current.filter((_, itemIndex) => itemIndex !== index))}>删除</button>
+            {item.content_type === "module" && item.module_type === "commerce" ? <div className="admin-commerce-label-fields">
+              <input className="input" value={item.settings?.onsite_purchase_label || ""} onChange={(event) => setNewItems((current) => current.map((entry, itemIndex) => itemIndex === index ? { ...entry, settings: { ...entry.settings, onsite_purchase_label: event.target.value } } : entry))} placeholder="本站购买按钮文字（例如 Acheter le livre numérique）" />
+              <input className="input" value={item.settings?.external_purchase_label || ""} onChange={(event) => setNewItems((current) => current.map((entry, itemIndex) => itemIndex === index ? { ...entry, settings: { ...entry.settings, external_purchase_label: event.target.value } } : entry))} placeholder="站外购买按钮文字（例如 Amazon broché）" />
+            </div> : null}
           </div>)}
         </div>
         <button className="cta-button" type="button" disabled={busy} onClick={() => void createSection()}>{busy ? "创建中..." : "创建新类目"}</button>
@@ -229,7 +239,7 @@ export function AdminContentSectionsPanel() {
           <strong>类目页面项目 Éléments</strong>
           <button className="pill-button" type="button" onClick={() => setItems((current) => [...current, {
             section_id: selected.id, admin_label: "新项目", source_key: `custom_${Date.now()}`, content_type: "string", module_type: null,
-            display_position: "right-middle-1", show_on_user_page: true, sort_order: selectedItems.length * 10 + 10,
+            display_position: "right-middle-1", show_on_user_page: true, sort_order: selectedItems.length * 10 + 10, settings: null,
           }])}>添加项目</button>
         </div>
 
@@ -253,6 +263,10 @@ export function AdminContentSectionsPanel() {
                 <button className="pill-button" type="button" disabled={index === selectedItems.length - 1} onClick={() => moveItem(index, "down")}>↓</button>
                 <button className="pill-button" type="button" onClick={() => setItems((current) => current.filter((entry) => entry !== item))}>删除</button>
               </div>
+              {item.content_type === "module" && item.module_type === "commerce" ? <div className="admin-commerce-label-fields">
+                <input className="input" value={item.settings?.onsite_purchase_label || ""} onChange={(event) => updateItem(index, { settings: { ...item.settings, onsite_purchase_label: event.target.value } })} placeholder="本站购买按钮文字（例如 Acheter le livre numérique）" />
+                <input className="input" value={item.settings?.external_purchase_label || ""} onChange={(event) => updateItem(index, { settings: { ...item.settings, external_purchase_label: event.target.value } })} placeholder="站外购买按钮文字（例如 Amazon broché）" />
+              </div> : null}
             </div>
           ))}
         </div>

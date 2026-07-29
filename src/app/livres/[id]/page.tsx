@@ -20,6 +20,10 @@ type SectionLayoutItem = {
   display_position: string;
   show_on_user_page: boolean;
   sort_order: number;
+  settings?: {
+    onsite_purchase_label?: string;
+    external_purchase_label?: string;
+  } | null;
 };
 
 type ReviewRecord = {
@@ -194,6 +198,9 @@ export default function BookDetailPage() {
     "Ce contenu est gratuit ! Partagez notre site à l’aide des boutons situés en haut de la page pour déverrouiller le lien de téléchargement.";
   const effectiveHasAccess = accessState.hasAccess || optimisticSharedUnlock;
   const layoutByKey = useMemo(() => new Map(layoutItems.map((item) => [item.source_key, item])), [layoutItems]);
+  const commerceSettings = layoutByKey.get("commerce")?.settings;
+  const onsitePurchaseLabel = commerceSettings?.onsite_purchase_label?.trim() || "Acheter le livre numérique";
+  const externalPurchaseLabel = commerceSettings?.external_purchase_label?.trim() || book?.externalPurchaseLabel || "Amazon broché";
   const moduleStyle = (key: string, fallbackOrder: number) => {
     const item = layoutByKey.get(key);
     return { order: item?.sort_order ?? fallbackOrder, display: item && !item.show_on_user_page ? "none" : undefined };
@@ -207,7 +214,7 @@ export default function BookDetailPage() {
       if (!section?.id) return;
       const { data } = await supabase
         .from("content_section_items")
-        .select("source_key, display_position, show_on_user_page, sort_order")
+        .select("source_key, display_position, show_on_user_page, sort_order, settings")
         .eq("section_id", section.id)
         .order("sort_order");
       setLayoutItems((data || []) as SectionLayoutItem[]);
@@ -971,10 +978,10 @@ export default function BookDetailPage() {
                         rel="noopener noreferrer"
                         className="pill-button"
                       >
-                        {book.externalPurchaseLabel || "Amazon broché"}
+                        {externalPurchaseLabel}
                       </a>
                       <span className="purchase-link-tooltip" role="tooltip">
-                        Acheter sur {(book.externalPurchaseLabel || "Amazon").replace(/\s+broché$/i, "")}
+                        Acheter sur {externalPurchaseLabel.replace(/\s+broché$/i, "")}
                       </span>
                     </span>
                   ) : null}
@@ -1023,7 +1030,7 @@ export default function BookDetailPage() {
                         </>
                       ) : (
                         <button className="cta-button book-buy-button" type="button" onClick={() => void handleBookCheckout()}>
-                          {promoUnlocksFreeAccess ? "Partager pour déverrouiller" : "Acheter le livre numérique"}
+                          {promoUnlocksFreeAccess ? "Partager pour déverrouiller" : onsitePurchaseLabel}
                         </button>
                       )}
 
