@@ -728,6 +728,7 @@ export default function AccountPage() {
                       <strong className="account-purchase-amount">{Number(purchase.amount_paid || 0).toFixed(2)} {purchase.currency || "EUR"}</strong>
                       <div className="account-purchase-actions">
                         {downloadable && isResource ? <button className="pill-button" type="button" onClick={() => void handleResourceDownload(purchase.resource_id as string)}>Télécharger</button> : null}
+                        {downloadable && !isResource && bookId ? <Link className="pill-button" href={`/read/${bookId}`}>Lire en ligne</Link> : null}
                         {downloadable && !isResource && bookId ? <button className="pill-button" type="button" onClick={() => void handlePdfDownload(bookId)}>Télécharger</button> : null}
                         <button className="pill-button" type="button" onClick={() => void downloadInvoice(purchase.id, purchase.invoice_number)}>Facture PDF</button>
                       </div>
