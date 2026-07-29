@@ -1008,15 +1008,17 @@ export default function BookDetailPage() {
                       )}
 
                       {book.amazonPaperbackUrl ? (
-                        <a
-                          href={book.amazonPaperbackUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="pill-button shrink-0 flex items-center gap-2"
-                          title="Ce bouton ouvre la page Amazon correspondante."
-                        >
-                          <span>Amazon broché</span>
-                        </a>
+                        <span className="purchase-link-tooltip-wrap">
+                          <a
+                            href={book.amazonPaperbackUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="pill-button shrink-0 flex items-center gap-2"
+                          >
+                            <span>Amazon broché</span>
+                          </a>
+                          <span className="purchase-link-tooltip" role="tooltip">Page Amazon</span>
+                        </span>
                       ) : (
                         <button className="pill-button shrink-0 flex items-center gap-2" type="button" disabled>
                           <span>Amazon broché</span>

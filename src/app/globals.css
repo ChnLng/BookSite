@@ -1344,6 +1344,41 @@ select {
   transform: translateY(0);
 }
 
+.purchase-link-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.purchase-link-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  z-index: 20;
+  width: max-content;
+  transform: translateX(-50%) translateY(4px);
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow-glass);
+  color: var(--text-main);
+  font-size: 0.72rem;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+}
+
+.purchase-link-tooltip-wrap:hover .purchase-link-tooltip,
+.purchase-link-tooltip-wrap:focus-within .purchase-link-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
 .resource-commerce-toolbar .resource-buy-row {
   flex: 0 0 auto;
   flex-wrap: nowrap;

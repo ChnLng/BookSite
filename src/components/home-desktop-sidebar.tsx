@@ -143,6 +143,33 @@ export function HomeDesktopSidebar() {
 
     container.addEventListener("input", commitDonationAmount, true);
 
+    const simplifyDonationButtons = () => {
+      const sdkContainer = container.querySelector(`#js-sdk-container-D3LVZA49QZ4VE`) as HTMLElement | null;
+      if (sdkContainer) {
+        sdkContainer.style.display = "none";
+      }
+
+      const checkoutButton = container.querySelector("#checkout-button") as HTMLButtonElement | null;
+      if (checkoutButton && checkoutButton.textContent?.trim() !== "PayPal") {
+        checkoutButton.textContent = "PayPal";
+      }
+
+      const genericErr = container.querySelector("#generic-error") as HTMLElement | null;
+      if (genericErr) {
+        genericErr.style.display = "none";
+      }
+
+      const browserErr = container.querySelector("#browser-error") as HTMLElement | null;
+      if (browserErr) {
+        browserErr.style.display = "none";
+      }
+
+      const inventoryErr = container.querySelector("#inventory-error") as HTMLElement | null;
+      if (inventoryErr) {
+        inventoryErr.style.display = "none";
+      }
+    };
+
     const selectFirstDonationPurpose = () => {
       const select = container.querySelector("select") as HTMLSelectElement | null;
       if (select && select.options.length > 0) {
@@ -168,6 +195,8 @@ export function HomeDesktopSidebar() {
         const firstEnabledRadio = radios.find((radio) => !radio.disabled);
         firstEnabledRadio?.click();
       }
+
+      simplifyDonationButtons();
     };
 
     const observer = new MutationObserver(selectFirstDonationPurpose);
