@@ -146,7 +146,7 @@ export function HomeDesktopSidebar() {
     const simplifyDonationButtons = () => {
       const sdkContainer = container.querySelector(`#js-sdk-container-D3LVZA49QZ4VE`) as HTMLElement | null;
       if (sdkContainer) {
-        sdkContainer.style.display = "none";
+        sdkContainer.remove();
       }
 
       const checkoutButton = container.querySelector("#checkout-button") as HTMLButtonElement | null;
@@ -156,18 +156,26 @@ export function HomeDesktopSidebar() {
 
       const genericErr = container.querySelector("#generic-error") as HTMLElement | null;
       if (genericErr) {
-        genericErr.style.display = "none";
+        genericErr.remove();
       }
 
       const browserErr = container.querySelector("#browser-error") as HTMLElement | null;
       if (browserErr) {
-        browserErr.style.display = "none";
+        browserErr.remove();
       }
 
       const inventoryErr = container.querySelector("#inventory-error") as HTMLElement | null;
       if (inventoryErr) {
-        inventoryErr.style.display = "none";
+        inventoryErr.remove();
       }
+
+      const smartButtonFrames = Array.from(container.querySelectorAll("iframe")) as HTMLIFrameElement[];
+      smartButtonFrames.forEach((frame) => {
+        const src = frame.getAttribute("src") || "";
+        if (src.includes("paypal.com/smart/buttons")) {
+          frame.remove();
+        }
+      });
     };
 
     const selectFirstDonationPurpose = () => {
