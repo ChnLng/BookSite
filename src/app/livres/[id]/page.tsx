@@ -964,28 +964,32 @@ export default function BookDetailPage() {
                 <div className="promo-panel book-detail-cta-panel" style={moduleStyle("commerce", 30)}>
                   <div className="book-detail-cta-stack">
                     <div className="book-commerce-toolbar">
-                      <div className="book-promo-row">
-                        <input
-                          type="text"
-                          className="input book-promo-input"
-                          value={promoCode}
-                          onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
-                          placeholder="Code promo"
-                          title="Optionnel"
-                          maxLength={8}
-                          autoComplete="off"
-                          spellCheck={false}
-                          name="promo-code-input"
-                        />
-                        <button
-                          type="button"
-                          className="pill-button shrink-0 px-5"
-                          disabled={promoBusy}
-                          onClick={() => void handleApplyPromo()}
-                        >
-                          {promoBusy ? "..." : "Appliquer"}
-                        </button>
-                      </div>
+                      {!effectiveHasAccess ? (
+                        <div className="book-promo-row">
+                          <div className="compact-promo-field">
+                            <input
+                              type="text"
+                              className="input book-promo-input"
+                              value={promoCode}
+                              onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
+                              placeholder="Code promo"
+                              maxLength={8}
+                              autoComplete="off"
+                              spellCheck={false}
+                              name="promo-code-input"
+                            />
+                            <span className="detail-promo-tooltip" role="tooltip">Code promotionnel facultatif.</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="pill-button shrink-0 px-5"
+                            disabled={promoBusy}
+                            onClick={() => void handleApplyPromo()}
+                          >
+                            {promoBusy ? "..." : "Appliquer"}
+                          </button>
+                        </div>
+                      ) : null}
 
                       <div className="book-buy-row">
                       {effectiveHasAccess ? (
@@ -1021,7 +1025,7 @@ export default function BookDetailPage() {
                       </div>
                     </div>
 
-                    {promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
+                    {!effectiveHasAccess && promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
                   </div>
 
                   {promoSuccess ? <p className="tiny promo-message success">{promoSuccess}</p> : null}

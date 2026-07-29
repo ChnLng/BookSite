@@ -1273,6 +1273,7 @@ select {
   align-items: center;
   gap: 8px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .book-commerce-toolbar .book-promo-row {
@@ -1281,10 +1282,9 @@ select {
 }
 
 .book-commerce-toolbar .book-promo-input {
-  width: calc(8ch + 32px);
-  min-width: calc(8ch + 32px);
-  max-width: calc(8ch + 32px);
-  flex: 0 0 calc(8ch + 32px);
+  width: 100%;
+  min-width: 0;
+  max-width: none;
 }
 
 .book-commerce-toolbar .book-buy-row {
@@ -1308,6 +1308,7 @@ select {
   align-items: center;
   gap: 8px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .resource-commerce-toolbar .resource-promo-row {
@@ -1316,10 +1317,24 @@ select {
 }
 
 .resource-commerce-toolbar .resource-promo-input {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.compact-promo-field {
+  position: relative;
   width: calc(8ch + 32px);
   min-width: calc(8ch + 32px);
   max-width: calc(8ch + 32px);
   flex: 0 0 calc(8ch + 32px);
+}
+
+.compact-promo-field:hover .detail-promo-tooltip,
+.compact-promo-field:focus-within .detail-promo-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .resource-commerce-toolbar .resource-buy-row {

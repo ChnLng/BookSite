@@ -856,28 +856,32 @@ export default function ResourceDetailPage() {
 
             <div className="resource-inline-promo">
               <div className="resource-commerce-toolbar">
-                <div className="resource-promo-row">
-                  <input
-                    type="text"
-                    className="input resource-promo-input"
-                    value={promoCode}
-                    onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
-                    placeholder="Code promo"
-                    title="Optionnel"
-                    maxLength={8}
-                    autoComplete="off"
-                    spellCheck={false}
-                    name="promo-code-input"
-                  />
-                  <button
-                    type="button"
-                    className="pill-button shrink-0 px-5"
-                    disabled={promoBusy}
-                    onClick={() => void handleApplyPromo()}
-                  >
-                    {promoBusy ? "..." : "Appliquer"}
-                  </button>
-                </div>
+                {!effectiveHasAccess ? (
+                  <div className="resource-promo-row">
+                    <div className="compact-promo-field">
+                      <input
+                        type="text"
+                        className="input resource-promo-input"
+                        value={promoCode}
+                        onChange={(event) => setPromoCode(event.target.value.trim().toUpperCase().slice(0, 8))}
+                        placeholder="Code promo"
+                        maxLength={8}
+                        autoComplete="off"
+                        spellCheck={false}
+                        name="promo-code-input"
+                      />
+                      <span className="detail-promo-tooltip" role="tooltip">Code promotionnel facultatif.</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="pill-button shrink-0 px-5"
+                      disabled={promoBusy}
+                      onClick={() => void handleApplyPromo()}
+                    >
+                      {promoBusy ? "..." : "Appliquer"}
+                    </button>
+                  </div>
+                ) : null}
 
                 <div className="resource-buy-row">
                   <button
@@ -909,7 +913,7 @@ export default function ResourceDetailPage() {
                 </div>
               </div>
 
-              {promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
+              {!effectiveHasAccess && promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
             </div>
           </div>
 
