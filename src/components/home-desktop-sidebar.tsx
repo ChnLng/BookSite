@@ -58,6 +58,7 @@ export function HomeDesktopSidebar() {
   const [donationPaymentError, setDonationPaymentError] = useState("");
   const { user, session } = useAuth();
   const defaultCommentName = useMemo(() => user?.email?.split("@")[0] || "", [user?.email]);
+  const donationFallbackUrl = "https://www.paypal.com/ncp/payment/D3LVZA49QZ4VE?locale.x=fr-FR&country.x=FR";
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -191,9 +192,9 @@ export function HomeDesktopSidebar() {
     let attempts = 0;
     const intervalId = window.setInterval(() => {
       attempts += 1;
-      if (renderHostedButton() || attempts >= 30) {
+      if (renderHostedButton() || attempts >= 80) {
         window.clearInterval(intervalId);
-        if (attempts >= 30 && !container.querySelector("iframe")) {
+        if (attempts >= 80 && !container.querySelector("iframe")) {
           setDonationPaymentError("Le module PayPal ne s'est pas chargé. Veuillez actualiser la page.");
         }
       }
@@ -400,7 +401,14 @@ export function HomeDesktopSidebar() {
           <div className="paypal-donation-shell">
             <div className="paypal-donation-card">
               <div className="donation-hosted-button" id="paypal-container-D3LVZA49QZ4VE" />
-              {donationPaymentError ? <p className="donation-payment-error">{donationPaymentError}</p> : null}
+              {donationPaymentError ? (
+                <div className="donation-payment-error">
+                  <p className="tiny" style={{ margin: 0 }}>{donationPaymentError}</p>
+                  <a className="cta-button secondary compact-submit" href={donationFallbackUrl} target="_blank" rel="noreferrer">
+                    Ouvrir PayPal
+                  </a>
+                </div>
+              ) : null}
             </div>
             <SecurePaymentNote compact />
           </div>
