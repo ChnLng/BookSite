@@ -1,7 +1,9 @@
 import type { User } from "@supabase/supabase-js";
 import { getSupabaseRequestClient, getSupabaseServiceClient } from "@/lib/supabase-server";
 
-const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
+// Server-only emergency allowlist. Never expose the administrator list through
+// a NEXT_PUBLIC_* variable because those values are bundled into browser code.
+const adminEmails = (process.env.ADMIN_EMAILS || "")
   .split(",")
   .map((entry) => entry.trim().toLowerCase())
   .filter(Boolean);

@@ -26,11 +26,6 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
-  .split(",")
-  .map((entry) => entry.trim().toLowerCase())
-  .filter(Boolean);
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
@@ -185,9 +180,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const isAdmin = useMemo(() => {
-    const normalizedEmail = user?.email?.toLowerCase() || profile?.email?.toLowerCase() || "";
-    return Boolean(profile?.role === "admin" || adminEmails.includes(normalizedEmail));
-  }, [profile, user]);
+    return profile?.role === "admin";
+  }, [profile]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
