@@ -17,6 +17,7 @@ const githubToken = process.env.GITHUB_TOKEN;
 const githubOwner = process.env.GITHUB_OWNER;
 const githubRepo = process.env.GITHUB_REPO;
 const githubBranch = process.env.GITHUB_BRANCH || "main";
+const siteMediaBucketName = "site-media";
 
 type GitHubFileResponse = {
   sha?: string;
@@ -193,6 +194,62 @@ async function ensureResourceDownloadsBucket() {
   });
 
   return { error: null, supabase };
+}
+
+async function ensureSiteMediaBucket() {
+  const supabase = getSupabaseServiceClient();
+
+  if (!supabase) {
+    return { error: "SUPABASE_SERVICE_ROLE_KEY manquant.", supabase: null };
+  }
+
+  await supabase.storage.createBucket(siteMediaBucketName, {
+    public: true,
+    fileSizeLimit: 10 * 1024 * 1024,
+    allowedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"],
+  });
+
+  await supabase.storage.updateBucket(siteMediaBucketName, {
+    public: true,
+    fileSizeLimit: 10 * 1024 * 1024,
+    allowedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"],
+  });
+
+  return { error: null, supabase };
+}
+
+async function uploadImageToSupabase(file: File, fileName: string) {
+  const safeName = sanitizeFilename(fileName);
+  if (!safeName.match(/\.(png|jpg|jpeg|webp|gif|svg)$/i) || !file.type.startsWith("image/")) {
+    throw new Error("Format image non pris en charge.");
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error("L'image depasse la limite de 10 Mo.");
+  }
+
+  const { error, supabase } = await ensureSiteMediaBucket();
+  if (error || !supabase) throw new Error(error || "Supabase indisponible.");
+
+  const storagePath = `images/${safeName}`;
+  const { error: uploadError } = await supabase.storage.from(siteMediaBucketName).upload(storagePath, Buffer.from(await file.arrayBuffer()), {
+    contentType: file.type,
+    cacheControl: "3600",
+    upsert: true,
+  });
+  if (uploadError) throw new Error(uploadError.message);
+
+  return supabase.storage.from(siteMediaBucketName).getPublicUrl(storagePath).data.publicUrl;
+}
+
+function siteMediaPathFromUrl(assetPath: string) {
+  const marker = `/storage/v1/object/public/${siteMediaBucketName}/`;
+  try {
+    const pathname = new URL(assetPath).pathname;
+    const markerIndex = pathname.indexOf(marker);
+    return markerIndex >= 0 ? decodeURIComponent(pathname.slice(markerIndex + marker.length)) : null;
+  } catch {
+    return assetPath.startsWith(`${siteMediaBucketName}/`) ? assetPath.slice(siteMediaBucketName.length + 1) : null;
+  }
 }
 
 async function getGitHubFileSha(repoPath: string) {
@@ -426,7 +483,7 @@ export async function POST(request: Request) {
 
   try {
     if (kind === "image") {
-      const assetPath = await uploadImageToGitHub(file, fileName);
+      const assetPath = await uploadImageToSupabase(file, fileName);
       return NextResponse.json({ ok: true, assetPath });
     }
 
@@ -464,7 +521,15 @@ export async function DELETE(request: Request) {
 
   try {
     if (kind === "image") {
-      await deleteImageFromGitHub(assetPath);
+      const storagePath = siteMediaPathFromUrl(assetPath);
+      if (storagePath) {
+        const { error, supabase } = await ensureSiteMediaBucket();
+        if (error || !supabase) throw new Error(error || "Supabase indisponible.");
+        const { error: removeError } = await supabase.storage.from(siteMediaBucketName).remove([storagePath]);
+        if (removeError) throw new Error(removeError.message);
+      } else {
+        await deleteImageFromGitHub(assetPath);
+      }
       return NextResponse.json({ ok: true });
     }
 

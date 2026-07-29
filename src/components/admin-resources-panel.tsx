@@ -101,6 +101,9 @@ export function AdminResourcesPanel() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"create" | "edit">("create");
   const [lastDeleted, setLastDeleted] = useState<{ id: string; title: string; wasVisible: boolean } | null>(null);
+  const [selectedCoverFile, setSelectedCoverFile] = useState<File | null>(null);
+  const [selectedQrFile, setSelectedQrFile] = useState<File | null>(null);
+  const [selectedVariantFiles, setSelectedVariantFiles] = useState<Record<number, File | null>>({});
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -199,6 +202,9 @@ export function AdminResourcesPanel() {
   const resetDraft = () => {
     setDraft(defaultDraft);
     setEditingId(null);
+    setSelectedCoverFile(null);
+    setSelectedQrFile(null);
+    setSelectedVariantFiles({});
   };
 
   const startNewResource = () => {
@@ -357,7 +363,8 @@ export function AdminResourcesPanel() {
     try {
       const assetPath = await uploadAsset("image", file, filename);
       setDraft((current) => ({ ...current, qrImageUrl: assetPath }));
-      setStatusMessage("QR image telechargee.");
+      setSelectedQrFile(null);
+      setStatusMessage("QR 已上传到 Supabase；点击下方保存商品后在用户端生效。");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Upload QR impossible.");
     } finally {
@@ -373,7 +380,8 @@ export function AdminResourcesPanel() {
     try {
       const assetPath = await uploadAsset("image", file, filename);
       setDraft((current) => ({ ...current, coverImageUrl: assetPath }));
-      setStatusMessage("Image carree telechargee.");
+      setSelectedCoverFile(null);
+      setStatusMessage("封面已上传到 Supabase；点击下方保存商品后在用户端生效。");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Upload image impossible.");
     } finally {
@@ -395,6 +403,7 @@ export function AdminResourcesPanel() {
           entryIndex === index ? { ...entry, filePath: assetPath } : entry,
         ),
       }));
+      setSelectedVariantFiles((current) => ({ ...current, [index]: null }));
       setStatusMessage("付费文件已上传到统一的 GitHub Release。保存商品后生效。");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Upload impossible.");
@@ -518,13 +527,19 @@ export function AdminResourcesPanel() {
           type="file"
           accept="image/*"
           onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) {
-              void uploadCoverImage(file);
-            }
+            const file = event.target.files?.[0] || null;
+            setSelectedCoverFile(file);
+            setStatusMessage(file ? `已选择封面：${file.name}，请点击上传封面。` : "");
           }}
         />
-        <span className="tiny">Uploader l'image carree de la carte</span>
+        <button
+          className="pill-button"
+          type="button"
+          disabled={!selectedCoverFile || busyKey === "upload-resource-cover"}
+          onClick={() => selectedCoverFile ? void uploadCoverImage(selectedCoverFile) : undefined}
+        >
+          {busyKey === "upload-resource-cover" ? "上传中..." : "上传封面并绑定"}
+        </button>
       </div>
 
       <div className="actions-row">
@@ -533,13 +548,19 @@ export function AdminResourcesPanel() {
           type="file"
           accept="image/*"
           onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) {
-              void uploadQrImage(file);
-            }
+            const file = event.target.files?.[0] || null;
+            setSelectedQrFile(file);
+            setStatusMessage(file ? `已选择 QR：${file.name}，请点击上传 QR。` : "");
           }}
         />
-        <span className="tiny">Uploader un QR code image</span>
+        <button
+          className="pill-button"
+          type="button"
+          disabled={!selectedQrFile || busyKey === "upload-resource-qr"}
+          onClick={() => selectedQrFile ? void uploadQrImage(selectedQrFile) : undefined}
+        >
+          {busyKey === "upload-resource-qr" ? "上传中..." : "上传 QR 并绑定"}
+        </button>
       </div>
 
       <div className="section-block">
@@ -637,12 +658,19 @@ export function AdminResourcesPanel() {
                 type="file"
                 accept=".zip,.7z,.rar,application/zip,application/x-zip-compressed,application/octet-stream"
                 onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) {
-                    void uploadVariantFile(index, file);
-                  }
+                  const file = event.target.files?.[0] || null;
+                  setSelectedVariantFiles((current) => ({ ...current, [index]: file }));
+                  setStatusMessage(file ? `已选择付费文件：${file.name}，请点击上传文件。` : "");
                 }}
               />
+              <button
+                className="pill-button"
+                type="button"
+                disabled={!selectedVariantFiles[index] || busyKey === `upload-resource-file-${index}`}
+                onClick={() => selectedVariantFiles[index] ? void uploadVariantFile(index, selectedVariantFiles[index] as File) : undefined}
+              >
+                {busyKey === `upload-resource-file-${index}` ? "上传中..." : "上传并绑定文件"}
+              </button>
               <button
                 className="pill-button"
                 type="button"

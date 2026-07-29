@@ -39,6 +39,7 @@ export function AdminPartnerLinksPanel() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"create" | "edit">("create");
   const [lastDeleted, setLastDeleted] = useState<{ id: string; title: string; wasVisible: boolean } | null>(null);
+  const [selectedIconFile, setSelectedIconFile] = useState<File | null>(null);
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -112,6 +113,7 @@ export function AdminPartnerLinksPanel() {
   const resetDraft = () => {
     setDraft(defaultDraft);
     setEditingId(null);
+    setSelectedIconFile(null);
   };
 
   const startNewLink = () => {
@@ -119,8 +121,9 @@ export function AdminPartnerLinksPanel() {
     setActiveTab("create");
   };
 
-  const saveLink = async () => {
-    if (!draft.titleFr.trim() || !draft.targetUrl.trim() || !draft.iconUrl.trim()) {
+  const saveLink = async (overrides?: Partial<PartnerDraft>) => {
+    const nextDraft = { ...draft, ...overrides };
+    if (!nextDraft.titleFr.trim() || !nextDraft.targetUrl.trim() || !nextDraft.iconUrl.trim()) {
       setStatusMessage("Remplissez le titre, l'icone et l'URL cible.");
       return;
     }
@@ -135,7 +138,7 @@ export function AdminPartnerLinksPanel() {
         },
         body: JSON.stringify({
           payload: {
-            ...draft,
+            ...nextDraft,
             id: editingId || undefined,
           },
         }),
@@ -150,6 +153,26 @@ export function AdminPartnerLinksPanel() {
       setStatusMessage("Lien partenaire enregistre.");
       resetDraft();
       await loadData();
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
+  const uploadAndSaveIcon = async () => {
+    if (!selectedIconFile) return;
+    if (!draft.titleFr.trim() || !draft.targetUrl.trim()) {
+      setStatusMessage("填写标题和目标链接后，再上传并保存图片。");
+      return;
+    }
+
+    setBusyKey("upload-partner-icon");
+    try {
+      const assetPath = await uploadIcon(selectedIconFile);
+      setDraft((current) => ({ ...current, iconUrl: assetPath }));
+      setSelectedIconFile(null);
+      await saveLink({ iconUrl: assetPath });
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Upload impossible.");
     } finally {
       setBusyKey(null);
     }
@@ -349,23 +372,19 @@ export function AdminPartnerLinksPanel() {
           type="file"
           accept="image/*"
           onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) {
-              void (async () => {
-                try {
-                  setBusyKey("upload-partner-icon");
-                  const assetPath = await uploadIcon(file);
-                  setDraft((current) => ({ ...current, iconUrl: assetPath }));
-                  setStatusMessage("Icone telechargee.");
-                } catch (error) {
-                  setStatusMessage(error instanceof Error ? error.message : "Upload impossible.");
-                } finally {
-                  setBusyKey(null);
-                }
-              })();
-            }
+            const file = event.target.files?.[0] || null;
+            setSelectedIconFile(file);
+            setStatusMessage(file ? `已选择图片：${file.name}，请点击上传并保存。` : "");
           }}
         />
+        <button
+          className="pill-button"
+          type="button"
+          disabled={!selectedIconFile || busyKey === "upload-partner-icon"}
+          onClick={() => void uploadAndSaveIcon()}
+        >
+          {busyKey === "upload-partner-icon" ? "上传中..." : "上传并保存图片"}
+        </button>
         <button className="cta-button" type="button" disabled={busyKey === "save-partner"} onClick={() => void saveLink()}>
           {busyKey === "save-partner" ? "Enregistrement..." : editingId ? "Mettre a jour le lien" : "Ajouter le lien"}
         </button>
