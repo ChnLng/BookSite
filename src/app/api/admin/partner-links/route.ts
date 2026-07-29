@@ -7,6 +7,7 @@ type PartnerLinkPayload = {
   titleFr?: string;
   iconUrl?: string;
   targetUrl?: string;
+  tooltipText?: string;
   sortOrder?: string;
   visible?: boolean;
 };
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("partner_links")
-    .select("id, title_fr, icon_url, target_url, sort_order, visible")
+    .select("id, title_fr, icon_url, target_url, tooltip_text, sort_order, visible")
     .is("deleted_at", null)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
@@ -84,6 +85,7 @@ export async function POST(request: Request) {
     title_fr: link.titleFr.trim(),
     icon_url: link.iconUrl.trim(),
     target_url: link.targetUrl.trim(),
+    tooltip_text: link.tooltipText?.trim() || link.titleFr.trim(),
     sort_order: Number(link.sortOrder || 0),
     visible: link.visible !== false,
   };

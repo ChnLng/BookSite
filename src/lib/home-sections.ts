@@ -69,6 +69,7 @@ export type PartnerLink = {
   titleFr: string;
   iconUrl: string;
   targetUrl: string;
+  tooltipText: string;
   sortOrder: number;
   visible: boolean;
 };
@@ -140,6 +141,7 @@ type PartnerLinkRow = {
   title_fr: string | null;
   icon_url: string | null;
   target_url: string | null;
+  tooltip_text: string | null;
   sort_order: number | null;
   visible: boolean | null;
 };
@@ -233,6 +235,7 @@ function mapPartnerLink(row: PartnerLinkRow): PartnerLink {
     titleFr: row.title_fr || "Lien",
     iconUrl: row.icon_url || "",
     targetUrl: row.target_url || "",
+    tooltipText: row.tooltip_text || row.title_fr || "Lien partenaire",
     sortOrder: row.sort_order ?? 0,
     visible: row.visible !== false,
   };
@@ -282,7 +285,7 @@ export async function loadExpandedHomeData() {
         .order("created_at", { ascending: true }),
       supabase
         .from("partner_links")
-        .select("id, title_fr, icon_url, target_url, sort_order, visible")
+        .select("id, title_fr, icon_url, target_url, tooltip_text, sort_order, visible")
         .eq("visible", true)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true }),

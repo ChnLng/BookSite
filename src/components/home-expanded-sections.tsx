@@ -94,7 +94,7 @@ async function loadFallbackPartnerLinks() {
 
   const { data } = await supabase
     .from("partner_links")
-    .select("id, title_fr, icon_url, target_url, sort_order, visible")
+    .select("id, title_fr, icon_url, target_url, tooltip_text, sort_order, visible")
     .eq("visible", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
@@ -104,6 +104,7 @@ async function loadFallbackPartnerLinks() {
     titleFr: String(item.title_fr || "Lien"),
     iconUrl: String(item.icon_url || "/images/logo.png"),
     targetUrl: String(item.target_url || "https://visdar.fr"),
+    tooltipText: String(item.tooltip_text || item.title_fr || "Lien partenaire"),
     sortOrder: Number(item.sort_order || 0),
     visible: item.visible !== false,
   }));

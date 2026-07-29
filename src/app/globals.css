@@ -3361,8 +3361,9 @@ select {
   width: 220px;
   padding: 10px 12px;
   border-radius: 16px;
-  background: rgba(15, 23, 42, 0.92);
-  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text-main);
   font-size: 0.78rem;
   line-height: 1.45;
   opacity: 0;
@@ -3370,7 +3371,7 @@ select {
   transition:
     opacity 0.2s ease,
     transform 0.2s ease;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.22);
+  box-shadow: var(--shadow-glass);
 }
 
 .partner-link-button:hover .partner-link-tooltip,

@@ -10,6 +10,7 @@ export type PartnerLinkItem = {
   titleFr: string;
   iconUrl: string;
   targetUrl: string;
+  tooltipText: string;
   sortOrder: number;
 };
 
@@ -19,11 +20,10 @@ const fallbackLinks: PartnerLinkItem[] = [
     titleFr: "Visd AR",
     iconUrl: "/images/logo.png",
     targetUrl: "https://visdar.fr",
+    tooltipText: "Visd AR",
     sortOrder: 10,
   },
 ];
-
-const tooltipText = "Ce lien s'ouvrira dans une nouvelle fenetre vers un site tiers.";
 
 type PartnerLinksSectionProps = {
   links?: PartnerLinkItem[];
@@ -55,7 +55,7 @@ export function PartnerLinksSection({
 
       const { data } = await supabase
         .from("partner_links")
-        .select("id, title_fr, icon_url, target_url, sort_order")
+        .select("id, title_fr, icon_url, target_url, tooltip_text, sort_order")
         .eq("visible", true)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true });
@@ -70,6 +70,7 @@ export function PartnerLinksSection({
           titleFr: (item.title_fr as string | null) || "Partenaire",
           iconUrl: (item.icon_url as string | null) || "/images/logo.png",
           targetUrl: (item.target_url as string | null) || "https://visdar.fr",
+          tooltipText: (item.tooltip_text as string | null) || (item.title_fr as string | null) || "Partenaire",
           sortOrder: Number(item.sort_order || 0),
         })),
       );
@@ -109,7 +110,7 @@ export function PartnerLinksSection({
               className="partner-link-icon"
             />
             <span className="partner-link-tooltip" role="tooltip">
-              {tooltipText}
+              {link.tooltipText || link.titleFr}
             </span>
           </a>
         ))}

@@ -8,6 +8,7 @@ type PartnerLinkRow = {
   title_fr: string | null;
   icon_url: string | null;
   target_url: string | null;
+  tooltip_text: string | null;
   sort_order: number | null;
   visible: boolean | null;
 };
@@ -17,6 +18,7 @@ type PartnerDraft = {
   titleFr: string;
   iconUrl: string;
   targetUrl: string;
+  tooltipText: string;
   sortOrder: string;
   visible: boolean;
 };
@@ -25,6 +27,7 @@ const defaultDraft: PartnerDraft = {
   titleFr: "",
   iconUrl: "",
   targetUrl: "",
+  tooltipText: "",
   sortOrder: "10",
   visible: true,
 };
@@ -186,6 +189,7 @@ export function AdminPartnerLinksPanel() {
       titleFr: link.title_fr || "",
       iconUrl: link.icon_url || "",
       targetUrl: link.target_url || "",
+      tooltipText: link.tooltip_text || link.title_fr || "",
       sortOrder: String(link.sort_order || 0),
       visible: link.visible !== false,
     });
@@ -352,9 +356,9 @@ export function AdminPartnerLinksPanel() {
         />
         <input
           className="input"
-          placeholder="Ordre"
-          value={draft.sortOrder}
-          onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })}
+          placeholder="悬停浮窗文字 Texte de l'infobulle"
+          value={draft.tooltipText}
+          onChange={(event) => setDraft({ ...draft, tooltipText: event.target.value })}
         />
         <label className="tiny">
           <input
