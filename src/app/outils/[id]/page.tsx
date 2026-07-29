@@ -396,6 +396,11 @@ export default function ResourceDetailPage() {
               },
             },
           ],
+          application_context: {
+            landing_page: "BILLING",
+            shipping_preference: "NO_SHIPPING",
+            user_action: "PAY_NOW",
+          },
         }),
       onApprove: async (data: any, actions: any) => {
         const order = await actions.order.capture();
