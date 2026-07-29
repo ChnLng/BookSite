@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
   if (!normalizedCode) {
     return NextResponse.json(
-      { ok: false, message: "Code promo invalide, veuillez verifier et reessayer." },
+      { ok: false, message: "Code promo invalide, veuillez vérifier et réessayer." },
       { status: 400 },
     );
   }
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
   if (error || !data) {
     return NextResponse.json(
-      { ok: false, message: "Code promo invalide, veuillez verifier et reessayer." },
+      { ok: false, message: "Code promo invalide, veuillez vérifier et réessayer." },
       { status: 404 },
     );
   }
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
   if (!isActive) {
     return NextResponse.json(
-      { ok: false, message: "Code promo invalide, veuillez verifier et reessayer." },
+      { ok: false, message: "Code promo invalide, veuillez vérifier et réessayer." },
       { status: 400 },
     );
   }
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 
   if ((validFrom && now < validFrom) || (expiresAt && now > expiresAt)) {
     return NextResponse.json(
-      { ok: false, message: "Code promo invalide, veuillez verifier et reessayer." },
+      { ok: false, message: "Code promo invalide, veuillez vérifier et réessayer." },
       { status: 400 },
     );
   }

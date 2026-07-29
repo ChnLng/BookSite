@@ -141,7 +141,7 @@ export function GoogleAdsSlot({
           <div className="ad-slot-placeholder">
             <p className="tiny" style={{ margin: 0 }}>
               {status === "unfilled"
-                ? "Annonce Google chargee, mais aucun contenu n'a encore ete rempli pour cet espace."
+                ? "Annonce Google chargée, mais aucun contenu n'a encore été fourni pour cet espace."
                 : status === "blocked"
                   ? "Le script Google AdSense ne s'est pas charge correctement ou la zone n'est pas encore eligible."
                   : "Chargement de l'annonce Google en cours..."}

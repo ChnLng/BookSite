@@ -289,7 +289,7 @@ export function HomeDesktopSidebar() {
         setCommentMessage("Message envoye a l'administrateur avec succes !");
         setCommentContent("");
       } catch {
-        setCommentMessage("Erreur d'envoi. Veuillez reessayer.");
+        setCommentMessage("Erreur d'envoi. Veuillez réessayer.");
       } finally {
         setIsSubmittingComment(false);
       }

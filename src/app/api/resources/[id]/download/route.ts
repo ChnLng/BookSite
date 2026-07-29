@@ -50,7 +50,7 @@ export async function GET(request: Request, context: RouteContext) {
   });
 
   if (!hasAccess) {
-    return NextResponse.json({ ok: false, message: "Acces non autorise." }, { status: 403 });
+    return NextResponse.json({ ok: false, message: "Accès non autorisé." }, { status: 403 });
   }
 
   const { data: fileRow } = await supabase
@@ -103,7 +103,7 @@ export async function GET(request: Request, context: RouteContext) {
   if (parseGithubPaidAssetReference(rawFilePath) || /^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(rawFilePath)) {
     const asset = await fetchGithubPaidAsset(rawFilePath);
     if (!asset?.response.ok || !asset.response.body) {
-      return NextResponse.json({ ok: false, message: "Fichier GitHub prive introuvable." }, { status: 404 });
+      return NextResponse.json({ ok: false, message: "Fichier GitHub privé introuvable." }, { status: 404 });
     }
     return new NextResponse(asset.response.body, {
       status: 200,
@@ -114,7 +114,7 @@ export async function GET(request: Request, context: RouteContext) {
   const storagePath = normalizeResourceAssetPath(rawFilePath);
 
   if (!storagePath || /^https?:\/\//i.test(storagePath)) {
-    return NextResponse.json({ ok: false, message: "Chemin de telechargement invalide." }, { status: 404 });
+    return NextResponse.json({ ok: false, message: "Chemin de téléchargement invalide." }, { status: 404 });
   }
 
   const { data: signedData, error } = await supabase.storage

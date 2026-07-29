@@ -61,7 +61,7 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   if (price > 0) {
-    return NextResponse.json({ ok: false, message: "Cette ressource doit etre achetee." }, { status: 400 });
+    return NextResponse.json({ ok: false, message: "Cette ressource doit être achetée." }, { status: 400 });
   }
 
   const existing = await hasPurchasedResource(supabase, {

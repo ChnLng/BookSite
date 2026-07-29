@@ -73,7 +73,7 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   if (resolvedPrice > 0) {
-    return NextResponse.json({ ok: false, message: "Ce livre doit etre achete." }, { status: 400 });
+    return NextResponse.json({ ok: false, message: "Ce livre doit être acheté." }, { status: 400 });
   }
 
   const existing = await hasPurchasedBook(supabase, {

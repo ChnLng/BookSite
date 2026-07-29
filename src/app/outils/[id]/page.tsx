@@ -171,7 +171,7 @@ export default function ResourceDetailPage() {
     [user?.email, user?.user_metadata?.full_name],
   );
   const zeroPriceUnlockMessage =
-    "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
+    "Ce contenu est gratuit ! Partagez notre site à l’aide des boutons situés en haut de la page pour déverrouiller le lien de téléchargement.";
   const effectiveHasAccess = accessState.hasAccess || optimisticSharedUnlock;
 
   const authorizedFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -342,7 +342,7 @@ export default function ResourceDetailPage() {
 
   useEffect(() => {
     if (purchaseSucceeded) {
-      setActionMessage("Paiement confirme. Vos telechargements sont maintenant debloques.");
+      setActionMessage("Paiement confirmé. Vos téléchargements sont maintenant débloqués.");
       void refreshAccess();
     } else if (purchaseCanceled) {
       setActionMessage("Paiement annule. Vous pouvez reprendre quand vous voulez.");
@@ -443,7 +443,7 @@ export default function ResourceDetailPage() {
           accountUrl: result.accountUrl || "/account",
           resourceUrl: result.resourceUrl || `/outils/${resource.slug || resource.id}`,
         });
-        setActionMessage("Paiement confirme. Vos telechargements sont maintenant debloques.");
+        setActionMessage("Paiement confirmé. Vos téléchargements sont maintenant débloqués.");
         await refreshAccess();
 
         if (paypalContainerRef.current) {
@@ -507,7 +507,7 @@ export default function ResourceDetailPage() {
         const result = (await response.json().catch(() => null)) as { ok?: boolean; message?: string } | null;
 
         if (!response.ok || !result?.ok) {
-          setActionMessage(result?.message || "Impossible de deverrouiller cette ressource.");
+          setActionMessage(result?.message || "Impossible de déverrouiller cette ressource.");
           return;
         }
 
@@ -560,7 +560,7 @@ export default function ResourceDetailPage() {
       if (!response.ok || !result?.ok || !result.promo) {
         setAppliedPromo(null);
         setPromoMessageKind("error");
-        setPromoMessage(result?.message || "Code promo invalide, veuillez verifier et reessayer.");
+        setPromoMessage(result?.message || "Code promo invalide, veuillez vérifier et réessayer.");
         return;
       }
 
@@ -569,7 +569,7 @@ export default function ResourceDetailPage() {
       setPromoMessageKind("success");
       setPromoMessage(
         result.promo.isFreeShare
-          ? `Code ${result.promo.code} applique. Le partage peut maintenant deverrouiller cette ressource gratuitement.`
+          ? `Code ${result.promo.code} appliqué. Le partage peut maintenant déverrouiller cette ressource gratuitement.`
           : `Code ${result.promo.code} applique. Nouveau prix: ${result.promo.discountedPrice.toFixed(2)} EUR.`,
       );
     } finally {
@@ -661,7 +661,7 @@ export default function ResourceDetailPage() {
 
   const handleDownload = async (fileId: string) => {
     if (!resource || !session?.access_token) {
-      setActionMessage("Connectez-vous pour telecharger.");
+      setActionMessage("Connectez-vous pour télécharger.");
       return;
     }
 
@@ -685,7 +685,7 @@ export default function ResourceDetailPage() {
       const result = (await response.json().catch(() => null)) as { ok?: boolean; message?: string; url?: string } | null;
 
       if (!response.ok || !result?.ok || !result.url) {
-        setActionMessage(result?.message || "Impossible de preparer le telechargement.");
+        setActionMessage(result?.message || "Impossible de préparer le téléchargement.");
         return;
       }
 
@@ -799,7 +799,7 @@ export default function ResourceDetailPage() {
               </div>
 
               <label className="tiny" htmlFor="resource-review-text">
-                Votre ressenti apres utilisation
+                Votre ressenti après utilisation
               </label>
               <textarea
                 id="resource-review-text"
@@ -839,7 +839,7 @@ export default function ResourceDetailPage() {
                   </article>
                 ))
               ) : (
-                <p className="muted">Aucun retour pour l&apos;instant. Votre experience peut lancer la premiere etoile.</p>
+                <p className="muted">Aucun retour pour l&apos;instant. Votre expérience peut faire naître la première étoile.</p>
               )}
             </div>
           </div>
@@ -855,7 +855,7 @@ export default function ResourceDetailPage() {
                 <span className="resource-price-tag">{priceLabel}</span>
               </div>
               <span className="tiny">
-                {promoUnlocksFreeAccess ? "Acces gratuit apres partage" : "Paiement securise puis telechargement"}
+                {promoUnlocksFreeAccess ? "Accès gratuit après partage" : "Paiement sécurisé puis téléchargement"}
               </span>
             </div>
 
@@ -896,11 +896,11 @@ export default function ResourceDetailPage() {
                     onClick={() => void handleCheckout()}
                   >
                     {effectiveHasAccess
-                      ? "Acces deja debloque"
+                      ? "Accès déjà débloqué"
                       : actionBusy
                         ? "Ouverture..."
                         : promoUnlocksFreeAccess
-                          ? "Partager pour deverrouiller"
+                          ? "Partager pour déverrouiller"
                           : "Acheter cet outil"}
                   </button>
 
@@ -932,11 +932,11 @@ export default function ResourceDetailPage() {
 
           {promoUnlocksFreeAccess && !effectiveHasAccess ? (
             <div className="share-unlock-box">
-              <strong>Partage pour deverrouiller</strong>
+              <strong>Partagez pour déverrouiller</strong>
               <p className="tiny">{zeroPriceUnlockMessage}</p>
               {shareUnlockPending ? (
                 <p className="tiny">
-                  Cliquez maintenant sur l'un des boutons de partage en haut de la page. Les telechargements se deverrouilleront aussitot.
+                  Cliquez maintenant sur l&apos;un des boutons de partage en haut de la page. Les téléchargements se déverrouilleront aussitôt.
                 </p>
               ) : null}
             </div>

@@ -1247,6 +1247,40 @@ select {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
+}
+
+.book-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+}
+
+.book-main-title {
+  min-width: 0;
+  margin: 0;
+}
+
+.book-external-purchase {
+  margin-left: auto;
+}
+
+.book-external-purchase .pill-button {
+  max-width: 190px;
+  padding: 9px 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-chinese-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-family: "Kaiti SC", "STKaiti", "KaiTi", "Noto Serif CJK SC", serif;
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
+  line-height: 1.55;
 }
 
 .book-detail-cta-panel {
@@ -1274,6 +1308,7 @@ select {
   gap: 6px;
   min-width: 0;
   max-width: 100%;
+  overflow: hidden;
 }
 
 .book-commerce-toolbar .book-promo-row {
@@ -1506,6 +1541,16 @@ select {
 }
 
 @media (max-width: 760px) {
+  .book-title-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .book-external-purchase {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+
   .book-commerce-toolbar,
   .resource-commerce-toolbar {
     align-items: stretch;
@@ -3322,6 +3367,7 @@ select {
   flex-wrap: wrap;
   gap: 14px;
   margin-top: 12px;
+  overflow: visible;
 }
 
 .partner-link-button {
@@ -3335,13 +3381,14 @@ select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
 }
 
 .partner-link-button:hover {
+  z-index: 30;
   transform: translateY(-2px);
   box-shadow: 0 12px 24px rgba(99, 102, 241, 0.14);
 }
@@ -3355,10 +3402,11 @@ select {
 
 .partner-link-tooltip {
   position: absolute;
-  left: 50%;
+  left: 0;
   bottom: calc(100% + 12px);
-  transform: translateX(-50%) translateY(6px);
-  width: 220px;
+  transform: translateY(6px);
+  width: max-content;
+  max-width: min(260px, calc(100vw - 64px));
   padding: 10px 12px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.9);
@@ -3366,6 +3414,7 @@ select {
   color: var(--text-main);
   font-size: 0.78rem;
   line-height: 1.45;
+  white-space: normal;
   opacity: 0;
   pointer-events: none;
   transition:
@@ -3377,7 +3426,7 @@ select {
 .partner-link-button:hover .partner-link-tooltip,
 .partner-link-button:focus-visible .partner-link-tooltip {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
 }
 
 .resource-detail-layout {

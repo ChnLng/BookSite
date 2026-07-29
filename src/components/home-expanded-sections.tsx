@@ -487,7 +487,7 @@ export function HomeExpandedSections() {
               </div>
               <p className="section-caption">
                 {section.category?.introFr ||
-                  "Jeux a telecharger, mini outils bienveillants et ressources multi-plateformes pour prolonger l'experience du site."}
+                  "Jeux à télécharger, mini-outils bienveillants et ressources multiplateformes pour prolonger l'expérience du site."}
               </p>
 
               {section.resources.length === 0 ? (
@@ -523,7 +523,7 @@ export function HomeExpandedSections() {
                                 <strong>{resource.titleFr}</strong>
                                 <span>{resource.priceEur.toFixed(2)} EUR</span>
                               </div>
-                              <p className="tiny">{resource.summaryFr || "Ouvrez la fiche pour voir les details et les options de telechargement."}</p>
+                              <p className="tiny">{resource.summaryFr || "Ouvrez la fiche pour voir les détails et les options de téléchargement."}</p>
                               <span className="home-resource-carousel-meta">
                                 {resource.downloads.length > 0 ? `${resource.downloads.length} version(s)` : "Voir la fiche"}
                               </span>
@@ -551,7 +551,7 @@ export function HomeExpandedSections() {
                 <h2 className="section-heading-text">{section.label}</h2>
               </div>
               <p className="section-caption">
-                {section.category.introFr || "Une nouvelle categorie modulable, pilotee depuis l'administration."}
+                {section.category.introFr || "Une nouvelle catégorie modulable, pilotée depuis l'administration."}
               </p>
 
               {section.categoryEntries.length === 0 ? (

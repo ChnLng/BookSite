@@ -118,7 +118,7 @@ export async function GET(request: Request, context: RouteContext) {
   });
 
   if (!hasAccess) {
-    return NextResponse.json({ ok: false, message: "Acces non autorise." }, { status: 403 });
+    return NextResponse.json({ ok: false, message: "Accès non autorisé." }, { status: 403 });
   }
 
   if (serviceClient) {
@@ -147,7 +147,7 @@ export async function GET(request: Request, context: RouteContext) {
   if (parseGithubPaidAssetReference(normalizedPdf)) {
     const asset = await fetchGithubPaidAsset(normalizedPdf);
     if (!asset?.response.ok || !asset.response.body) {
-      return NextResponse.json({ ok: false, message: "Fichier GitHub prive introuvable." }, { status: 404 });
+      return NextResponse.json({ ok: false, message: "Fichier GitHub privé introuvable." }, { status: 404 });
     }
     return new NextResponse(asset.response.body, {
       status: 200,

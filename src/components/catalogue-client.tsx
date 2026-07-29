@@ -69,7 +69,7 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
     <main className="page-shell">
       <TopNav
         className="topbar-luxury"
-        subtitle="Bibliotheque visuelle bilingue"
+        subtitle="Bibliothèque visuelle bilingue"
         title="Visd AR"
         showAdmin
         showLogout

@@ -202,7 +202,7 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
     <main className="page-shell luxury-shell homepage-shell w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <TopNav
         className="topbar-luxury"
-        subtitle="Bibliotheque visuelle bilingue"
+        subtitle="Bibliothèque visuelle bilingue"
         title={siteConfig.brand}
         onLoginClick={() => setAuthOpen(true)}
         showAdmin

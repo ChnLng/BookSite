@@ -18,6 +18,7 @@ type BookPayload = {
   synopsis_zh?: string | null;
   amazon_ebook_url?: string | null;
   amazon_paperback_url?: string | null;
+  external_purchase_label?: string | null;
   related_book_ids?: string[] | null;
 };
 

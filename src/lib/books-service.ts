@@ -17,6 +17,7 @@ export type BookRow = {
   synopsis_zh: string | null;
   amazon_ebook_url: string | null;
   amazon_paperback_url: string | null;
+  external_purchase_label?: string | null;
   asin: string | null;
   related_book_ids?: string[] | null;
   created_at?: string | null;
@@ -32,7 +33,7 @@ export type DisplayBook = Book & {
 };
 
 export const BOOK_PUBLIC_SELECT =
-  "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, asin, related_book_ids, created_at, deleted_at";
+  "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, synopsis_fr, synopsis_zh, amazon_ebook_url, amazon_paperback_url, external_purchase_label, asin, related_book_ids, created_at, deleted_at";
 
 // Supabase is authoritative; admin edits should appear immediately on product pages.
 const BOOK_CACHE_TTL_MS = 0;
@@ -85,6 +86,7 @@ export function mapBookRow(row: BookRow, fallback?: Book): DisplayBook {
     teachingPointFr: fallback?.teachingPointFr || "",
     amazonEbookUrl: row.amazon_ebook_url || fallback?.amazonEbookUrl || "",
     amazonPaperbackUrl: row.amazon_paperback_url || fallback?.amazonPaperbackUrl || "",
+    externalPurchaseLabel: row.external_purchase_label || fallback?.externalPurchaseLabel || "Amazon broché",
     visible: row.visible,
     coverImage: row.cover_image || bookCoverPath(slug, ext),
     pdfFile: row.pdf_file || bookPdfPath(slug),
@@ -210,6 +212,7 @@ export async function resolveDisplayBookById(
     synopsis_zh: fallback.synopsisZh || null,
     amazon_ebook_url: fallback.amazonEbookUrl,
     amazon_paperback_url: fallback.amazonPaperbackUrl,
+    external_purchase_label: fallback.externalPurchaseLabel || "Amazon broché",
     asin: fallback.asin,
     related_book_ids: defaultRelatedBookIds[fallback.id] || [],
   }, fallback) : null;

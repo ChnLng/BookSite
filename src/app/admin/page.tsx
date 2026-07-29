@@ -33,6 +33,7 @@ type BookRow = {
   asin: string | null;
   amazon_ebook_url: string | null;
   amazon_paperback_url: string | null;
+  external_purchase_label?: string | null;
   related_book_ids?: string[] | null;
   created_at?: string | null;
   deleted_at?: string | null;
@@ -97,6 +98,7 @@ type BookFormState = {
   synopsisZh: string;
   amazonEbookUrl: string;
   amazonPaperbackUrl: string;
+  externalPurchaseLabel: string;
   visible: boolean;
   relatedBookIds: string[];
 };
@@ -165,6 +167,7 @@ const defaultBookForm: BookFormState = {
   synopsisZh: "",
   amazonEbookUrl: "",
   amazonPaperbackUrl: "",
+  externalPurchaseLabel: "Amazon broché",
   visible: true,
   relatedBookIds: [],
 };
@@ -257,6 +260,7 @@ function bookEditFromRow(book: BookRow): BookEditState {
     synopsisZh: book.synopsis_zh || "",
     amazonEbookUrl: book.amazon_ebook_url || "",
     amazonPaperbackUrl: book.amazon_paperback_url || "",
+    externalPurchaseLabel: book.external_purchase_label || "Amazon broché",
     visible: Boolean(book.visible),
     relatedBookIds: relatedBookIds.length > 0 ? relatedBookIds : defaultRelatedBookIds[slug] || [],
   };
@@ -298,6 +302,7 @@ function fallbackBookRow(index: number, book: (typeof staticBooks)[number]): Boo
     asin: book.asin,
     amazon_ebook_url: book.amazonEbookUrl,
     amazon_paperback_url: book.amazonPaperbackUrl,
+    external_purchase_label: book.externalPurchaseLabel || "Amazon broché",
     related_book_ids: defaultRelatedBookIds[slug] || [],
     created_at: null,
   };
@@ -410,7 +415,7 @@ function AdminPageContent() {
     const booksQuery = await supabase
       .from("books")
       .select(
-        "id, slug, category_id, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, related_book_ids, created_at, deleted_at",
+        "id, slug, category_id, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, external_purchase_label, related_book_ids, created_at, deleted_at",
       )
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
@@ -419,7 +424,7 @@ function AdminPageContent() {
       const fallbackBooksQuery = await supabase
         .from("books")
         .select(
-          "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, related_book_ids, created_at, deleted_at",
+          "id, slug, sort_order, title_fr, title_zh, visible, price_eur, cover_image, pdf_file, synopsis_fr, synopsis_zh, asin, amazon_ebook_url, amazon_paperback_url, external_purchase_label, related_book_ids, created_at, deleted_at",
         )
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true });
@@ -824,6 +829,7 @@ function AdminPageContent() {
       synopsis_zh: state.synopsisZh.trim() || null,
       amazon_ebook_url: state.amazonEbookUrl.trim() || null,
       amazon_paperback_url: state.amazonPaperbackUrl.trim() || null,
+      external_purchase_label: state.externalPurchaseLabel.trim() || "Amazon broché",
       related_book_ids: relatedBookIds.length > 0 ? relatedBookIds : null,
     };
   };
@@ -1544,6 +1550,12 @@ function AdminPageContent() {
                   />
                   <input
                     className="input"
+                    placeholder="Nom du bouton d’achat externe (ex. Amazon broché)"
+                    value={form.externalPurchaseLabel}
+                    onChange={(event) => setForm({ ...form, externalPurchaseLabel: event.target.value })}
+                  />
+                  <input
+                    className="input"
                     placeholder="Couverture /images/..."
                     value={form.coverImage}
                     onChange={(event) => setForm({ ...form, coverImage: event.target.value })}
@@ -1870,6 +1882,14 @@ function AdminPageContent() {
                                 value={edit.amazonPaperbackUrl}
                                 onChange={(event) =>
                                   setBookEdits({ ...bookEdits, [book.id]: { ...edit, amazonPaperbackUrl: event.target.value } })
+                                }
+                              />
+                              <input
+                                className="input"
+                                placeholder="Nom du bouton d’achat externe (ex. Amazon broché)"
+                                value={edit.externalPurchaseLabel}
+                                onChange={(event) =>
+                                  setBookEdits({ ...bookEdits, [book.id]: { ...edit, externalPurchaseLabel: event.target.value } })
                                 }
                               />
                               <input

@@ -191,7 +191,7 @@ export default function BookDetailPage() {
   const promoError = promoMessageKind === "error" ? promoMessage : "";
   const promoSuccess = promoMessageKind === "success" ? promoMessage : "";
   const zeroPriceUnlockMessage =
-    "Ce contenu est gratuit ! Veuillez partager notre site via les boutons de partage en haut de la page pour deverrouiller le lien de telechargement.";
+    "Ce contenu est gratuit ! Partagez notre site à l’aide des boutons situés en haut de la page pour déverrouiller le lien de téléchargement.";
   const effectiveHasAccess = accessState.hasAccess || optimisticSharedUnlock;
   const layoutByKey = useMemo(() => new Map(layoutItems.map((item) => [item.source_key, item])), [layoutItems]);
   const moduleStyle = (key: string, fallbackOrder: number) => {
@@ -598,7 +598,7 @@ export default function BookDetailPage() {
           | null;
 
         if (!response.ok || !result?.ok) {
-          setPaymentError(result?.message || "Impossible de deverrouiller ce livre.");
+          setPaymentError(result?.message || "Impossible de déverrouiller ce livre.");
           return;
         }
 
@@ -710,7 +710,7 @@ export default function BookDetailPage() {
       if (!response.ok || !result?.ok || !result.promo) {
         setAppliedPromo(null);
         setPromoMessageKind("error");
-        setPromoMessage(result?.message || "Code promo invalide, veuillez verifier et reessayer.");
+        setPromoMessage(result?.message || "Code promo invalide, veuillez vérifier et réessayer.");
         return;
       }
 
@@ -719,7 +719,7 @@ export default function BookDetailPage() {
       setPromoMessageKind("success");
       setPromoMessage(
         result.promo.isFreeShare
-          ? `Code ${result.promo.code} applique. Le partage peut maintenant deverrouiller ce livre gratuitement.`
+          ? `Code ${result.promo.code} appliqué. Le partage peut maintenant déverrouiller ce livre gratuitement.`
           : `Code ${result.promo.code} applique. Nouveau prix: ${result.promo.discountedPrice.toFixed(2)} EUR.`,
       );
     } finally {
@@ -729,7 +729,7 @@ export default function BookDetailPage() {
 
   const handleBookDownload = async () => {
     if (!book || !session?.access_token) {
-      setPaymentError("Connectez-vous pour telecharger le contenu.");
+      setPaymentError("Connectez-vous pour télécharger le contenu.");
       return;
     }
 
@@ -737,7 +737,7 @@ export default function BookDetailPage() {
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setPaymentError(payload?.message || "Impossible de telecharger le contenu.");
+      setPaymentError(payload?.message || "Impossible de télécharger le contenu.");
       return;
     }
 
@@ -777,7 +777,7 @@ export default function BookDetailPage() {
       <PayPalSdkScript />
       <TopNav
         className="topbar-luxury"
-        subtitle="Presentation du livre"
+        subtitle="Présentation du livre"
         title="Visd AR"
         showAdmin
         showLogout
@@ -913,7 +913,7 @@ export default function BookDetailPage() {
                     </div>
 
                     <label className="tiny" htmlFor="book-review-text">
-                      Votre ressenti apres lecture
+                      Votre ressenti après lecture
                     </label>
                     <textarea
                       id="book-review-text"
@@ -953,7 +953,7 @@ export default function BookDetailPage() {
                         </article>
                       ))
                     ) : (
-                      <p className="muted">Aucun retour pour l&apos;instant. Votre lecture peut lancer la premiere etoile.</p>
+                      <p className="muted">Aucun retour pour l&apos;instant. Votre lecture peut faire naître la première étoile.</p>
                     )}
                   </div>
                 </div>
@@ -961,10 +961,25 @@ export default function BookDetailPage() {
 
               <div className="book-detail-copy">
                 <div className="badge" style={moduleStyle("collection", 10)}>Collection : Album illustré apaisant en chinois facile</div>
-                <h1 className="section-title" style={{ marginTop: 18, ...moduleStyle("title", 20) }}>
-                  {book.titleFr}
-                </h1>
-                <p className="tiny" style={moduleStyle("title", 20)}>{book.titleZh}</p>
+                <div className="book-title-row" style={{ marginTop: 18, ...moduleStyle("title", 20) }}>
+                  <h1 className="section-title book-main-title">{book.titleFr}</h1>
+                  {book.amazonPaperbackUrl ? (
+                    <span className="purchase-link-tooltip-wrap book-external-purchase">
+                      <a
+                        href={book.amazonPaperbackUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="pill-button"
+                      >
+                        {book.externalPurchaseLabel || "Amazon broché"}
+                      </a>
+                      <span className="purchase-link-tooltip" role="tooltip">
+                        Acheter sur {(book.externalPurchaseLabel || "Amazon").replace(/\s+broché$/i, "")}
+                      </span>
+                    </span>
+                  ) : null}
+                </div>
+                <p className="book-chinese-subtitle" lang="zh-Hans" style={moduleStyle("title", 20)}>{book.titleZh}</p>
 
                 <div className="promo-panel book-detail-cta-panel" style={moduleStyle("commerce", 30)}>
                   <div className="book-detail-cta-stack">
@@ -1012,23 +1027,6 @@ export default function BookDetailPage() {
                         </button>
                       )}
 
-                      {book.amazonPaperbackUrl ? (
-                        <span className="purchase-link-tooltip-wrap">
-                          <a
-                            href={book.amazonPaperbackUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="pill-button shrink-0 flex items-center gap-2"
-                          >
-                            <span>Amazon broché</span>
-                          </a>
-                          <span className="purchase-link-tooltip" role="tooltip">Page Amazon</span>
-                        </span>
-                      ) : (
-                        <button className="pill-button shrink-0 flex items-center gap-2" type="button" disabled>
-                          <span>Amazon broché</span>
-                        </button>
-                      )}
                       </div>
                     </div>
 
@@ -1038,16 +1036,16 @@ export default function BookDetailPage() {
                   {promoSuccess ? <p className="tiny promo-message success">{promoSuccess}</p> : null}
                     {promoUnlocksFreeAccess && !effectiveHasAccess ? (
                     <div className="share-unlock-box">
-                      <strong>Partage pour deverrouiller</strong>
+                      <strong>Partagez pour déverrouiller</strong>
                       <p className="tiny">{zeroPriceUnlockMessage}</p>
                       {shareUnlockPending ? (
                         <p className="tiny">
-                          Cliquez maintenant sur l'un des boutons de partage en haut de la page. Le livre se deverrouillera aussitot.
+                          Cliquez maintenant sur l&apos;un des boutons de partage en haut de la page. Le livre se déverrouillera aussitôt.
                         </p>
                       ) : null}
                     </div>
                   ) : null}
-                  {accessLoading ? <p className="tiny">Verification de vos droits...</p> : null}
+                  {accessLoading ? <p className="tiny">Vérification de vos droits...</p> : null}
                   {paymentError ? <p className="tiny promo-message error">{paymentError}</p> : null}
                 </div>
 

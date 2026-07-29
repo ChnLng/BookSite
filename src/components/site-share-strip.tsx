@@ -11,9 +11,9 @@ const socialLinks = [
 ] as const;
 
 const shareTexts = [
-  "J'ai trouve un superbe site de livres illustres bilingues chinois-francais, je vous le partage.",
-  "Je viens de decouvrir un joli site d'albums bilingues chinois-francais, partageons-le avec tout le monde.",
-  "Belle decouverte du jour : un site de livres bilingues chinois-francais a partager autour de soi.",
+  "J'ai trouvé un superbe site de livres illustrés bilingues chinois-français, je vous le partage.",
+  "Je viens de découvrir un joli site d'albums bilingues chinois-français, partageons-le avec tout le monde.",
+  "Belle découverte du jour : un site de livres bilingues chinois-français à partager autour de soi.",
 ];
 
 type SharePlatform = (typeof socialLinks)[number]["platform"];
