@@ -1621,7 +1621,69 @@ button,
   align-items: start;
 }
 
+.account-download-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto minmax(105px, auto);
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.account-download-row:last-of-type {
+  border-bottom: 0;
+}
+
+.account-download-title,
+.account-download-meta {
+  min-width: 0;
+}
+
+.account-download-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-download-actions {
+  flex-wrap: nowrap;
+  margin: 0;
+}
+
+.account-download-actions .cta-button {
+  white-space: nowrap;
+}
+
+.account-download-meta {
+  text-align: right;
+  white-space: nowrap;
+}
+
 @media (max-width: 900px) {
+  .account-download-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "title meta"
+      "actions actions";
+    gap: 8px 10px;
+  }
+
+  .account-download-title {
+    grid-area: title;
+  }
+
+  .account-download-actions {
+    grid-area: actions;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .account-download-meta {
+    grid-area: meta;
+  }
+
   .account-comment-row {
     grid-template-columns: 1fr auto;
     grid-template-areas:

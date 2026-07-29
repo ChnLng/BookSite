@@ -644,10 +644,11 @@ export default function AccountPage() {
                       const isResourceDownload = download.download_kind === "resource" && download.resource_id;
 
                       return (
-                      <div key={download.id} className="split-line" style={{ marginTop: 8 }}>
-                        <div>
-                          <span>{isResourceDownload ? download.resource_title || "Ressource" : download.book_title || "Livre"}</span>
-                          <div className="actions-row" style={{ marginTop: 6, marginBottom: 0 }}>
+                      <div key={download.id} className="account-download-row">
+                        <span className="account-download-title">
+                          {isResourceDownload ? download.resource_title || "Ressource" : download.book_title || "Livre"}
+                        </span>
+                        <div className="actions-row account-download-actions">
                             {isResourceDownload ? (
                               <Link className="cta-button compact-submit" href={`/outils/${download.resource_id}`}>
                                 Voir la fiche
@@ -676,9 +677,10 @@ export default function AccountPage() {
                                 Télécharger le PDF
                               </button>
                             ) : null}
-                          </div>
                         </div>
-                        <span className="tiny">{download.last_downloaded_at ? new Date(download.last_downloaded_at).toLocaleDateString("fr-FR") : "—"} · {download.download_count || 0}</span>
+                        <span className="account-download-meta tiny">
+                          {download.last_downloaded_at ? new Date(download.last_downloaded_at).toLocaleDateString("fr-FR") : "—"} · {download.download_count || 0}
+                        </span>
                       </div>
                       );
                     })
