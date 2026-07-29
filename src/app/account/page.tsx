@@ -60,7 +60,10 @@ type DownloadRecord = {
 type DonationRecord = {
   id: string;
   amount: number | null;
+  currency: string | null;
   note: string | null;
+  payment_status: string | null;
+  paid_at: string | null;
   created_at: string | null;
 };
 
@@ -114,7 +117,7 @@ export default function AccountPage() {
         email
           ? supabase.from("downloads").select("id, download_kind, book_id, book_title, resource_id, resource_title, download_url, created_at, amount_paid, currency, payment_status, paid_at, refunded_at, invoice_number, download_count, last_downloaded_at").eq("user_email", email).order("created_at", { ascending: false })
           : Promise.resolve({ data: [] }),
-        supabase.from("donations").select("id, amount, note, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("donations").select("id, amount, currency, note, payment_status, paid_at, created_at").eq("user_id", user.id).order("paid_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }),
         supabase.from("comment_likes").select("id, comment_id").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("book_reviews").select("id, book_id, author_name, rating, review_text, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("resource_reviews").select("id, resource_id, author_name, rating, review_text, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
@@ -391,6 +394,28 @@ export default function AccountPage() {
     if (!response.ok) return;
     const url = URL.createObjectURL(await response.blob());
     const anchor = document.createElement("a"); anchor.href = url; anchor.download = `facture-${invoiceNumber || purchaseId}.pdf`; anchor.click(); URL.revokeObjectURL(url);
+  };
+
+  const downloadDonationInvoice = async (donationId: string) => {
+    if (!session?.access_token) return;
+    const response = await fetch(`/api/account/donations/${donationId}/invoice`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (!response.ok) return;
+    const url = URL.createObjectURL(await response.blob());
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `facture-donation-${donationId}.pdf`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const donationStatusLabel = (status?: string | null) => {
+    if (status === "paid") return "Payé";
+    if (status === "refunded") return "Remboursé";
+    if (status === "refund_pending") return "Remboursement en cours";
+    if (status === "refund_failed") return "Échec du remboursement";
+    return "En attente";
   };
 
   const toggleLikedComment = async (commentId: string) => {
@@ -716,16 +741,34 @@ export default function AccountPage() {
                     <strong>Historique des donations</strong>
                     <span>{donations.length}</span>
                   </div>
-                  {donations.length === 0 ? (
-                    <p className="muted">Aucune donation enregistree.</p>
-                  ) : (
-                    donations.map((donation) => (
-                      <div key={donation.id} className="split-line" style={{ marginTop: 8 }}>
-                        <span>{donation.note || "Donation"}</span>
-                        <span className="tiny">{donation.amount ? `${donation.amount.toFixed(2)} EUR` : "—"}</span>
+                  <div className="account-donation-table">
+                    <div className="account-donation-row account-donation-header" aria-hidden="true">
+                      <span>Date</span>
+                      <span>Motif du don</span>
+                      <span>Montant</span>
+                      <span>Statut du paiement</span>
+                      <span>Facture</span>
+                    </div>
+                    {donations.length === 0 ? (
+                      <div className="account-donation-empty">Aucune donation enregistrée.</div>
+                    ) : donations.map((donation) => (
+                      <div key={donation.id} className="account-donation-row">
+                        <span data-label="Date">
+                          {new Date(donation.paid_at || donation.created_at || Date.now()).toLocaleString("fr-FR")}
+                        </span>
+                        <span className="account-donation-note" data-label="Motif du don">{donation.note || "Soutien libre"}</span>
+                        <strong data-label="Montant">
+                          {Number(donation.amount || 0).toFixed(2)} {donation.currency || "EUR"}
+                        </strong>
+                        <span data-label="Statut du paiement">{donationStatusLabel(donation.payment_status)}</span>
+                        <span data-label="Facture">
+                          <button className="pill-button account-donation-invoice" type="button" onClick={() => void downloadDonationInvoice(donation.id)}>
+                            Facture PDF
+                          </button>
+                        </span>
                       </div>
-                    ))
-                  )}
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>
