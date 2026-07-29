@@ -1265,13 +1265,13 @@ select {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .book-commerce-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
   max-width: 100%;
 }
@@ -1290,7 +1290,7 @@ select {
 .book-commerce-toolbar .book-buy-row {
   flex: 0 0 auto;
   flex-wrap: nowrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .book-commerce-toolbar .book-buy-button,
@@ -1298,15 +1298,15 @@ select {
   width: auto;
   min-width: 0;
   flex: 0 0 auto;
-  padding: 10px 12px;
-  font-size: 0.76rem;
+  padding: 9px 10px;
+  font-size: 0.7rem;
   white-space: nowrap;
 }
 
 .resource-commerce-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
   max-width: 100%;
 }
@@ -1324,10 +1324,17 @@ select {
 
 .compact-promo-field {
   position: relative;
-  width: calc(8ch + 32px);
-  min-width: calc(8ch + 32px);
-  max-width: calc(8ch + 32px);
-  flex: 0 0 calc(8ch + 32px);
+  width: calc(8ch + 24px);
+  min-width: calc(8ch + 24px);
+  max-width: calc(8ch + 24px);
+  flex: 0 0 calc(8ch + 24px);
+}
+
+.compact-promo-field .input {
+  box-sizing: border-box;
+  padding-left: 10px;
+  padding-right: 10px;
+  font-size: 0.72rem;
 }
 
 .compact-promo-field:hover .detail-promo-tooltip,
@@ -1340,7 +1347,7 @@ select {
 .resource-commerce-toolbar .resource-buy-row {
   flex: 0 0 auto;
   flex-wrap: nowrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .resource-commerce-toolbar .resource-buy-button,
@@ -1348,8 +1355,8 @@ select {
   width: auto;
   min-width: 0;
   flex: 0 0 auto;
-  padding: 10px 12px;
-  font-size: 0.76rem;
+  padding: 9px 10px;
+  font-size: 0.7rem;
   white-space: nowrap;
 }
 
