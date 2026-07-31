@@ -6,7 +6,6 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutGrid } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
-import { PayPalSdkScript } from "@/components/shared/paypal-sdk-script";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
@@ -73,17 +72,6 @@ type RelatedProduct = {
   subtitle: string;
   priceEur: number;
   image: string;
-};
-
-type PayPalButtonsInstance = {
-  render: (target: HTMLElement | string) => Promise<void> | void;
-  close?: () => Promise<void> | void;
-};
-
-type PayPalWindow = Window & {
-  paypal?: {
-    Buttons?: (config: Record<string, unknown>) => PayPalButtonsInstance;
-  };
 };
 
 const defaultReviewForm: ReviewFormState = {
@@ -173,16 +161,19 @@ export default function BookDetailPage() {
   const [shareUnlockBusy, setShareUnlockBusy] = useState(false);
   const [optimisticSharedUnlock, setOptimisticSharedUnlock] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentReady, setPaymentReady] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(null);
   const [purchaseThankYouMessage] = useState(() => randomPurchaseThankYouMessage());
   const [autoOpenedPayment, setAutoOpenedPayment] = useState(false);
   const [layoutItems, setLayoutItems] = useState<SectionLayoutItem[]>([]);
-  const paypalContainerRef = useRef<HTMLDivElement | null>(null);
 
   const bookId = Array.isArray(params?.id) ? params.id[0] : params?.id || "";
   const openBuyImmediately = searchParams.get("buy") === "1";
+  const purchaseSucceeded = searchParams.get("success") === "1";
+  const purchaseCanceled = searchParams.get("cancel") === "1";
+  const paypalOrderId = searchParams.get("token") || "";
+  const returnPromoCode = searchParams.get("promo") || "";
+  const processedOrderRef = useRef<string | null>(null);
 
   const defaultAuthorName = useMemo(
     () => buildDefaultAuthorName(user?.email, profile?.displayName),
@@ -451,83 +442,85 @@ export default function BookDetailPage() {
   }, [refreshAccess]);
 
   useEffect(() => {
-    if (!showPayment) {
-      setPaymentReady(false);
-      setPaymentError("");
+    if (!purchaseCanceled) {
+      return;
+    }
 
-      if (paypalContainerRef.current) {
-        paypalContainerRef.current.innerHTML = "";
+    setShowPayment(true);
+    setPaymentSuccess(null);
+    setPaymentError("Paiement annulé. Vous pouvez reprendre quand vous le souhaitez.");
+  }, [purchaseCanceled]);
+
+  useEffect(() => {
+    if (!purchaseSucceeded || !paypalOrderId || !book) {
+      return;
+    }
+
+    if (processedOrderRef.current === paypalOrderId) {
+      return;
+    }
+
+    processedOrderRef.current = paypalOrderId;
+    setShowPayment(true);
+    setPaymentSuccess(null);
+    setPaymentError("");
+
+    const finalizePurchase = async () => {
+      const response = await fetch("/api/paypal/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({
+          bookId: book.id,
+          orderId: paypalOrderId,
+          promoCode: returnPromoCode,
+        }),
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            message?: string;
+            accountUrl?: string;
+            readUrl?: string;
+          }
+        | null;
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(result?.message || "Paiement validé, mais enregistrement impossible.");
       }
 
-      return;
-    }
+      setPaymentSuccess({
+        accountUrl: result.accountUrl || "/account",
+        readUrl: result.readUrl || `/read/${book.id}`,
+      });
+      setPaymentError("");
+    };
 
-    if (!book || !paypalContainerRef.current || typeof window === "undefined" || finalPrice <= 0) {
-      return;
-    }
+    finalizePurchase().catch((error) => {
+      setPaymentError(error instanceof Error ? error.message : "Impossible d'ouvrir PayPal pour le moment.");
+    });
+  }, [book, paypalOrderId, purchaseSucceeded, returnPromoCode, session?.access_token]);
 
-    paypalContainerRef.current.innerHTML = "";
-    setPaymentReady(false);
-    setPaymentError("");
-    setPaymentSuccess(null);
+  const startPayPalCheckout = useCallback(
+    async (preferredFunding: "paypal" | "card") => {
+      if (!book) {
+        return;
+      }
 
-    const paypalWindow = window as PayPalWindow;
-    const buttonsFactory = paypalWindow.paypal?.Buttons;
+      setPaymentError("");
 
-    if (!buttonsFactory) {
-      setPaymentError("Le module PayPal est en cours de chargement. Reessayez dans un instant.");
-      return;
-    }
-
-    const buttons = buttonsFactory({
-      style: {
-        layout: "vertical",
-        shape: "pill",
-        label: "paypal",
-      },
-      createOrder: (_data: unknown, actions: any) =>
-        actions.order.create({
-          purchase_units: [
-            {
-              custom_id: book.id,
-              description: book.titleFr,
-              amount: {
-                currency_code: "EUR",
-                value: finalPrice.toFixed(2),
-              },
-            },
-          ],
-          application_context: {
-            landing_page: "BILLING",
-            shipping_preference: "NO_SHIPPING",
-            user_action: "PAY_NOW",
-          },
-        }),
-      onApprove: async (data: any, actions: any) => {
-        const order = await actions.order.capture();
-        const payerEmail = order?.payer?.email_address || "";
-        const payerName = [order?.payer?.name?.given_name, order?.payer?.name?.surname]
-          .filter(Boolean)
-          .join(" ")
-          .trim();
-
-        const response = await fetch("/api/paypal/complete", {
+      try {
+        const response = await fetch("/api/paypal/purchase/start", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...(session?.access_token
-              ? {
-                  Authorization: `Bearer ${session.access_token}`,
-                }
-              : {}),
           },
           body: JSON.stringify({
-            bookId: book.id,
-            orderId: order?.id || data?.orderID,
-            payerEmail,
-            payerName,
-            amountPaid: finalPrice,
-            captureId: order?.purchase_units?.[0]?.payments?.captures?.[0]?.id,
+            kind: "book",
+            itemId: book.id,
             promoCode: appliedPromo?.code || "",
           }),
         });
@@ -536,47 +529,28 @@ export default function BookDetailPage() {
           | {
               ok?: boolean;
               message?: string;
-              accountUrl?: string;
-              readUrl?: string;
+              approvalUrl?: string;
             }
           | null;
 
-        if (!response.ok || !result?.ok) {
-          throw new Error(result?.message || "Paiement validé, mais enregistrement impossible.");
+        if (!response.ok || !result?.ok || !result.approvalUrl) {
+          throw new Error(result?.message || "Impossible d'ouvrir PayPal pour le moment.");
         }
 
-        setPaymentSuccess({
-          accountUrl: result.accountUrl || "/account",
-          readUrl: result.readUrl || `/read/${book.id}`,
-        });
-        setPaymentError("");
-
-        if (paypalContainerRef.current) {
-          paypalContainerRef.current.innerHTML = "";
+        if (preferredFunding === "card") {
+          const url = new URL(result.approvalUrl);
+          url.searchParams.set("fundingSource", "card");
+          window.location.href = url.toString();
+          return;
         }
-      },
-      onError: () => {
-        setPaymentError("Impossible d'ouvrir PayPal pour le moment.");
-      },
-    });
 
-    const rendered = buttons.render(paypalContainerRef.current);
-    Promise.resolve(rendered)
-      .then(() => {
-        setPaymentReady(true);
-      })
-      .catch(() => {
-        setPaymentError("Impossible d'ouvrir PayPal pour le moment.");
-      });
-
-    return () => {
-      if (paypalContainerRef.current) {
-        paypalContainerRef.current.innerHTML = "";
+        window.location.href = result.approvalUrl;
+      } catch (error) {
+        setPaymentError(error instanceof Error ? error.message : "Impossible d'ouvrir PayPal pour le moment.");
       }
-
-      void buttons.close?.();
-    };
-  }, [book, finalPrice, session?.access_token, showPayment]);
+    },
+    [appliedPromo?.code, book],
+  );
 
   useEffect(() => {
     if (!shareUnlockPending || finalPrice > 0) {
@@ -793,7 +767,6 @@ export default function BookDetailPage() {
 
   return (
     <main className="page-shell">
-      <PayPalSdkScript />
       <TopNav
         className="topbar-luxury"
         subtitle="Présentation du livre"
@@ -1148,14 +1121,16 @@ export default function BookDetailPage() {
                   Reglez ici avec PayPal. Une fois la transaction validee, l&apos;acces PDF sera ajoute automatiquement.
                 </p>
                 <div className="book-payment-shell">
-                  <div ref={paypalContainerRef} />
+                  <div className="actions-row">
+                    <button className="cta-button" type="button" onClick={() => void startPayPalCheckout("paypal")}>
+                      Payer avec PayPal
+                    </button>
+                    <button className="pill-button" type="button" onClick={() => void startPayPalCheckout("card")}>
+                      Payer par carte bancaire
+                    </button>
+                  </div>
                 </div>
                 <SecurePaymentNote />
-                {!paymentReady && !paymentError ? (
-                  <p className="tiny" style={{ marginTop: 12 }}>
-                    Chargement de PayPal...
-                  </p>
-                ) : null}
                 {paymentError ? (
                   <p className="tiny" style={{ marginTop: 12 }}>
                     {paymentError}

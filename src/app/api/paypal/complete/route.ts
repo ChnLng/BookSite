@@ -181,7 +181,27 @@ export async function POST(request: Request) {
       cache: "no-store",
     });
     verifiedOrder = await response.json();
-    if (!response.ok || verifiedOrder?.status !== "COMPLETED") {
+    if (!response.ok) {
+      throw new Error("Verification PayPal impossible.");
+    }
+
+    if (verifiedOrder?.status === "APPROVED") {
+      const captureResponse = await fetch(
+        `${paypalBaseUrl()}/v2/checkout/orders/${encodeURIComponent(orderId)}/capture`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          cache: "no-store",
+        },
+      );
+      const captured = await captureResponse.json();
+      if (!captureResponse.ok || captured?.status !== "COMPLETED") {
+        throw new Error("Paiement PayPal non confirme.");
+      }
+      verifiedOrder = captured;
+    }
+
+    if (verifiedOrder?.status !== "COMPLETED") {
       throw new Error("Paiement PayPal non confirme.");
     }
   } catch (error) {
