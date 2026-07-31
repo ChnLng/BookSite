@@ -394,7 +394,7 @@ export default function ResourceDetailPage() {
   }, [paypalOrderId, purchaseSucceeded, refreshAccess, resource, returnPromoCode, session?.access_token]);
 
   const startPayPalCheckout = useCallback(
-    async (preferredFunding: "paypal" | "card") => {
+    async () => {
       if (!resource) {
         return;
       }
@@ -426,14 +426,11 @@ export default function ResourceDetailPage() {
           throw new Error(result?.message || "Impossible d'ouvrir PayPal pour le moment.");
         }
 
-        if (preferredFunding === "card") {
-          const url = new URL(result.approvalUrl);
-          url.searchParams.set("fundingSource", "card");
-          window.location.href = url.toString();
-          return;
-        }
-
-        window.location.href = result.approvalUrl;
+        const url = new URL(result.approvalUrl);
+        url.searchParams.delete("fundingSource");
+        url.searchParams.set("locale.x", "fr_FR");
+        url.searchParams.set("country.x", "FR");
+        window.location.href = url.toString();
       } catch (error) {
         setPaymentError(error instanceof Error ? error.message : "Impossible d'ouvrir PayPal pour le moment.");
       }
@@ -1007,11 +1004,8 @@ export default function ResourceDetailPage() {
                 </p>
                 <div className="book-payment-shell">
                   <div className="actions-row">
-                    <button className="cta-button" type="button" onClick={() => void startPayPalCheckout("paypal")}>
+                    <button className="cta-button" type="button" onClick={() => void startPayPalCheckout()}>
                       Payer avec PayPal
-                    </button>
-                    <button className="pill-button" type="button" onClick={() => void startPayPalCheckout("card")}>
-                      Payer par carte bancaire
                     </button>
                   </div>
                 </div>
