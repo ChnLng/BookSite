@@ -1871,6 +1871,35 @@ button,
   flex: 0 1 16rem;
 }
 
+.payment-fallback-link {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.76rem;
+  line-height: 1.15;
+  padding: 8px 10px;
+  white-space: nowrap;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.payment-fallback-link:hover,
+.payment-fallback-link:focus-visible {
+  background: rgba(255, 255, 255, 0.94);
+  color: #4f46e5;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.payment-fallback-link:disabled {
+  cursor: wait;
+  opacity: 0.55;
+  transform: none;
+}
+
 @media (max-width: 760px) {
   .book-title-row {
     align-items: stretch;

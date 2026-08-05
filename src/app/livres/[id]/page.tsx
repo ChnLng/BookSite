@@ -161,6 +161,7 @@ export default function BookDetailPage() {
   const [shareUnlockBusy, setShareUnlockBusy] = useState(false);
   const [optimisticSharedUnlock, setOptimisticSharedUnlock] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [paymentBusy, setPaymentBusy] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(null);
   const [purchaseThankYouMessage] = useState(() => randomPurchaseThankYouMessage());
@@ -172,8 +173,11 @@ export default function BookDetailPage() {
   const purchaseSucceeded = searchParams.get("success") === "1";
   const purchaseCanceled = searchParams.get("cancel") === "1";
   const paypalOrderId = searchParams.get("token") || "";
+  const stripeSessionId = searchParams.get("stripe_session_id") || "";
+  const paymentProvider = searchParams.get("provider") || "";
   const returnPromoCode = searchParams.get("promo") || "";
   const processedOrderRef = useRef<string | null>(null);
+  const processedStripeSessionRef = useRef<string | null>(null);
 
   const defaultAuthorName = useMemo(
     () => buildDefaultAuthorName(user?.email, profile?.displayName),
@@ -388,17 +392,6 @@ export default function BookDetailPage() {
     };
   }, [bookId, fetchReviewData]);
 
-  useEffect(() => {
-    if (!book || !openBuyImmediately || autoOpenedPayment) {
-      return;
-    }
-
-    if (finalPrice > 0) {
-      setShowPayment(true);
-    }
-    setAutoOpenedPayment(true);
-  }, [autoOpenedPayment, book, finalPrice, openBuyImmediately]);
-
   const refreshAccess = useCallback(async () => {
     if (!bookId || !session?.access_token) {
       setAccessState({
@@ -446,10 +439,10 @@ export default function BookDetailPage() {
       return;
     }
 
-    setShowPayment(true);
+    setShowPayment(paymentProvider !== "stripe");
     setPaymentSuccess(null);
     setPaymentError("Paiement annulé. Vous pouvez reprendre quand vous le souhaitez.");
-  }, [purchaseCanceled]);
+  }, [paymentProvider, purchaseCanceled]);
 
   useEffect(() => {
     if (!purchaseSucceeded || !paypalOrderId || !book) {
@@ -548,6 +541,95 @@ export default function BookDetailPage() {
     },
     [appliedPromo?.code, book],
   );
+
+  const startStripeCheckout = useCallback(async () => {
+    if (!book || !session?.access_token || paymentBusy) return;
+
+    setPaymentBusy(true);
+    setPaymentError("");
+
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          kind: "book",
+          id: book.id,
+          promoCode: appliedPromo?.code || "",
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { ok?: boolean; url?: string; message?: string }
+        | null;
+
+      if (!response.ok || !result?.ok || !result.url) {
+        throw new Error(result?.message || "Impossible d'ouvrir le paiement par carte.");
+      }
+
+      window.location.assign(result.url);
+    } catch (error) {
+      setPaymentBusy(false);
+      setPaymentError(
+        error instanceof Error
+          ? error.message
+          : "Impossible d'ouvrir le paiement par carte.",
+      );
+    }
+  }, [appliedPromo?.code, book, paymentBusy, session?.access_token]);
+
+  useEffect(() => {
+    if (!book || !openBuyImmediately || autoOpenedPayment || !session?.access_token) return;
+    setAutoOpenedPayment(true);
+    if (finalPrice > 0) void startStripeCheckout();
+  }, [autoOpenedPayment, book, finalPrice, openBuyImmediately, session?.access_token, startStripeCheckout]);
+
+  useEffect(() => {
+    if (!purchaseSucceeded || !stripeSessionId || !book || !session?.access_token) return;
+    if (processedStripeSessionRef.current === stripeSessionId) return;
+
+    processedStripeSessionRef.current = stripeSessionId;
+    setPaymentBusy(true);
+    setPaymentError("");
+
+    const finalizeStripePurchase = async () => {
+      const response = await fetch("/api/stripe/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ sessionId: stripeSessionId }),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            message?: string;
+            accountUrl?: string;
+            readUrl?: string;
+          }
+        | null;
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(result?.message || "Paiement reçu, mais accès encore indisponible.");
+      }
+
+      setPaymentSuccess({
+        accountUrl: result.accountUrl || "/account",
+        readUrl: result.readUrl || `/read/${book.id}`,
+      });
+      setShowPayment(true);
+      await refreshAccess();
+    };
+
+    finalizeStripePurchase()
+      .catch((error) => {
+        setPaymentError(error instanceof Error ? error.message : "Confirmation Stripe impossible.");
+      })
+      .finally(() => setPaymentBusy(false));
+  }, [book, purchaseSucceeded, refreshAccess, session?.access_token, stripeSessionId]);
 
   useEffect(() => {
     if (!shareUnlockPending || finalPrice > 0) {
@@ -759,7 +841,7 @@ export default function BookDetailPage() {
       return;
     }
 
-    setShowPayment(true);
+    void startStripeCheckout();
   };
 
   return (
@@ -1011,9 +1093,30 @@ export default function BookDetailPage() {
                           </button>
                         </>
                       ) : (
-                        <button className="cta-button book-buy-button" type="button" onClick={() => void handleBookCheckout()}>
-                          {promoUnlocksFreeAccess ? "Partager pour déverrouiller" : onsitePurchaseLabel}
-                        </button>
+                        <>
+                          <button
+                            className="cta-button book-buy-button"
+                            type="button"
+                            disabled={paymentBusy}
+                            onClick={() => void handleBookCheckout()}
+                          >
+                            {paymentBusy
+                              ? "Ouverture du paiement..."
+                              : promoUnlocksFreeAccess
+                                ? "Partager pour déverrouiller"
+                                : onsitePurchaseLabel}
+                          </button>
+                          {!promoUnlocksFreeAccess ? (
+                            <button
+                              className="payment-fallback-link"
+                              type="button"
+                              disabled={paymentBusy}
+                              onClick={() => void startPayPalCheckout()}
+                            >
+                              ou payer avec PayPal
+                            </button>
+                          ) : null}
+                        </>
                       )}
 
                       </div>
@@ -1081,13 +1184,13 @@ export default function BookDetailPage() {
             className="overlay-card glass book-payment-card"
             role="dialog"
             aria-modal="true"
-            aria-label={`Paiement PayPal pour ${book.titleFr}`}
+            aria-label={`Confirmation du paiement pour ${book.titleFr}`}
             onClick={(event) => event.stopPropagation()}
           >
             <button className="overlay-close" type="button" onClick={() => setShowPayment(false)}>
               Fermer
             </button>
-            <div className="badge">PayPal</div>
+            <div className="badge">{paymentSuccess ? "Paiement confirmé" : "PayPal"}</div>
             <h2 style={{ marginTop: 14, marginBottom: 10 }}>{book.titleFr}</h2>
             <p className="tiny" style={{ marginBottom: 16 }}>
               {book.titleZh}
@@ -1115,7 +1218,7 @@ export default function BookDetailPage() {
             ) : (
               <>
                 <p className="muted" style={{ marginTop: 16 }}>
-                  Reglez ici avec PayPal. Une fois la transaction validee, l&apos;acces PDF sera ajoute automatiquement.
+                  Réglez ici avec PayPal. Une fois la transaction validée, l&apos;accès PDF sera ajouté automatiquement.
                 </p>
                 <div className="book-payment-shell">
                   <div className="actions-row">

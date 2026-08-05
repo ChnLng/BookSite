@@ -141,13 +141,18 @@ export default function ResourceDetailPage() {
   const [paymentError, setPaymentError] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(null);
   const [purchaseThankYouMessage] = useState(() => randomPurchaseThankYouMessage());
+  const [autoStartedCheckout, setAutoStartedCheckout] = useState(false);
 
   const resourceId = Array.isArray(params?.id) ? params.id[0] : params?.id || "";
+  const openBuyImmediately = searchParams.get("buy") === "1";
   const purchaseSucceeded = searchParams.get("success") === "1";
   const purchaseCanceled = searchParams.get("cancel") === "1";
   const paypalOrderId = searchParams.get("token") || "";
+  const stripeSessionId = searchParams.get("stripe_session_id") || "";
+  const paymentProvider = searchParams.get("provider") || "";
   const returnPromoCode = searchParams.get("promo") || "";
   const processedOrderRef = useRef<string | null>(null);
+  const processedStripeSessionRef = useRef<string | null>(null);
   const basePrice = resource?.priceEur ?? 0;
   const finalPrice = appliedPromo?.discountedPrice ?? resource?.priceEur ?? 0;
   const hasAppliedPromo = Boolean(appliedPromo);
@@ -334,10 +339,10 @@ export default function ResourceDetailPage() {
       return;
     }
 
-    setShowPayment(true);
+    setShowPayment(paymentProvider !== "stripe");
     setPaymentSuccess(null);
     setPaymentError("Paiement annulé. Vous pouvez reprendre quand vous le souhaitez.");
-  }, [purchaseCanceled]);
+  }, [paymentProvider, purchaseCanceled]);
 
   useEffect(() => {
     if (!purchaseSucceeded || !paypalOrderId || !resource) {
@@ -437,6 +442,97 @@ export default function ResourceDetailPage() {
     },
     [appliedPromo?.code, resource],
   );
+
+  const startStripeCheckout = useCallback(async () => {
+    if (!resource || !session?.access_token || actionBusy) return;
+
+    setActionBusy(true);
+    setPaymentError("");
+    setActionMessage("");
+
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          kind: "resource",
+          id: resource.slug || resource.id,
+          promoCode: appliedPromo?.code || "",
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { ok?: boolean; url?: string; message?: string }
+        | null;
+
+      if (!response.ok || !result?.ok || !result.url) {
+        throw new Error(result?.message || "Impossible d'ouvrir le paiement par carte.");
+      }
+
+      window.location.assign(result.url);
+    } catch (error) {
+      setActionBusy(false);
+      setPaymentError(
+        error instanceof Error
+          ? error.message
+          : "Impossible d'ouvrir le paiement par carte.",
+      );
+    }
+  }, [actionBusy, appliedPromo?.code, resource, session?.access_token]);
+
+  useEffect(() => {
+    if (!resource || !openBuyImmediately || autoStartedCheckout || !session?.access_token) return;
+    setAutoStartedCheckout(true);
+    if (finalPrice > 0) void startStripeCheckout();
+  }, [autoStartedCheckout, finalPrice, openBuyImmediately, resource, session?.access_token, startStripeCheckout]);
+
+  useEffect(() => {
+    if (!purchaseSucceeded || !stripeSessionId || !resource || !session?.access_token) return;
+    if (processedStripeSessionRef.current === stripeSessionId) return;
+
+    processedStripeSessionRef.current = stripeSessionId;
+    setActionBusy(true);
+    setPaymentError("");
+
+    const finalizeStripePurchase = async () => {
+      const response = await fetch("/api/stripe/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ sessionId: stripeSessionId }),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            message?: string;
+            accountUrl?: string;
+            resourceUrl?: string;
+          }
+        | null;
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(result?.message || "Paiement reçu, mais accès encore indisponible.");
+      }
+
+      setPaymentSuccess({
+        accountUrl: result.accountUrl || "/account",
+        resourceUrl: result.resourceUrl || `/outils/${resource.slug || resource.id}`,
+      });
+      setShowPayment(true);
+      setActionMessage("Paiement confirmé. Vos téléchargements sont maintenant débloqués.");
+      await refreshAccess();
+    };
+
+    finalizeStripePurchase()
+      .catch((error) => {
+        setPaymentError(error instanceof Error ? error.message : "Confirmation Stripe impossible.");
+      })
+      .finally(() => setActionBusy(false));
+  }, [purchaseSucceeded, refreshAccess, resource, session?.access_token, stripeSessionId]);
 
   const priceLabel = useMemo(
     () => `${(hasAppliedPromo ? finalPrice : basePrice).toFixed(2)} EUR`,
@@ -608,20 +704,16 @@ export default function ResourceDetailPage() {
       return;
     }
 
-    setActionBusy(true);
     setActionMessage("");
     setPaymentError("");
 
-    try {
-      if (finalPrice <= 0) {
-        setShareUnlockPending(true);
-        setActionMessage(zeroPriceUnlockMessage);
-        return;
-      }
-      setShowPayment(true);
-    } finally {
-      setActionBusy(false);
+    if (finalPrice <= 0) {
+      setShareUnlockPending(true);
+      setActionMessage(zeroPriceUnlockMessage);
+      return;
     }
+
+    await startStripeCheckout();
   };
 
   const handleDownload = async (fileId: string) => {
@@ -868,6 +960,17 @@ export default function ResourceDetailPage() {
                           : "Acheter cet outil"}
                   </button>
 
+                  {!effectiveHasAccess && !promoUnlocksFreeAccess ? (
+                    <button
+                      className="payment-fallback-link"
+                      type="button"
+                      disabled={actionBusy}
+                      onClick={() => void startPayPalCheckout()}
+                    >
+                      ou payer avec PayPal
+                    </button>
+                  ) : null}
+
                   {resource.externalUrl ? (
                     <a
                       href={resource.externalUrl}
@@ -969,13 +1072,13 @@ export default function ResourceDetailPage() {
             className="overlay-card glass book-payment-card"
             role="dialog"
             aria-modal="true"
-            aria-label={`Paiement PayPal pour ${resource.titleFr}`}
+            aria-label={`Confirmation du paiement pour ${resource.titleFr}`}
             onClick={(event) => event.stopPropagation()}
           >
             <button className="overlay-close" type="button" onClick={() => setShowPayment(false)}>
               Fermer
             </button>
-            <div className="badge">PayPal</div>
+            <div className="badge">{paymentSuccess ? "Paiement confirmé" : "PayPal"}</div>
             <h2 style={{ marginTop: 14, marginBottom: 10 }}>{resource.titleFr}</h2>
             <div className="split-line" style={{ paddingTop: 0 }}>
               <span>Montant</span>
