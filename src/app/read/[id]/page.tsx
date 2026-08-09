@@ -257,7 +257,7 @@ export default function ReadBookPage() {
       <TopNav subtitle="Lecture en ligne" title={book.titleFr} showAdmin showLogout />
 
       <section className="panel glass reader-panel">
-        <div className="reader-header">
+        {readerState !== "ready" ? <div className="reader-header">
           <div className="reader-book-meta">
             <div className="reader-cover-wrap">
               <Image
@@ -277,7 +277,7 @@ export default function ReadBookPage() {
               </p>
             </div>
           </div>
-        </div>
+        </div> : null}
 
         {readerState === "loading" ? <p className="muted">Verification de l&apos;acces…</p> : null}
 
@@ -321,6 +321,10 @@ export default function ReadBookPage() {
             {pdfUrl && !pdfDocument && !pdfError ? <p className="muted">Préparation des pages…</p> : null}
             {pdfDocument ? (
               <div className="reader-book-viewer">
+                <div className="reader-hover-title" aria-hidden="true">
+                  <strong>{book.titleFr}</strong>
+                  {book.titleZh ? <span lang="zh-Hans">{book.titleZh}</span> : null}
+                </div>
                 <div
                   className="reader-spread"
                   aria-live="polite"

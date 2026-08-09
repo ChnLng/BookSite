@@ -3047,6 +3047,40 @@ button,
   margin: 0 auto;
 }
 
+.reader-hover-title {
+  position: absolute;
+  z-index: 7;
+  top: clamp(42px, 5vw, 64px);
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  max-width: min(78%, 720px);
+  transform: translate(-50%, -8px);
+  color: #111827;
+  opacity: 0;
+  pointer-events: none;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.95), 0 0 14px rgba(255, 255, 255, 0.92);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.reader-hover-title strong {
+  font-size: clamp(1rem, 2.1vw, 1.75rem);
+  line-height: 1.2;
+}
+
+.reader-hover-title span {
+  margin-top: 3px;
+  font-size: clamp(0.78rem, 1.3vw, 1.05rem);
+  font-weight: 650;
+}
+
+.reader-book-viewer:hover .reader-hover-title,
+.reader-book-viewer:focus-within .reader-hover-title {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
 .reader-spread {
   position: relative;
   display: grid;
