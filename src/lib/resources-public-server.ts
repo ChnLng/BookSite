@@ -34,7 +34,7 @@ export async function loadPublicResourcesForSeo(): Promise<PublicResourceSeo[]> 
     slug: String(row.slug || row.id),
     titleFr: String(row.title_fr || "Ressource numérique"),
     summaryFr: String(row.summary_fr || "Ressource numérique pour apprendre le chinois en français."),
-    coverImageUrl: String(row.cover_image_url || row.qr_image_url || "/images/site-icon-512.png"),
+    coverImageUrl: String(row.cover_image_url || row.qr_image_url || "/images/logo.png"),
     priceEur: Number(row.price_eur || 0),
     createdAt: row.created_at ? String(row.created_at) : null,
   }));

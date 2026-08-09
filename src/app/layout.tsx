@@ -38,14 +38,14 @@ export const metadata: Metadata = {
     siteName: "Visd AR",
     title: "Visd AR — apprendre le chinois par les histoires",
     description: "Ebooks bilingues, sinogrammes, pinyin, traduction française et outils ludiques pour les apprenants francophones.",
-    images: [{ url: "/images/site-icon-512.png", width: 512, height: 512, alt: "Visd AR" }],
+    images: [{ url: "/images/logo.png", width: 200, height: 200, alt: "Visd AR" }],
   },
-  twitter: { card: "summary_large_image", title: "Visd AR — apprendre le chinois par les histoires", description: "Livres bilingues chinois-français et outils numériques pour débutants.", images: ["/images/site-icon-512.png"] },
+  twitter: { card: "summary_large_image", title: "Visd AR — apprendre le chinois par les histoires", description: "Livres bilingues chinois-français et outils numériques pour débutants.", images: ["/images/logo.png"] },
   icons: {
     icon: [
-      { url: "/images/site-icon-512.png", type: "image/png", sizes: "512x512" },
+      { url: "/images/logo.png", type: "image/png", sizes: "200x200" },
     ],
-    shortcut: "/images/site-icon-512.png",
+    shortcut: "/images/logo.png",
     apple: [
       { url: "/images/apple-touch-icon.png", type: "image/png", sizes: "180x180" },
     ],
@@ -92,7 +92,7 @@ export default function RootLayout({
           "@id": "https://www.visdar.fr/#organization",
           name: "Visd AR",
           url: "https://www.visdar.fr",
-          logo: "https://www.visdar.fr/images/site-icon-512.png",
+          logo: "https://www.visdar.fr/images/logo.png",
           description: "Livres bilingues chinois-français et ressources numériques pour apprendre le chinois en français.",
           email: "visdar@outlook.fr",
           areaServed: "FR",

@@ -29,9 +29,9 @@ export const metadata: Metadata = {
     title,
     description,
     siteName: "Visd AR",
-    images: [{ url: "/images/site-icon-512.png", width: 512, height: 512, alt: "Visd AR — lecture bilingue chinois-français" }],
+    images: [{ url: "/images/logo.png", width: 200, height: 200, alt: "Visd AR — lecture bilingue chinois-français" }],
   },
-  twitter: { card: "summary_large_image", title, description, images: ["/images/site-icon-512.png"] },
+  twitter: { card: "summary_large_image", title, description, images: ["/images/logo.png"] },
 };
 
 export default async function ChineseReadingGuidePage() {
@@ -53,7 +53,7 @@ export default async function ChineseReadingGuidePage() {
           "@type": "Organization",
           name: "Visd AR",
           url: "https://www.visdar.fr",
-          logo: { "@type": "ImageObject", url: "https://www.visdar.fr/images/site-icon-512.png" },
+          logo: { "@type": "ImageObject", url: "https://www.visdar.fr/images/logo.png" },
         },
         about: ["Apprentissage du chinois", "Sinogrammes", "Pinyin", "Lecture bilingue chinois-français"],
       },
@@ -96,7 +96,7 @@ export default async function ChineseReadingGuidePage() {
         <header className="seo-article-header">
           <Image
             className="seo-article-hero-icon"
-            src="/images/site-icon-512.png"
+            src="/images/logo.png"
             width={132}
             height={132}
             alt=""

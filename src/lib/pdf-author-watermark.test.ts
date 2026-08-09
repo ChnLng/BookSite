@@ -25,7 +25,7 @@ describe("PDF author watermark", () => {
       page.drawText("Sinogrammes, pinyin et traduction francaise", { x: 76, y: 675, size: 14, font });
     }
     const sourceBytes = await source.save();
-    const logoBytes = await readFile(path.join(process.cwd(), "public/images/site-icon-512.png"));
+    const logoBytes = await readFile(path.join(process.cwd(), "public/images/logo.png"));
     vi.stubGlobal("fetch", vi.fn(async () => new Response(logoBytes, { status: 200, headers: { "Content-Type": "image/png" } })));
 
     const input = new File([new Uint8Array(sourceBytes)], "lecture.pdf", { type: "application/pdf" });

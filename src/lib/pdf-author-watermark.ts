@@ -1,6 +1,6 @@
 import { degrees, PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
-const logoPath = "/images/site-icon-512.png";
+const logoPath = "/images/logo.png";
 
 export const maxPdfWatermarkBytes = 80 * 1024 * 1024;
 
