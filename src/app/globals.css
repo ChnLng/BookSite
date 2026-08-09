@@ -2611,6 +2611,21 @@ button,
   margin-top: 0;
 }
 
+.account-card-stat {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.account-card-stat strong {
+  color: var(--text-main);
+  font-weight: 750;
+}
+
 .account-tab-strip {
   display: flex;
   flex-wrap: nowrap;

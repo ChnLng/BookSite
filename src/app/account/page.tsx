@@ -294,6 +294,10 @@ export default function AccountPage() {
   }, [user]);
 
   const greeting = useMemo(() => profile?.displayName || user?.email || "Lecteur", [profile, user]);
+  const downloadedRecords = useMemo(
+    () => downloads.filter((download) => Number(download.download_count || 0) > 0 || download.last_downloaded_at),
+    [downloads],
+  );
 
   const startEditingComment = (comment: CommentRecord) => {
     setEditingCommentId(comment.id);
@@ -532,7 +536,7 @@ export default function AccountPage() {
     { key: "likes", label: "J'aime", count: likedComments.length },
     { key: "evaluations", label: "Évaluations", count: evaluations.length },
     { key: "purchases", label: "Achats", count: downloads.length },
-    { key: "downloads", label: "Téléchargements", count: downloads.length },
+    { key: "downloads", label: "Téléchargements", count: downloadedRecords.length },
     { key: "donations", label: "Donations", count: donations.length },
   ] as const;
 
@@ -599,9 +603,8 @@ export default function AccountPage() {
             <div className="account-list account-panel-list">
               {activeTab === "comments" ? (
                 <div className="account-card">
-                  <div className="split-line">
-                    <strong>Commentaires</strong>
-                    <span>{comments.length}</span>
+                  <div className="account-card-stat">
+                    <span>Commentaires publiés : <strong>{comments.length}</strong></span>
                   </div>
                   {comments.length === 0 ? (
                     <p className="muted">Aucun commentaire pour le moment. Laissez-en un depuis l&apos;accueil.</p>
@@ -668,9 +671,8 @@ export default function AccountPage() {
 
               {activeTab === "likes" ? (
                 <div className="account-card">
-                  <div className="split-line">
-                    <strong>Commentaires aimés</strong>
-                    <span>{likedComments.length}</span>
+                  <div className="account-card-stat">
+                    <span>Commentaires aimés : <strong>{likedComments.length}</strong></span>
                   </div>
                   {likedComments.length === 0 ? (
                     <p className="muted">Aucun j'aime pour le moment. Revenez sur l'accueil pour soutenir les commentaires que vous aimez.</p>
@@ -699,12 +701,11 @@ export default function AccountPage() {
 
               {activeTab === "evaluations" ? (
                 <div className="account-card">
-                  <div className="split-line">
-                    <strong>Vos evaluations</strong>
-                    <span>{evaluations.length}</span>
+                  <div className="account-card-stat">
+                    <span>Évaluations publiées : <strong>{evaluations.length}</strong></span>
                   </div>
                   {evaluations.length === 0 ? (
-                    <p className="muted">Aucune evaluation publiee pour le moment.</p>
+                    <p className="muted">Aucune évaluation publiée pour le moment.</p>
                   ) : (
                     evaluations.map((evaluation) => {
                       const itemHref = evaluation.kind === "book" ? `/livres/${evaluation.slug}` : `/outils/${evaluation.slug}`;
@@ -728,7 +729,7 @@ export default function AccountPage() {
                             {evaluation.authorName ? ` · ${evaluation.authorName}` : ""}
                           </span>
                           <span className="account-evaluation-text tiny">
-                            {evaluation.reviewText || "Evaluation sans texte."}
+                            {evaluation.reviewText || "Évaluation sans texte."}
                           </span>
                           <span className="account-evaluation-date tiny">
                             {evaluation.createdAt ? new Date(evaluation.createdAt).toLocaleDateString("fr-FR") : "—"}
@@ -742,14 +743,13 @@ export default function AccountPage() {
 
               {activeTab === "downloads" ? (
                 <div className="account-card">
-                  <div className="split-line">
-                    <strong>Historique des téléchargements</strong>
-                    <span className="tiny">Produits téléchargés : {downloads.length}</span>
+                  <div className="account-card-stat">
+                    <span>Produits téléchargés : <strong>{downloadedRecords.length}</strong></span>
                   </div>
-                  {downloads.length === 0 ? (
+                  {downloadedRecords.length === 0 ? (
                     <p className="muted">Aucun téléchargement enregistré.</p>
                   ) : (
-                    downloads.filter((download) => Number(download.download_count || 0) > 0 || download.last_downloaded_at).map((download) => {
+                    downloadedRecords.map((download) => {
                       const readBookId = bookIdFromDownload(download);
                       const isResourceDownload = download.download_kind === "resource" && download.resource_id;
                       const productId = isResourceDownload ? download.resource_id : readBookId;
@@ -793,7 +793,9 @@ export default function AccountPage() {
 
               {activeTab === "purchases" ? (
                 <div className="account-card">
-                  <div className="split-line"><strong>Historique des achats 购买记录</strong><span>{downloads.length}</span></div>
+                  <div className="account-card-stat">
+                    <span>Achats enregistrés : <strong>{downloads.length}</strong></span>
+                  </div>
                   {downloads.length === 0 ? <p className="muted">Aucun achat enregistré.</p> : downloads.map((purchase) => {
                     const isResource = purchase.download_kind === "resource" && purchase.resource_id;
                     const bookId = bookIdFromDownload(purchase);
@@ -829,9 +831,8 @@ export default function AccountPage() {
 
               {activeTab === "donations" ? (
                 <div className="account-card">
-                  <div className="split-line">
-                    <strong>Historique des donations</strong>
-                    <span>{donations.length}</span>
+                  <div className="account-card-stat">
+                    <span>Dons enregistrés : <strong>{donations.length}</strong></span>
                   </div>
                   <div className="account-donation-table">
                     <div className="account-donation-row account-donation-header" aria-hidden="true">
