@@ -78,6 +78,17 @@ export function canViewMimeType(mimeType: string, extension: string) {
   );
 }
 
+export function isPdfDocument(document: Pick<PublicProductDocument, "mimeType" | "fileExtension">) {
+  return document.mimeType.toLowerCase() === "application/pdf" || normalizeExtension(document.fileExtension) === ".pdf";
+}
+
+export function preferredOnlineViewDocument(documents: PublicProductDocument[]) {
+  const viewable = documents.filter((document) => (
+    document.deliveryMode !== "download" && canViewMimeType(document.mimeType, document.fileExtension)
+  ));
+  return viewable.find(isPdfDocument) || viewable[0] || null;
+}
+
 export function safeDownloadFilename(fileName: string) {
   return fileName.trim().replace(/["\\\r\n/]/g, "-") || "document";
 }

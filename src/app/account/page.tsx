@@ -7,7 +7,12 @@ import { LockKeyhole } from "lucide-react";
 import { PasswordSettingsCard } from "@/components/password-settings-card";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
-import { canViewMimeType, type PublicProductDocument } from "@/lib/product-documents";
+import {
+  isPdfDocument,
+  preferredOnlineViewDocument,
+  type ProductKind,
+  type PublicProductDocument,
+} from "@/lib/product-documents";
 import { bookIdFromDownload } from "@/lib/purchase-access";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
@@ -72,7 +77,7 @@ export default function AccountPage() {
   const { user, profile, session, loading } = useAuth();
   const [comments, setComments] = useState<CommentRecord[]>([]);
   const [downloads, setDownloads] = useState<DownloadRecord[]>([]);
-  const [onlineViewProducts, setOnlineViewProducts] = useState<Set<string>>(new Set());
+  const [onlineViewDocuments, setOnlineViewDocuments] = useState<Map<string, PublicProductDocument>>(new Map());
   const [donations, setDonations] = useState<DonationRecord[]>([]);
   const [likedComments, setLikedComments] = useState<LikedCommentRecord[]>([]);
   const [evaluations, setEvaluations] = useState<EvaluationRecord[]>([]);
@@ -82,13 +87,15 @@ export default function AccountPage() {
   const [editingContent, setEditingContent] = useState("");
   const [editingAuthorName, setEditingAuthorName] = useState("");
   const [commentActionMessage, setCommentActionMessage] = useState("");
+  const [documentActionMessage, setDocumentActionMessage] = useState("");
+  const [documentActionKey, setDocumentActionKey] = useState("");
   const [showPasswordSection, setShowPasswordSection] = useState(false);
 
   useEffect(() => {
     if (!user) {
       setComments([]);
       setDownloads([]);
-      setOnlineViewProducts(new Set());
+      setOnlineViewDocuments(new Map());
       setDonations([]);
       setLikedComments([]);
       setEvaluations([]);
@@ -140,10 +147,8 @@ export default function AccountPage() {
         try {
           const response = await fetch(`/api/products/${productKind}/${encodeURIComponent(productId)}/documents`, { cache: "no-store" });
           const result = await response.json().catch(() => null) as { ok?: boolean; documents?: PublicProductDocument[] } | null;
-          const hasOnlineView = Boolean(result?.ok && result.documents?.some((document) =>
-            document.deliveryMode !== "download" && canViewMimeType(document.mimeType, document.fileExtension),
-          ));
-          return hasOnlineView ? `${productKind}:${productId}` : null;
+          const document = result?.ok ? preferredOnlineViewDocument(result.documents || []) : null;
+          return document ? { key: `${productKind}:${productId}`, document } : null;
         } catch {
           return null;
         }
@@ -274,7 +279,11 @@ export default function AccountPage() {
         }),
       );
       setDownloads(mergedDownloads);
-      setOnlineViewProducts(new Set(onlineViewEntries.filter(Boolean) as string[]));
+      const nextOnlineViewDocuments = new Map<string, PublicProductDocument>();
+      onlineViewEntries.forEach((entry) => {
+        if (entry) nextOnlineViewDocuments.set(entry.key, entry.document);
+      });
+      setOnlineViewDocuments(nextOnlineViewDocuments);
       setDonations((donationData || []) as DonationRecord[]);
       setLikedComments(likedCommentRecords);
       setEvaluations(mergedEvaluations);
@@ -409,6 +418,59 @@ export default function AccountPage() {
     }
 
     window.open(result.url, "_blank", "noopener,noreferrer");
+  };
+
+  const openOnlineDocument = async (
+    productKind: ProductKind,
+    productId: string,
+    onlineDocument: PublicProductDocument,
+  ) => {
+    const actionKey = `${productKind}:${productId}:${onlineDocument.id}`;
+    setDocumentActionMessage("");
+    setDocumentActionKey(actionKey);
+
+    if (productKind === "book" && isPdfDocument(onlineDocument)) {
+      window.open(
+        `/read/${encodeURIComponent(productId)}?document=${encodeURIComponent(onlineDocument.id)}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+      setDocumentActionKey("");
+      return;
+    }
+
+    if (!session?.access_token) {
+      setDocumentActionMessage("Reconnectez-vous pour ouvrir ce document.");
+      setDocumentActionKey("");
+      return;
+    }
+
+    const previewWindow = window.open("about:blank", "_blank");
+    if (previewWindow) previewWindow.opener = null;
+    try {
+      const response = await fetch(
+        `/api/products/${productKind}/${encodeURIComponent(productId)}/documents/${encodeURIComponent(onlineDocument.id)}/grant`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ mode: "view" }),
+        },
+      );
+      const result = await response.json().catch(() => null) as { ok?: boolean; url?: string; message?: string } | null;
+      if (!response.ok || !result?.ok || !result.url) {
+        throw new Error(result?.message || "Ouverture impossible.");
+      }
+      if (previewWindow) previewWindow.location.replace(result.url);
+      else window.location.href = result.url;
+    } catch (error) {
+      previewWindow?.close();
+      setDocumentActionMessage(error instanceof Error ? error.message : "Ouverture impossible.");
+    } finally {
+      setDocumentActionKey("");
+    }
   };
 
   const downloadInvoice = async (purchaseId: string, invoiceNumber?: string | null) => {
@@ -693,7 +755,8 @@ export default function AccountPage() {
                       const productId = isResourceDownload ? download.resource_id : readBookId;
                       const productKind = isResourceDownload ? "resource" : "book";
                       const productHref = productId ? `/${isResourceDownload ? "outils" : "livres"}/${productId}#documents-numeriques` : "";
-                      const hasOnlineView = productId ? onlineViewProducts.has(`${productKind}:${productId}`) : false;
+                      const onlineDocument = productId ? onlineViewDocuments.get(`${productKind}:${productId}`) : undefined;
+                      const onlineActionKey = onlineDocument && productId ? `${productKind}:${productId}:${onlineDocument.id}` : "";
 
                       return (
                       <div key={download.id} className="account-download-row">
@@ -703,10 +766,17 @@ export default function AccountPage() {
                           {isResourceDownload ? download.resource_title || "Ressource" : download.book_title || "Livre"}
                         </span>}
                         <div className="actions-row account-download-actions">
-                            {productHref ? (
-                              <Link className="cta-button compact-submit" href={productHref}>
-                                {hasOnlineView ? "Lire en ligne" : "Télécharger à nouveau"}
-                              </Link>
+                            {onlineDocument && productId ? (
+                              <button
+                                className="cta-button compact-submit"
+                                type="button"
+                                disabled={documentActionKey === onlineActionKey}
+                                onClick={() => void openOnlineDocument(productKind, productId, onlineDocument)}
+                              >
+                                {documentActionKey === onlineActionKey ? "Ouverture..." : "Lire en ligne"}
+                              </button>
+                            ) : productHref ? (
+                              <Link className="cta-button compact-submit" href={productHref}>Télécharger à nouveau</Link>
                             ) : null}
                         </div>
                         <span className="account-download-meta tiny">
@@ -717,6 +787,7 @@ export default function AccountPage() {
                       );
                     })
                   )}
+                  {documentActionMessage ? <p className="tiny">{documentActionMessage}</p> : null}
                 </div>
               ) : null}
 
@@ -730,18 +801,29 @@ export default function AccountPage() {
                     const productId = isResource ? purchase.resource_id : bookId;
                     const productKind = isResource ? "resource" : "book";
                     const productHref = productId ? `/${isResource ? "outils" : "livres"}/${productId}#documents-numeriques` : "";
-                    const hasOnlineView = productId ? onlineViewProducts.has(`${productKind}:${productId}`) : false;
+                    const onlineDocument = productId ? onlineViewDocuments.get(`${productKind}:${productId}`) : undefined;
+                    const onlineActionKey = onlineDocument && productId ? `${productKind}:${productId}:${onlineDocument.id}` : "";
                     return <div key={`purchase-${purchase.id}`} className="account-purchase-row">
                       {productHref ? <Link className="account-purchase-title account-product-link" href={productHref}>{isResource ? purchase.resource_title || "Ressource" : purchase.book_title || "Livre"}</Link> : <strong className="account-purchase-title">{isResource ? purchase.resource_title || "Ressource" : purchase.book_title || "Livre"}</strong>}
                       <span className="account-purchase-date">Acheté le {new Date(purchase.paid_at || purchase.created_at || Date.now()).toLocaleString("fr-FR")}</span>
                       <span className="account-purchase-status">{Number(purchase.amount_paid || 0) > 0 ? "Payé" : "Gratuit"}</span>
                       <strong className="account-purchase-amount">{Number(purchase.amount_paid || 0).toFixed(2)} {purchase.currency || "EUR"}</strong>
                       <div className="account-purchase-actions">
-                        {downloadable && productHref ? <Link className="pill-button" href={productHref}>{hasOnlineView ? "Lire en ligne" : "Télécharger à nouveau"}</Link> : null}
+                        {downloadable && onlineDocument && productId ? (
+                          <button
+                            className="pill-button"
+                            type="button"
+                            disabled={documentActionKey === onlineActionKey}
+                            onClick={() => void openOnlineDocument(productKind, productId, onlineDocument)}
+                          >
+                            {documentActionKey === onlineActionKey ? "Ouverture..." : "Lire en ligne"}
+                          </button>
+                        ) : downloadable && productHref ? <Link className="pill-button" href={productHref}>Télécharger à nouveau</Link> : null}
                         <button className="pill-button" type="button" onClick={() => void downloadInvoice(purchase.id, purchase.invoice_number)}>Facture PDF</button>
                       </div>
                     </div>;
                   })}
+                  {documentActionMessage ? <p className="tiny">{documentActionMessage}</p> : null}
                 </div>
               ) : null}
 
