@@ -12,7 +12,7 @@ import { resolveDisplayBookById, type DisplayBook } from "@/lib/books-service";
 
 type ReaderState = "loading" | "ready" | "paywall" | "login" | "missing";
 
-function PdfCanvasPage({ document, pageNumber }: { document: PDFDocumentProxy; pageNumber: number }) {
+function PdfCanvasPage({ document, pageNumber, side }: { document: PDFDocumentProxy; pageNumber: number; side: "left" | "right" }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ function PdfCanvasPage({ document, pageNumber }: { document: PDFDocumentProxy; p
   }, [document, pageNumber]);
 
   return (
-    <div className="reader-page reader-pdf-page" aria-label={`Page ${pageNumber}`}>
+    <div className={`reader-page reader-page-${side} reader-pdf-page`} aria-label={`Page ${pageNumber}`}>
       <canvas ref={canvasRef} />
       <span className="reader-page-number">{pageNumber}</span>
     </div>
@@ -66,7 +66,13 @@ export default function ReadBookPage() {
   const [pdfError, setPdfError] = useState("");
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
   const [spreadIndex, setSpreadIndex] = useState(0);
+  const [documentId, setDocumentId] = useState("");
+  const touchStartX = useRef<number | null>(null);
   const [paying, setPaying] = useState(false);
+
+  useEffect(() => {
+    setDocumentId(new URLSearchParams(window.location.search).get("document")?.trim() || "");
+  }, [bookId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -137,10 +143,29 @@ export default function ReadBookPage() {
       setPdfError("");
 
       try {
-        const response = await fetch(`/api/books/${bookId}/pdf`, {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
+        let pdfEndpoint = `/api/books/${bookId}/pdf`;
+        if (documentId) {
+          const grantResponse = await fetch(
+            `/api/products/book/${encodeURIComponent(bookId)}/documents/${encodeURIComponent(documentId)}/grant`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ mode: "view" }),
+            },
+          );
+          const grant = await grantResponse.json().catch(() => null) as { ok?: boolean; url?: string; message?: string } | null;
+          if (!grantResponse.ok || !grant?.ok || !grant.url) {
+            throw new Error(grant?.message || "Impossible d'ouvrir ce document.");
+          }
+          pdfEndpoint = grant.url;
+        }
+
+        const response = await fetch(pdfEndpoint, {
+          headers: documentId ? undefined : { Authorization: `Bearer ${session.access_token}` },
+          cache: "no-store",
         });
 
         if (!response.ok) {
@@ -183,11 +208,24 @@ export default function ReadBookPage() {
       }
       setPdfDocument(null);
     };
-  }, [book, bookId, readerState, session?.access_token]);
+  }, [book, bookId, documentId, readerState, session?.access_token]);
 
   const spreadCount = pdfDocument ? 1 + Math.ceil(Math.max(0, pdfDocument.numPages - 1) / 2) : 0;
   const leftPdfPage = spreadIndex > 0 ? spreadIndex * 2 : null;
   const rightPdfPage = spreadIndex === 0 ? 1 : spreadIndex * 2 + 1;
+
+  useEffect(() => {
+    if (!pdfDocument) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") {
+        setSpreadIndex((current) => Math.max(0, current - 1));
+      } else if (event.key === "ArrowRight") {
+        setSpreadIndex((current) => Math.min(spreadCount - 1, current + 1));
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [pdfDocument, spreadCount]);
 
   const handleCheckout = async () => {
     if (!book) {
@@ -283,27 +321,42 @@ export default function ReadBookPage() {
             {pdfUrl && !pdfDocument && !pdfError ? <p className="muted">Préparation des pages…</p> : null}
             {pdfDocument ? (
               <div className="reader-book-viewer">
-                <div className="reader-spread" aria-live="polite">
+                <div
+                  className="reader-spread"
+                  aria-live="polite"
+                  onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null; }}
+                  onTouchEnd={(event) => {
+                    if (touchStartX.current === null) return;
+                    const distance = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
+                    touchStartX.current = null;
+                    if (Math.abs(distance) < 45) return;
+                    if (distance > 0) {
+                      setSpreadIndex((current) => Math.max(0, current - 1));
+                    } else {
+                      setSpreadIndex((current) => Math.min(spreadCount - 1, current + 1));
+                    }
+                  }}
+                >
                   <div className="reader-spread-progress">
                     {spreadIndex === 0
                       ? `1 / ${pdfDocument.numPages}`
                       : `${leftPdfPage}–${Math.min(rightPdfPage, pdfDocument.numPages)} / ${pdfDocument.numPages}`}
                   </div>
                   {spreadIndex === 0 ? (
-                    <div className="reader-page reader-cover-page">
+                    <div className="reader-page reader-page-left reader-cover-page">
                       <Image src={book.coverImage} alt={`Couverture de ${book.titleFr}`} fill sizes="45vw" />
                       <span className="reader-page-number">Couverture</span>
                     </div>
                   ) : leftPdfPage && leftPdfPage <= pdfDocument.numPages ? (
-                    <PdfCanvasPage document={pdfDocument} pageNumber={leftPdfPage} />
+                    <PdfCanvasPage document={pdfDocument} pageNumber={leftPdfPage} side="left" />
                   ) : (
-                    <div className="reader-page reader-empty-page" />
+                    <div className="reader-page-slot reader-page-slot-empty" aria-hidden="true" />
                   )}
 
                   {rightPdfPage <= pdfDocument.numPages ? (
-                    <PdfCanvasPage document={pdfDocument} pageNumber={rightPdfPage} />
+                    <PdfCanvasPage document={pdfDocument} pageNumber={rightPdfPage} side="right" />
                   ) : (
-                    <div className="reader-page reader-empty-page" />
+                    <div className="reader-page-slot reader-page-slot-empty" aria-hidden="true" />
                   )}
                 </div>
                 <button

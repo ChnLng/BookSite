@@ -56,6 +56,13 @@ export function ProductDocumentsPanel({ productKind, productId, hasAccess, acces
       setMessage("Connectez-vous puis validez le paiement pour accéder à ce document.");
       return;
     }
+    const opensInBookReader = mode === "view"
+      && productKind === "book"
+      && (document.mimeType.toLowerCase() === "application/pdf" || document.fileExtension.toLowerCase().replace(/^\./, "") === "pdf");
+    if (opensInBookReader) {
+      window.open(`/read/${encodeURIComponent(productId)}?document=${encodeURIComponent(document.id)}`, "_blank", "noopener,noreferrer");
+      return;
+    }
     const previewWindow = mode === "view" ? window.open("about:blank", "_blank") : null;
     if (previewWindow) previewWindow.opener = null;
     setBusyId(`${document.id}-${mode}`);
