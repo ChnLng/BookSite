@@ -6,6 +6,7 @@ import { loadCachedPublicDisplayBooks } from "@/lib/books-public-server";
 
 const pageUrl = "https://www.visdar.fr/blog/lecture-chinois-pinyin-traduction";
 const title = "Lire le chinois avec sinogrammes, pinyin et traduction française";
+const headline = "Passer du manuel à la lecture courante : pourquoi choisir des histoires avec sinogrammes, pinyin et traduction";
 const description = "Passez du manuel à la lecture courante grâce aux histoires chinoises avec sinogrammes, pinyin et traduction française, pensées pour les débutants.";
 
 export const metadata: Metadata = {
@@ -40,7 +41,7 @@ export default async function ChineseReadingGuidePage() {
       {
         "@type": "BlogPosting",
         "@id": `${pageUrl}#article`,
-        headline: title,
+        headline,
         description,
         inLanguage: "fr-FR",
         datePublished: "2026-08-09",
@@ -93,7 +94,7 @@ export default async function ChineseReadingGuidePage() {
       <article className="panel glass seo-article">
         <header className="seo-article-header">
           <span className="badge">Guide · Apprendre le chinois en français</span>
-          <h1>{title}</h1>
+          <h1>{headline}</h1>
           <p className="section-caption">
             Passer du manuel à une lecture chinoise fluide grâce à trois appuis complémentaires : les sinogrammes, le pinyin et la traduction française.
           </p>
@@ -102,7 +103,7 @@ export default async function ChineseReadingGuidePage() {
         <section>
           <h2>Passer du manuel à la lecture courante</h2>
           <p>
-            Vous avez appris les bases du mandarin, mais vous vous sentez bloqué lorsqu&apos;il faut lire un vrai texte chinois ? Ce passage entre les exercices du manuel et une histoire complète représente un défi fréquent pour les débutants.
+            Vous avez appris les bases du mandarin, mais vous vous sentez bloqué quand il s&apos;agit de lire des textes réels ? C&apos;est le défi de nombreux apprenants : le fossé entre les exercices des manuels scolaires et la littérature chinoise.
           </p>
           <p>
             Lire les sinogrammes en contexte consolide le vocabulaire, la grammaire et les réflexes de compréhension. Sans accompagnement, le décodage peut toutefois devenir lent et décourageant. Un support bilingue bien structuré sert alors de pont vers la lecture autonome.
