@@ -989,12 +989,15 @@ export default function ResourceDetailPage() {
               {!effectiveHasAccess && promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
             </div>
           </div> : (
-            <ProductDocumentsPanel
-              productKind="resource"
-              productId={resource.id}
-              hasAccess={effectiveHasAccess}
-              accessToken={session?.access_token}
-            />
+            <div className="product-owned-section">
+              <p className="product-owned-notice">Vous possédez déjà ce produit.</p>
+              <ProductDocumentsPanel
+                productKind="resource"
+                productId={resource.id}
+                hasAccess={effectiveHasAccess}
+                accessToken={session?.access_token}
+              />
+            </div>
           )}
 
           <p className="section-caption" style={{ marginTop: 18 }}>{resource.summaryFr}</p>

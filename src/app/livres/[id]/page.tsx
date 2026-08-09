@@ -1136,12 +1136,15 @@ export default function BookDetailPage() {
                   {accessLoading ? <p className="tiny">Vérification de vos droits...</p> : null}
                   {paymentError ? <p className="tiny promo-message error">{paymentError}</p> : null}
                 </div> : (
-                  <ProductDocumentsPanel
-                  productKind="book"
-                  productId={book.id}
-                  hasAccess={effectiveHasAccess}
-                  accessToken={session?.access_token}
-                  />
+                  <div className="product-owned-section" style={moduleStyle("commerce", 30)}>
+                    <p className="product-owned-notice">Vous possédez déjà ce produit.</p>
+                    <ProductDocumentsPanel
+                      productKind="book"
+                      productId={book.id}
+                      hasAccess={effectiveHasAccess}
+                      accessToken={session?.access_token}
+                    />
+                  </div>
                 )}
 
                 <div className="book-detail-facts" style={moduleStyle("commerce", 30)}>

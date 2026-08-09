@@ -7,6 +7,7 @@ import { LockKeyhole } from "lucide-react";
 import { PasswordSettingsCard } from "@/components/password-settings-card";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
+import { canViewMimeType, type PublicProductDocument } from "@/lib/product-documents";
 import { bookIdFromDownload } from "@/lib/purchase-access";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
@@ -71,6 +72,7 @@ export default function AccountPage() {
   const { user, profile, session, loading } = useAuth();
   const [comments, setComments] = useState<CommentRecord[]>([]);
   const [downloads, setDownloads] = useState<DownloadRecord[]>([]);
+  const [onlineViewProducts, setOnlineViewProducts] = useState<Set<string>>(new Set());
   const [donations, setDonations] = useState<DonationRecord[]>([]);
   const [likedComments, setLikedComments] = useState<LikedCommentRecord[]>([]);
   const [evaluations, setEvaluations] = useState<EvaluationRecord[]>([]);
@@ -86,6 +88,7 @@ export default function AccountPage() {
     if (!user) {
       setComments([]);
       setDownloads([]);
+      setOnlineViewProducts(new Set());
       setDonations([]);
       setLikedComments([]);
       setEvaluations([]);
@@ -126,6 +129,25 @@ export default function AccountPage() {
       const mergedDownloads = [...(downloadByUser || []), ...(downloadByEmail || [])].filter(
         (item, index, array) => array.findIndex((entry) => entry.id === item.id) === index,
       ) as DownloadRecord[];
+
+      const documentTargets = Array.from(new Map(mergedDownloads.flatMap((download) => {
+        const isResource = download.download_kind === "resource" && download.resource_id;
+        const productId = isResource ? download.resource_id : bookIdFromDownload(download);
+        const productKind = isResource ? "resource" : "book";
+        return productId ? [[`${productKind}:${productId}`, { productKind, productId }]] : [];
+      })).values());
+      const onlineViewEntries = await Promise.all(documentTargets.map(async ({ productKind, productId }) => {
+        try {
+          const response = await fetch(`/api/products/${productKind}/${encodeURIComponent(productId)}/documents`, { cache: "no-store" });
+          const result = await response.json().catch(() => null) as { ok?: boolean; documents?: PublicProductDocument[] } | null;
+          const hasOnlineView = Boolean(result?.ok && result.documents?.some((document) =>
+            document.deliveryMode !== "download" && canViewMimeType(document.mimeType, document.fileExtension),
+          ));
+          return hasOnlineView ? `${productKind}:${productId}` : null;
+        } catch {
+          return null;
+        }
+      }));
 
       const likedCommentIds = Array.from(
         new Set(((likedRows || []) as Array<{ id: string; comment_id: string | null }>).map((row) => row.comment_id).filter(Boolean) as string[]),
@@ -252,6 +274,7 @@ export default function AccountPage() {
         }),
       );
       setDownloads(mergedDownloads);
+      setOnlineViewProducts(new Set(onlineViewEntries.filter(Boolean) as string[]));
       setDonations((donationData || []) as DonationRecord[]);
       setLikedComments(likedCommentRecords);
       setEvaluations(mergedEvaluations);
@@ -667,21 +690,22 @@ export default function AccountPage() {
                     downloads.filter((download) => Number(download.download_count || 0) > 0 || download.last_downloaded_at).map((download) => {
                       const readBookId = bookIdFromDownload(download);
                       const isResourceDownload = download.download_kind === "resource" && download.resource_id;
+                      const productId = isResourceDownload ? download.resource_id : readBookId;
+                      const productKind = isResourceDownload ? "resource" : "book";
+                      const productHref = productId ? `/${isResourceDownload ? "outils" : "livres"}/${productId}#documents-numeriques` : "";
+                      const hasOnlineView = productId ? onlineViewProducts.has(`${productKind}:${productId}`) : false;
 
                       return (
                       <div key={download.id} className="account-download-row">
-                        <span className="account-download-title">
+                        {productHref ? <Link className="account-download-title account-product-link" href={productHref}>
                           {isResourceDownload ? download.resource_title || "Ressource" : download.book_title || "Livre"}
-                        </span>
+                        </Link> : <span className="account-download-title">
+                          {isResourceDownload ? download.resource_title || "Ressource" : download.book_title || "Livre"}
+                        </span>}
                         <div className="actions-row account-download-actions">
-                            {isResourceDownload ? (
-                              <Link className="cta-button compact-submit" href={`/outils/${download.resource_id}#documents-numeriques`}>
-                                Voir les documents
-                              </Link>
-                            ) : null}
-                            {!isResourceDownload && readBookId ? (
-                              <Link className="cta-button compact-submit" href={`/livres/${readBookId}#documents-numeriques`}>
-                                Voir les documents
+                            {productHref ? (
+                              <Link className="cta-button compact-submit" href={productHref}>
+                                {hasOnlineView ? "Lire en ligne" : "Télécharger à nouveau"}
                               </Link>
                             ) : null}
                         </div>
@@ -703,14 +727,17 @@ export default function AccountPage() {
                     const isResource = purchase.download_kind === "resource" && purchase.resource_id;
                     const bookId = bookIdFromDownload(purchase);
                     const downloadable = purchase.payment_status !== "refunded" && purchase.payment_status !== "refund_pending";
+                    const productId = isResource ? purchase.resource_id : bookId;
+                    const productKind = isResource ? "resource" : "book";
+                    const productHref = productId ? `/${isResource ? "outils" : "livres"}/${productId}#documents-numeriques` : "";
+                    const hasOnlineView = productId ? onlineViewProducts.has(`${productKind}:${productId}`) : false;
                     return <div key={`purchase-${purchase.id}`} className="account-purchase-row">
-                      <strong className="account-purchase-title">{isResource ? purchase.resource_title || "Ressource" : purchase.book_title || "Livre"}</strong>
+                      {productHref ? <Link className="account-purchase-title account-product-link" href={productHref}>{isResource ? purchase.resource_title || "Ressource" : purchase.book_title || "Livre"}</Link> : <strong className="account-purchase-title">{isResource ? purchase.resource_title || "Ressource" : purchase.book_title || "Livre"}</strong>}
                       <span className="account-purchase-date">Acheté le {new Date(purchase.paid_at || purchase.created_at || Date.now()).toLocaleString("fr-FR")}</span>
                       <span className="account-purchase-status">{Number(purchase.amount_paid || 0) > 0 ? "Payé" : "Gratuit"}</span>
                       <strong className="account-purchase-amount">{Number(purchase.amount_paid || 0).toFixed(2)} {purchase.currency || "EUR"}</strong>
                       <div className="account-purchase-actions">
-                        {downloadable && isResource ? <Link className="pill-button" href={`/outils/${purchase.resource_id}#documents-numeriques`}>Voir les documents</Link> : null}
-                        {downloadable && !isResource && bookId ? <Link className="pill-button" href={`/livres/${bookId}#documents-numeriques`}>Voir les documents</Link> : null}
+                        {downloadable && productHref ? <Link className="pill-button" href={productHref}>{hasOnlineView ? "Lire en ligne" : "Télécharger à nouveau"}</Link> : null}
                         <button className="pill-button" type="button" onClick={() => void downloadInvoice(purchase.id, purchase.invoice_number)}>Facture PDF</button>
                       </div>
                     </div>;

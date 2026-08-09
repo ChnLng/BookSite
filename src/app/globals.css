@@ -1873,13 +1873,14 @@ button,
 
 .payment-fallback-link {
   appearance: none;
-  border: 0;
+  border: 1px solid #e5ad00;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.62);
-  color: var(--ink-soft);
+  background: #ffc439;
+  color: #003087;
   cursor: pointer;
   font: inherit;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
+  font-weight: 800;
   line-height: 1.15;
   padding: 8px 10px;
   white-space: nowrap;
@@ -1888,8 +1889,8 @@ button,
 
 .payment-fallback-link:hover,
 .payment-fallback-link:focus-visible {
-  background: rgba(255, 255, 255, 0.94);
-  color: #4f46e5;
+  background: #ffcf5c;
+  color: #001c64;
   outline: none;
   transform: translateY(-1px);
 }
@@ -1898,6 +1899,37 @@ button,
   cursor: wait;
   opacity: 0.55;
   transform: none;
+}
+
+.product-owned-section {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.product-owned-notice {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 16px;
+  background: rgba(34, 197, 94, 0.09);
+  color: #166534;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.account-product-link {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.account-product-link:hover,
+.account-product-link:focus-visible {
+  color: var(--accent-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 @media (max-width: 760px) {
