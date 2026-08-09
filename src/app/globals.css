@@ -3096,6 +3096,11 @@ button,
     flex-direction: row;
   }
 
+  html[data-preferred-view="desktop"] .brand-mark {
+    width: auto;
+    max-width: none;
+  }
+
   html[data-preferred-view="desktop"] .topbar-share-wrap {
     width: auto;
   }
@@ -3107,6 +3112,25 @@ button,
 
   html[data-preferred-view="desktop"] .share-mobile-only {
     display: none;
+  }
+
+  html[data-preferred-view="desktop"] .nav-links {
+    display: flex;
+    grid-template-columns: none;
+    width: auto;
+    max-width: none;
+    gap: 6px;
+    padding: 6px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  html[data-preferred-view="desktop"] .nav-links a,
+  html[data-preferred-view="desktop"] .nav-links .nav-button {
+    width: auto;
+    min-width: auto;
+    padding: 10px 14px;
+    white-space: nowrap;
   }
 
   html[data-preferred-view="desktop"] .hero-scene,
