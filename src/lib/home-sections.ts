@@ -57,6 +57,7 @@ export type ResourceItem = {
   categoryId: string | null;
   titleFr: string;
   summaryFr: string;
+  coverImageUrl: string;
   qrImageUrl: string;
   externalUrl: string;
   priceEur: number;
@@ -121,6 +122,7 @@ type ResourceItemRow = {
   category_id: string | null;
   title_fr: string | null;
   summary_fr: string | null;
+  cover_image_url: string | null;
   qr_image_url: string | null;
   external_url: string | null;
   price_eur: number | string | null;
@@ -225,6 +227,7 @@ function mapResource(row: ResourceItemRow, variants: ResourceDownloadVariant[]):
     categoryId: row.category_id || null,
     titleFr: row.title_fr || "Ressource",
     summaryFr: row.summary_fr || "",
+    coverImageUrl: row.cover_image_url || row.qr_image_url || "/images/logo.png",
     qrImageUrl: row.qr_image_url || "",
     externalUrl: row.external_url || "",
     priceEur: Number(row.price_eur || 0),
@@ -279,7 +282,7 @@ export async function loadExpandedHomeData() {
         .order("created_at", { ascending: true }),
       supabase
         .from("resource_items")
-        .select("id, slug, category_id, title_fr, summary_fr, qr_image_url, external_url, price_eur, visible, sort_order")
+        .select("id, slug, category_id, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
         .eq("visible", true)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true }),

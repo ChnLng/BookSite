@@ -174,6 +174,7 @@ export function HomeExpandedSections() {
         categoryId: null,
         titleFr: resource.titleFr,
         summaryFr: resource.summaryFr,
+        coverImageUrl: resource.coverImageUrl || resource.qrImageUrl || "/images/logo.png",
         qrImageUrl: resource.qrImageUrl || resource.coverImageUrl,
         externalUrl: resource.externalUrl,
         priceEur: resource.priceEur,
@@ -511,7 +512,7 @@ export function HomeExpandedSections() {
                           >
                             <div className="home-resource-carousel-image">
                               <Image
-                                src={resource.qrImageUrl || "/images/logo.png"}
+                                src={resource.coverImageUrl || resource.qrImageUrl || "/images/logo.png"}
                                 alt={resource.titleFr}
                                 fill
                                 sizes="280px"
