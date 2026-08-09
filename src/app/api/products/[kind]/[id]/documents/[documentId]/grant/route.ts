@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
+import { getUserFromRequest } from "@/lib/auth-request";
 import { createProductDocumentGrant, productDocumentGrantCookieName } from "@/lib/product-document-grants";
 import {
   canViewMimeType,
@@ -26,10 +26,8 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     const body = await request.json().catch(() => ({})) as { mode?: string };
     const mode = body.mode === "view" ? "view" : "download";
-    const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
-    const admin = await isAdminUser(user, accessToken);
     const product = await resolveDocumentProduct(supabase, productKind, id);
-    if (!product || (!admin && (!product.visible || product.deletedAt))) {
+    if (!product || !product.visible || product.deletedAt) {
       return NextResponse.json({ ok: false, message: "Produit introuvable." }, { status: 404 });
     }
 
@@ -42,7 +40,7 @@ export async function POST(request: Request, context: RouteContext) {
       .maybeSingle();
     if (error) throw new Error(error.message);
     const document = data as ProductDocumentRecord | null;
-    if (!document || (!admin && (!document.visible || document.deleted_at))) {
+    if (!document || !document.visible || document.deleted_at) {
       return NextResponse.json({ ok: false, message: "Document introuvable." }, { status: 404 });
     }
     if (mode === "download" && document.delivery_mode === "view") {
@@ -52,14 +50,14 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ ok: false, message: "Ce format n'est pas disponible en lecture en ligne." }, { status: 403 });
     }
 
-    const purchased = admin || (productKind === "book"
+    const purchased = productKind === "book"
       ? await hasPurchasedBook(supabase, { userId: user.id, email: user.email, bookId: product.slug })
       : await hasPurchasedResource(supabase, {
           userId: user.id,
           email: user.email,
           resourceId: product.id,
           resourceSlug: product.slug,
-        }));
+        });
     if (!purchased) return NextResponse.json({ ok: false, message: "Accès non autorisé." }, { status: 403 });
 
     const grant = createProductDocumentGrant({

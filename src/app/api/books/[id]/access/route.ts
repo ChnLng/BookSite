@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { books as fallbackBooks } from "@/data/books";
-import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
+import { getUserFromRequest } from "@/lib/auth-request";
 import { isUuid } from "@/lib/database-identifiers";
 import { hasPurchasedBook } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
@@ -36,13 +36,11 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: true, hasAccess: false, requiresLogin: true });
   }
 
-  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
-  const isAdmin = await isAdminUser(user, accessToken);
-  const hasAccess = isAdmin || await hasPurchasedBook(supabase, {
+  const hasAccess = await hasPurchasedBook(supabase, {
     userId: user.id,
     email: user.email,
     bookId: book?.slug || fallback?.id || id,
   });
 
-  return NextResponse.json({ ok: true, hasAccess, requiresLogin: false, isAdmin });
+  return NextResponse.json({ ok: true, hasAccess, requiresLogin: false });
 }

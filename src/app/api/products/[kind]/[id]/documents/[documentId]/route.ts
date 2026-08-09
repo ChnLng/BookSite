@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
+import { getUserFromRequest } from "@/lib/auth-request";
 import { fetchGithubPaidAsset, resolveGithubPaidAssetRedirect } from "@/lib/github-paid-assets";
 import { productDocumentGrantCookieName, verifyProductDocumentGrant } from "@/lib/product-document-grants";
 import { hasPurchasedBook, hasPurchasedResource } from "@/lib/purchase-access";
@@ -54,8 +54,6 @@ export async function GET(request: Request, context: RouteContext) {
 
   try {
     const user = await getUserFromRequest(request);
-    const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
-    const admin = user ? await isAdminUser(user, accessToken) : false;
     const product = await resolveDocumentProduct(supabase, productKind, id);
     if (!product) {
       return NextResponse.json({ ok: false, message: "Produit introuvable." }, { status: 404 });
@@ -75,7 +73,7 @@ export async function GET(request: Request, context: RouteContext) {
     if (!user && !validGrant) {
       return NextResponse.json({ ok: false, message: "Connexion requise." }, { status: 401 });
     }
-    if (!admin && (!product.visible || product.deletedAt)) {
+    if (!product.visible || product.deletedAt) {
       return NextResponse.json({ ok: false, message: "Produit introuvable." }, { status: 404 });
     }
     const productColumn = productKind === "book" ? "book_id" : "resource_id";
@@ -87,7 +85,7 @@ export async function GET(request: Request, context: RouteContext) {
       .maybeSingle();
     if (error) throw new Error(error.message);
     const document = data as ProductDocumentRecord | null;
-    if (!document || (!admin && (!document.visible || document.deleted_at))) {
+    if (!document || !document.visible || document.deleted_at) {
       return NextResponse.json({ ok: false, message: "Document introuvable." }, { status: 404 });
     }
     if (mode === "download" && document.delivery_mode === "view") {
@@ -97,7 +95,7 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ ok: false, message: "Ce format n'est pas disponible en lecture en ligne." }, { status: 403 });
     }
 
-    const purchased = validGrant || admin || (productKind === "book"
+    const purchased = validGrant || (productKind === "book"
       ? await hasPurchasedBook(supabase, { userId: user!.id, email: user!.email, bookId: product.slug })
       : await hasPurchasedResource(supabase, {
           userId: user!.id,
@@ -117,7 +115,7 @@ export async function GET(request: Request, context: RouteContext) {
       }
     }
 
-    if (!admin && mode === "download") {
+    if (mode === "download") {
       const purchaseUserId = validGrant ? grantedUserId : user!.id;
       const purchaseQuery = supabase
         .from("downloads")

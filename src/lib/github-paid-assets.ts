@@ -4,6 +4,9 @@ export const githubPaidOwner = process.env.GITHUB_PAID_OWNER || process.env.GITH
 export const githubPaidRepo = process.env.GITHUB_PAID_REPO || "";
 export const githubPaidReleaseTag = process.env.GITHUB_PAID_RELEASE_TAG || "paid-downloads";
 
+let verifiedPrivateRepo = "";
+let verifiedPrivateRepoUntil = 0;
+
 export function githubPaidHeaders(binary = false) {
   const token = process.env.GITHUB_TOKEN;
   return {
@@ -11,6 +14,26 @@ export function githubPaidHeaders(binary = false) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     "X-GitHub-Api-Version": "2022-11-28",
   };
+}
+
+export async function assertGithubPaidRepositoryPrivate() {
+  if (!githubPaidOwner || !githubPaidRepo || !process.env.GITHUB_TOKEN) {
+    throw new Error("Configuration du dépôt GitHub privé manquante.");
+  }
+  const repoKey = `${githubPaidOwner}/${githubPaidRepo}`;
+  if (verifiedPrivateRepo === repoKey && verifiedPrivateRepoUntil > Date.now()) return;
+
+  const response = await fetch(`https://api.github.com/repos/${githubPaidOwner}/${githubPaidRepo}`, {
+    headers: githubPaidHeaders(),
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Impossible de vérifier le dépôt GitHub des fichiers payants.");
+  const repository = await response.json() as { private?: boolean; visibility?: string };
+  if (repository.private !== true || repository.visibility === "public") {
+    throw new Error("Sécurité bloquée : le dépôt GitHub des fichiers payants doit être privé.");
+  }
+  verifiedPrivateRepo = repoKey;
+  verifiedPrivateRepoUntil = Date.now() + 5 * 60 * 1000;
 }
 
 export function githubPaidAssetReference(assetId: number, fileName: string) {
@@ -37,6 +60,7 @@ export function parseGithubPaidAssetReference(value?: string | null) {
 export async function resolveLegacyGithubReleaseAsset(value: string) {
   const match = value.match(/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\/([^/]+)\/([^?#]+)/i);
   if (!match || !githubPaidOwner || !githubPaidRepo) return null;
+  await assertGithubPaidRepositoryPrivate();
   const tag = decodeURIComponent(match[1]);
   const fileName = decodeURIComponent(match[2]);
   const response = await fetch(
@@ -53,6 +77,7 @@ export async function fetchGithubPaidAsset(value: string, range?: string | null)
   if (!githubPaidOwner || !githubPaidRepo || !process.env.GITHUB_TOKEN) {
     throw new Error("Configuration du depot GitHub prive manquante.");
   }
+  await assertGithubPaidRepositoryPrivate();
   const parsed = parseGithubPaidAssetReference(value) || await resolveLegacyGithubReleaseAsset(value);
   if (!parsed) return null;
   const response = await fetch(
@@ -70,6 +95,7 @@ export async function resolveGithubPaidAssetRedirect(value: string) {
   if (!githubPaidOwner || !githubPaidRepo || !process.env.GITHUB_TOKEN) {
     throw new Error("Configuration du depot GitHub prive manquante.");
   }
+  await assertGithubPaidRepositoryPrivate();
   const parsed = parseGithubPaidAssetReference(value) || await resolveLegacyGithubReleaseAsset(value);
   if (!parsed) return null;
   const response = await fetch(

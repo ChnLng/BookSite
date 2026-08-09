@@ -1,6 +1,7 @@
 import "server-only";
 
 import {
+  assertGithubPaidRepositoryPrivate,
   githubPaidAssetReference,
   githubPaidHeaders,
   githubPaidOwner,
@@ -24,6 +25,7 @@ async function getOrCreatePaidRelease() {
   if (!process.env.GITHUB_TOKEN || !githubPaidOwner || !githubPaidRepo) {
     throw new Error("Configuration GitHub privée incomplète.");
   }
+  await assertGithubPaidRepositoryPrivate();
 
   const byTagUrl = `https://api.github.com/repos/${githubPaidOwner}/${githubPaidRepo}/releases/tags/${encodeURIComponent(githubPaidReleaseTag)}`;
   const existing = await fetch(byTagUrl, { headers: githubPaidHeaders(), cache: "no-store" });
@@ -80,6 +82,7 @@ export async function deletePaidAsset(assetReference: string) {
   if (!process.env.GITHUB_TOKEN || !githubPaidOwner || !githubPaidRepo) {
     throw new Error("Configuration GitHub privée incomplète.");
   }
+  await assertGithubPaidRepositoryPrivate();
   const response = await fetch(
     `https://api.github.com/repos/${githubPaidOwner}/${githubPaidRepo}/releases/assets/${parsed.assetId}`,
     { method: "DELETE", headers: githubPaidHeaders() },

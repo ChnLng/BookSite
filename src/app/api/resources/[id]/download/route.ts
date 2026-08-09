@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
+import { getUserFromRequest } from "@/lib/auth-request";
 import { isUuid } from "@/lib/database-identifiers";
 import { hasPurchasedResource } from "@/lib/purchase-access";
 import { normalizeResourceAssetPath, resourceDownloadsBucketName } from "@/lib/resource-assets";
@@ -44,9 +44,7 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Ressource introuvable." }, { status: 404 });
   }
 
-  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
-  const admin = await isAdminUser(user, accessToken);
-  const hasAccess = admin || await hasPurchasedResource(supabase, {
+  const hasAccess = await hasPurchasedResource(supabase, {
     userId: user.id,
     email: user.email,
     resourceId: resource.id,
