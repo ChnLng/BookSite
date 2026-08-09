@@ -217,14 +217,21 @@ export default function ReadBookPage() {
   useEffect(() => {
     if (!pdfDocument) return;
     const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target instanceof Element && target.closest("input, textarea, select, [contenteditable='true']")) return;
+
       if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        event.stopPropagation();
         setSpreadIndex((current) => Math.max(0, current - 1));
       } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        event.stopPropagation();
         setSpreadIndex((current) => Math.min(spreadCount - 1, current + 1));
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    return () => window.removeEventListener("keydown", handleKeyDown, { capture: true });
   }, [pdfDocument, spreadCount]);
 
   const handleCheckout = async () => {
@@ -325,6 +332,7 @@ export default function ReadBookPage() {
                   <strong>{book.titleFr}</strong>
                   {book.titleZh ? <span lang="zh-Hans">{book.titleZh}</span> : null}
                 </div>
+                <div className="reader-title-reveal-zone" aria-hidden="true" />
                 <div
                   className="reader-spread"
                   aria-live="polite"
