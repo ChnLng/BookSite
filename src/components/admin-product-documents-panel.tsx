@@ -10,6 +10,8 @@ import {
   type ProductDocumentRecord,
   type ProductKind,
 } from "@/lib/product-documents";
+import { addVisdArAuthorWatermark, isPdfUpload } from "@/lib/pdf-author-watermark";
+import { signedStorageTusEndpoint } from "@/lib/supabase-storage-upload";
 
 type CategoryRules = {
   allowedFileTypes: string[];
@@ -45,14 +47,15 @@ function modeLabel(mode: DocumentDeliveryMode) {
   return "Téléchargement";
 }
 
-function directStorageTusEndpoint() {
+function directStorageSignedTusEndpoint() {
   const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!configuredUrl) throw new Error("URL Supabase manquante.");
-  const url = new URL(configuredUrl);
-  if (url.hostname.endsWith(".supabase.co") && !url.hostname.endsWith(".storage.supabase.co")) {
-    url.hostname = url.hostname.replace(/\.supabase\.co$/, ".storage.supabase.co");
-  }
-  return `${url.origin}/storage/v1/upload/resumable`;
+  return signedStorageTusEndpoint(configuredUrl || "");
+}
+
+function supabasePublishableKey() {
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!key) throw new Error("Clé publique Supabase manquante.");
+  return key;
 }
 
 export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
@@ -63,6 +66,7 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
   const [newLabelFr, setNewLabelFr] = useState("");
   const [newLabelZh, setNewLabelZh] = useState("");
   const [newMode, setNewMode] = useState<DocumentDeliveryMode>("download");
+  const [watermarkPdf, setWatermarkPdf] = useState(true);
   const [replacementFiles, setReplacementFiles] = useState<Record<string, File | null>>({});
   const [busyKey, setBusyKey] = useState("");
   const [message, setMessage] = useState("");
@@ -107,6 +111,12 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
   }) => {
     if (!session?.access_token) throw new Error("Session admin expirée.");
 
+    let uploadFile = file;
+    if (watermarkPdf && isPdfUpload(file)) {
+      setMessage("Ajout de la signature discrète Auteur : Visd AR au PDF...");
+      uploadFile = await addVisdArAuthorWatermark(file);
+    }
+
     setMessage("1/3 Préparation de l'envoi privé...");
     const prepareResponse = await authorizedFetch("/api/admin/product-uploads/prepare", {
       method: "POST",
@@ -115,8 +125,8 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
         productKind,
         productId,
         fileName: file.name,
-        fileSize: file.size,
-        mimeType: file.type || "application/octet-stream",
+        fileSize: uploadFile.size,
+        mimeType: uploadFile.type || "application/octet-stream",
         deliveryMode: input.deliveryMode,
       }),
     });
@@ -131,28 +141,27 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
       throw new Error(prepared?.message || "Préparation impossible.");
     }
 
-    setMessage(`2/3 Envoi direct et reprenable (${formatBytes(file.size)})... Ne fermez pas cette page.`);
+    setMessage(`2/3 Envoi direct et reprenable (${formatBytes(uploadFile.size)})... Ne fermez pas cette page.`);
     await new Promise<void>((resolve, reject) => {
-      const upload = new Upload(file, {
-        endpoint: directStorageTusEndpoint(),
+      const upload = new Upload(uploadFile, {
+        endpoint: directStorageSignedTusEndpoint(),
         chunkSize: 6 * 1024 * 1024,
         retryDelays: [0, 3000, 5000, 10000, 20000],
         uploadDataDuringCreation: true,
         removeFingerprintOnSuccess: true,
         headers: {
-          authorization: `Bearer ${session.access_token}`,
+          apikey: supabasePublishableKey(),
           "x-signature": prepared.token as string,
-          "x-upsert": "true",
         },
         metadata: {
           bucketName: prepared.bucket as string,
           objectName: prepared.stagedPath as string,
-          contentType: file.type || "application/octet-stream",
+          contentType: uploadFile.type || "application/octet-stream",
           cacheControl: "no-cache",
         },
         onProgress: (uploadedBytes, totalBytes) => {
           const progress = totalBytes > 0 ? Math.round((uploadedBytes / totalBytes) * 100) : 0;
-          setMessage(`2/3 Envoi direct et reprenable : ${progress}% (${formatBytes(file.size)}). Ne fermez pas cette page.`);
+          setMessage(`2/3 Envoi direct et reprenable : ${progress}% (${formatBytes(uploadFile.size)}). Ne fermez pas cette page.`);
         },
         onError: (error) => reject(new Error(error.message || "Upload temporaire impossible.")),
         onSuccess: () => resolve(),
@@ -175,8 +184,8 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
         documentId: input.documentId,
         stagedPath: prepared.stagedPath,
         fileName: file.name,
-        fileSize: file.size,
-        mimeType: file.type || "application/octet-stream",
+        fileSize: uploadFile.size,
+        mimeType: uploadFile.type || "application/octet-stream",
         labelFr: input.labelFr || file.name,
         labelZh: input.labelZh,
         deliveryMode: input.deliveryMode,
@@ -340,6 +349,17 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
             }
           }}
         />
+        <label className="admin-pdf-watermark-option">
+          <input
+            type="checkbox"
+            checked={watermarkPdf}
+            onChange={(event) => setWatermarkPdf(event.target.checked)}
+          />
+          <span>
+            <strong>PDF：添加左右竖排作者署名</strong>
+            <small>Auteur : 猫咪 Logo Visd AR（字面朝两侧外边，浅蓝紫灰、低透明度）</small>
+          </span>
+        </label>
         <button className="cta-button" type="button" disabled={!newFile || busyKey === "add"} onClick={() => void addDocument()}>
           {busyKey === "add" ? "Upload en cours..." : "上传到私有 GitHub并绑定"}
         </button>

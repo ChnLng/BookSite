@@ -4243,6 +4243,35 @@ button,
   gap: 12px;
 }
 
+.admin-pdf-watermark-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(124, 104, 238, 0.14);
+  border-radius: 17px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(242, 240, 255, 0.7));
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.admin-pdf-watermark-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-primary);
+  flex: 0 0 auto;
+}
+
+.admin-pdf-watermark-option span {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-pdf-watermark-option small {
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
 @media (max-width: 760px) {
   .reader-header,
   .reader-book-meta {

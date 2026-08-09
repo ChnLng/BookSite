@@ -5,6 +5,7 @@ import {
   extensionFromFilename,
   normalizeAllowedFileTypes,
 } from "../src/lib/product-documents";
+import { signedStorageTusEndpoint } from "../src/lib/supabase-storage-upload";
 
 describe("product document rules", () => {
   it("normalizes administrator file-extension rules", () => {
@@ -22,5 +23,14 @@ describe("product document rules", () => {
   it("requires both category permissions for view-and-download delivery", () => {
     expect(deliveryModeAllowed("both", ["download", "view"])).toBe(true);
     expect(deliveryModeAllowed("both", ["download"])).toBe(false);
+  });
+
+  it("uses Supabase's signed resumable upload route on the direct storage host", () => {
+    expect(signedStorageTusEndpoint("https://project-ref.supabase.co")).toBe(
+      "https://project-ref.storage.supabase.co/storage/v1/upload/resumable/sign",
+    );
+    expect(signedStorageTusEndpoint("https://project-ref.storage.supabase.co/")).toBe(
+      "https://project-ref.storage.supabase.co/storage/v1/upload/resumable/sign",
+    );
   });
 });
