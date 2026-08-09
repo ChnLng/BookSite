@@ -1053,7 +1053,7 @@ export default function BookDetailPage() {
                 </div>
                 <p className="book-chinese-subtitle" lang="zh-Hans" style={moduleStyle("title", 20)}>{book.titleZh}</p>
 
-                <div className="promo-panel book-detail-cta-panel" style={moduleStyle("commerce", 30)}>
+                {!effectiveHasAccess ? <div className="promo-panel book-detail-cta-panel" style={moduleStyle("commerce", 30)}>
                   <div className="book-detail-cta-stack">
                     <div className="book-commerce-toolbar">
                       {!effectiveHasAccess ? (
@@ -1109,7 +1109,7 @@ export default function BookDetailPage() {
                               disabled={paymentBusy}
                               onClick={() => void startPayPalCheckout()}
                             >
-                              ou payer avec PayPal
+                              PayPal
                             </button>
                           ) : null}
                         </>
@@ -1135,14 +1135,14 @@ export default function BookDetailPage() {
                   ) : null}
                   {accessLoading ? <p className="tiny">Vérification de vos droits...</p> : null}
                   {paymentError ? <p className="tiny promo-message error">{paymentError}</p> : null}
-                </div>
-
-                <ProductDocumentsPanel
+                </div> : (
+                  <ProductDocumentsPanel
                   productKind="book"
                   productId={book.id}
                   hasAccess={effectiveHasAccess}
                   accessToken={session?.access_token}
-                />
+                  />
+                )}
 
                 <div className="book-detail-facts" style={moduleStyle("commerce", 30)}>
                   <div className="split-line">

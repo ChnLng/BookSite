@@ -905,7 +905,7 @@ export default function ResourceDetailPage() {
         <section className="panel glass resource-detail-main">
           <span className="badge">Coin ludique & Outils</span>
           <h1 className="book-detail-title" style={{ marginTop: 18 }}>{resource.titleFr}</h1>
-          <div className="resource-action-stack">
+          {!effectiveHasAccess ? <div className="resource-action-stack">
             <div className="resource-inline-price">
               <div className="promo-price-tag-wrap">
                 {hasAppliedPromo ? <span className="promo-original-price">{basePrice.toFixed(2)} EUR</span> : null}
@@ -968,7 +968,7 @@ export default function ResourceDetailPage() {
                       disabled={actionBusy}
                       onClick={() => void startPayPalCheckout()}
                     >
-                      ou payer avec PayPal
+                      PayPal
                     </button>
                   ) : null}
 
@@ -988,7 +988,14 @@ export default function ResourceDetailPage() {
 
               {!effectiveHasAccess && promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
             </div>
-          </div>
+          </div> : (
+            <ProductDocumentsPanel
+              productKind="resource"
+              productId={resource.id}
+              hasAccess={effectiveHasAccess}
+              accessToken={session?.access_token}
+            />
+          )}
 
           <p className="section-caption" style={{ marginTop: 18 }}>{resource.summaryFr}</p>
 
@@ -1009,13 +1016,6 @@ export default function ResourceDetailPage() {
               ) : null}
             </div>
           ) : null}
-
-          <ProductDocumentsPanel
-            productKind="resource"
-            productId={resource.id}
-            hasAccess={effectiveHasAccess}
-            accessToken={session?.access_token}
-          />
 
           {relatedResources.length > 0 ? (
             <div className="resource-related-strip">
