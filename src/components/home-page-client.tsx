@@ -307,6 +307,9 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
                 {item.label}
               </button>
             ))}
+            <Link className="footer-link-button" href="/blog/lecture-chinois-pinyin-traduction">
+              Conseils pour lire le chinois
+            </Link>
           </div>
         </div>
       </footer>

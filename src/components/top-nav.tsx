@@ -146,7 +146,6 @@ export function TopNav({
         <nav className="nav-links">
           {!isHomePage ? <Link href="/">Accueil</Link> : null}
           {!hideCatalogueLink ? <Link href="/catalogue">Catalogue</Link> : null}
-          <Link href="/blog/lecture-chinois-pinyin-traduction">Guide de lecture</Link>
           {dynamicLinks.map((link) => (
             <Link href={link.href} key={link.id}>
               {link.label}
