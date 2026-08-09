@@ -102,7 +102,7 @@ export default function RootLayout({
           id="visdar-preferred-view-bootstrap"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var root=document.documentElement;var desktopPreference=window.localStorage.getItem("visdar-preferred-view")==="desktop";if(desktopPreference){root.dataset.preferredView="desktop";}else{delete root.dataset.preferredView;}}catch(e){}})();`,
+            __html: `(function(){try{var root=document.documentElement;var desktopPreference=window.localStorage.getItem("visdar-preferred-view")==="desktop";if(desktopPreference){root.dataset.preferredView="desktop";if(window.innerWidth<768){root.style.setProperty("--desktop-preview-scale",String(Math.min(1,window.innerWidth/1180)));}}else{delete root.dataset.preferredView;root.style.removeProperty("--desktop-preview-scale");}}catch(e){}})();`,
           }}
         />
         <AuthProvider>{children}</AuthProvider>

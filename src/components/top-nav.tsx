@@ -60,14 +60,26 @@ export function TopNav({
       return;
     }
 
+    const root = document.documentElement;
+    const updateDesktopPreviewScale = () => {
+      if (preferDesktopView && window.innerWidth < 768) {
+        root.style.setProperty("--desktop-preview-scale", String(Math.min(1, window.innerWidth / 1180)));
+      } else {
+        root.style.removeProperty("--desktop-preview-scale");
+      }
+    };
+
     if (preferDesktopView) {
-      document.documentElement.dataset.preferredView = "desktop";
+      root.dataset.preferredView = "desktop";
       window.localStorage.setItem("visdar-preferred-view", "desktop");
+      updateDesktopPreviewScale();
+      window.addEventListener("resize", updateDesktopPreviewScale);
       window.dispatchEvent(new Event("visdar:view-mode-changed"));
-      return;
+      return () => window.removeEventListener("resize", updateDesktopPreviewScale);
     }
 
-    delete document.documentElement.dataset.preferredView;
+    delete root.dataset.preferredView;
+    root.style.removeProperty("--desktop-preview-scale");
     window.localStorage.removeItem("visdar-preferred-view");
     window.dispatchEvent(new Event("visdar:view-mode-changed"));
   }, [preferDesktopView, viewPreferenceReady]);
