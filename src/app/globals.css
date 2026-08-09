@@ -1396,7 +1396,7 @@ button,
   gap: 6px;
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .book-commerce-toolbar .book-promo-row {
