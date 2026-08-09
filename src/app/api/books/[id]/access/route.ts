@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { books as fallbackBooks } from "@/data/books";
 import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
+import { isUuid } from "@/lib/database-identifiers";
 import { hasPurchasedBook } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
@@ -16,12 +17,12 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
   }
 
-  const [{ data: book }, user] = await Promise.all([
-    supabase
+  const bookQuery = supabase
       .from("books")
       .select("id, slug, visible")
-      .or(`slug.eq.${id},id.eq.${id}`)
-      .maybeSingle(),
+      .limit(1);
+  const [{ data: book }, user] = await Promise.all([
+    (isUuid(id) ? bookQuery.eq("id", id) : bookQuery.eq("slug", id)).maybeSingle(),
     getUserFromRequest(request),
   ]);
 

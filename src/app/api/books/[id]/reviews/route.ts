@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { books as fallbackBooks } from "@/data/books";
+import { isUuid } from "@/lib/database-identifiers";
 import { siteConfig } from "@/lib/site-config";
 
 type RouteContext = {
@@ -66,12 +67,11 @@ async function bookExists(bookId: string, accessToken?: string) {
     return fallbackBookExists(bookId);
   }
 
-  const { data } = await supabase
+  const query = supabase
     .from("books")
     .select("id, slug")
-    .or(`slug.eq.${bookId},id.eq.${bookId}`)
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+  const { data } = await (isUuid(bookId) ? query.eq("id", bookId) : query.eq("slug", bookId)).maybeSingle();
 
   return Boolean(data) || fallbackBookExists(bookId);
 }

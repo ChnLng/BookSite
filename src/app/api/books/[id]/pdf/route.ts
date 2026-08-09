@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
 import { books } from "@/data/books";
 import { bookPdfPath, booksBucketName, isSupabaseBookPdfAsset, normalizeBookPdfAsset } from "@/lib/book-assets";
+import { isUuid } from "@/lib/database-identifiers";
 import { hasPurchasedBook } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 import { fetchGithubPaidAsset, parseGithubPaidAssetReference } from "@/lib/github-paid-assets";
@@ -65,11 +66,11 @@ async function resolveBook(id: string): Promise<ResolvedBook | null> {
   const serviceClient = getSupabaseServiceClient();
 
   if (serviceClient) {
-    const { data } = await serviceClient
+    const query = serviceClient
       .from("books")
       .select("id, slug, pdf_file")
-      .or(`slug.eq.${id},id.eq.${id}`)
-      .maybeSingle();
+      .limit(1);
+    const { data } = await (isUuid(id) ? query.eq("id", id) : query.eq("slug", id)).maybeSingle();
 
     if (data) {
       return {

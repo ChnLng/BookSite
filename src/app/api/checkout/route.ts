@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { books as fallbackBooks, donationOptions } from "@/data/books";
 import { getUserFromRequest } from "@/lib/auth-request";
 import { bookPdfPath } from "@/lib/book-assets";
+import { isUuid } from "@/lib/database-identifiers";
 import { applyDiscount } from "@/lib/promo";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
@@ -28,11 +29,11 @@ function siteOrigin(request: Request) {
 async function resolveBook(itemId: string): Promise<CheckoutProduct | null> {
   const supabase = getSupabaseServiceClient();
   if (supabase) {
-    const { data } = await supabase
+    const query = supabase
       .from("books")
       .select("id, slug, title_fr, pdf_file, price_eur, visible, deleted_at")
-      .or(`slug.eq.${itemId},id.eq.${itemId}`)
-      .maybeSingle();
+      .limit(1);
+    const { data } = await (isUuid(itemId) ? query.eq("id", itemId) : query.eq("slug", itemId)).maybeSingle();
 
     if (data && data.visible !== false && !data.deleted_at) {
       const slug = data.slug || itemId;
@@ -67,11 +68,11 @@ async function resolveResource(itemId: string): Promise<CheckoutProduct | null> 
   const supabase = getSupabaseServiceClient();
   if (!supabase) return null;
 
-  const { data: resource } = await supabase
+  const resourceQuery = supabase
     .from("resource_items")
     .select("id, slug, title_fr, price_eur, visible, deleted_at")
-    .or(`slug.eq.${itemId},id.eq.${itemId}`)
-    .maybeSingle();
+    .limit(1);
+  const { data: resource } = await (isUuid(itemId) ? resourceQuery.eq("id", itemId) : resourceQuery.eq("slug", itemId)).maybeSingle();
 
   if (!resource || resource.visible === false || resource.deleted_at) return null;
 

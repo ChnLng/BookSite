@@ -1,6 +1,7 @@
 import { books as staticBooks, defaultRelatedBookIds, type Book } from "@/data/books";
 import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-assets";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { isUuid } from "@/lib/database-identifiers";
 import { hasSupabaseConfig } from "@/lib/site-config";
 
 export type BookRow = {
@@ -172,8 +173,9 @@ export async function resolveDisplayBookById(
       .from("books")
       .select(BOOK_PUBLIC_SELECT)
       .is("deleted_at", null)
-      .or(`slug.eq.${bookId},id.eq.${bookId}`)
       .limit(1);
+
+    query = isUuid(bookId) ? query.eq("id", bookId) : query.eq("slug", bookId);
 
     if (!includeHidden) {
       query = query.eq("visible", true);

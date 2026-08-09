@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
+import { isUuid } from "@/lib/database-identifiers";
 import { hasPurchasedResource } from "@/lib/purchase-access";
 import { normalizeResourceAssetPath, resourceDownloadsBucketName } from "@/lib/resource-assets";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
@@ -33,11 +34,11 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
   }
 
-  const { data: resource } = await supabase
+  const resourceQuery = supabase
     .from("resource_items")
     .select("id, slug, visible")
-    .or(`slug.eq.${id},id.eq.${id}`)
-    .maybeSingle();
+    .limit(1);
+  const { data: resource } = await (isUuid(id) ? resourceQuery.eq("id", id) : resourceQuery.eq("slug", id)).maybeSingle();
 
   if (!resource || resource.visible === false) {
     return NextResponse.json({ ok: false, message: "Ressource introuvable." }, { status: 404 });

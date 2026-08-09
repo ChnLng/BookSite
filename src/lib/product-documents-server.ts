@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isUuid } from "@/lib/database-identifiers";
 import {
   canViewMimeType,
   deliveryModeAllowed,
@@ -13,10 +14,6 @@ import {
 
 export const productDocumentSelect =
   "id, product_kind, book_id, resource_id, category_id, label_fr, label_zh, file_name, file_extension, mime_type, size_bytes, asset_reference, delivery_mode, visible, sort_order, version, deleted_at";
-
-export function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-}
 
 export async function resolveDocumentProduct(
   supabase: SupabaseClient,

@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { isUuid } from "../src/lib/database-identifiers";
 import { bookIdFromDownload, resourceDownloadMatches } from "../src/lib/purchase-access";
 
 describe("purchase access helpers", () => {
+  it("distinguishes database UUIDs from public product slugs", () => {
+    expect(isUuid("a64cfd8d-8ca3-42bd-8355-6a6d8d5f72bf")).toBe(true);
+    expect(isUuid("echecschinois")).toBe(false);
+  });
+
   it("returns book_id when present", () => {
     expect(
       bookIdFromDownload({

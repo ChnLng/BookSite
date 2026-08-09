@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { books as fallbackBooks } from "@/data/books";
+import { isUuid } from "@/lib/database-identifiers";
 import { bookPdfPath } from "@/lib/book-assets";
 import { getUserFromRequest } from "@/lib/auth-request";
 import { hasPurchasedBook } from "@/lib/purchase-access";
@@ -30,11 +31,11 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
   }
 
-  const { data: book } = await supabase
+  const bookQuery = supabase
     .from("books")
     .select("id, slug, title_fr, price_eur, visible, pdf_file")
-    .or(`slug.eq.${id},id.eq.${id}`)
-    .maybeSingle();
+    .limit(1);
+  const { data: book } = await (isUuid(id) ? bookQuery.eq("id", id) : bookQuery.eq("slug", id)).maybeSingle();
 
   const fallback = fallbackBooks.find((item) => item.id === id);
   const resolvedId = book?.slug || fallback?.id || id;

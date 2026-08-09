@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { books as fallbackBooks } from "@/data/books";
 import { bookPdfPath } from "@/lib/book-assets";
 import { getUserFromRequest } from "@/lib/auth-request";
+import { isUuid } from "@/lib/database-identifiers";
 import { paypalAccessToken, paypalBaseUrl } from "@/lib/paypal-server";
 import { applyDiscount } from "@/lib/promo";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
@@ -30,11 +31,11 @@ async function resolveBook(bookId: string): Promise<ResolvedBook | null> {
   const supabase = getSupabaseServiceClient();
 
   if (supabase) {
-    const { data } = await supabase
+    const query = supabase
       .from("books")
       .select("id, slug, title_fr, pdf_file, price_eur")
-      .or(`slug.eq.${bookId},id.eq.${bookId}`)
-      .maybeSingle();
+      .limit(1);
+    const { data } = await (isUuid(bookId) ? query.eq("id", bookId) : query.eq("slug", bookId)).maybeSingle();
 
     if (data) {
       const slug = data.slug || bookId;
@@ -71,11 +72,11 @@ async function resolveResource(resourceId: string): Promise<ResolvedResource | n
     return null;
   }
 
-  const { data: resource } = await supabase
+  const resourceQuery = supabase
     .from("resource_items")
     .select("id, slug, title_fr, visible, price_eur")
-    .or(`slug.eq.${resourceId},id.eq.${resourceId}`)
-    .maybeSingle();
+    .limit(1);
+  const { data: resource } = await (isUuid(resourceId) ? resourceQuery.eq("id", resourceId) : resourceQuery.eq("slug", resourceId)).maybeSingle();
 
   if (!resource || resource.visible === false) {
     return null;

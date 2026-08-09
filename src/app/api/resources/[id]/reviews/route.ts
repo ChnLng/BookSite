@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { isUuid } from "@/lib/database-identifiers";
 import { siteConfig } from "@/lib/site-config";
 
 type RouteContext = {
@@ -55,12 +56,11 @@ async function resolveResourceId(idOrSlug: string, accessToken?: string) {
     return null;
   }
 
-  const { data } = await supabase
+  const query = supabase
     .from("resource_items")
     .select("id, slug")
-    .or(`slug.eq.${idOrSlug},id.eq.${idOrSlug}`)
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+  const { data } = await (isUuid(idOrSlug) ? query.eq("id", idOrSlug) : query.eq("slug", idOrSlug)).maybeSingle();
 
   return data?.id || null;
 }

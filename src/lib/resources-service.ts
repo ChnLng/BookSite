@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { isUuid } from "@/lib/database-identifiers";
 
 type ResourceItemRow = {
   id: string;
@@ -239,13 +240,12 @@ export async function resolveDisplayResourceById(idOrSlug: string) {
     return null;
   }
 
-  const [resourceResult, fileResult] = await Promise.all([
-    supabase
+  const resourceQuery = supabase
       .from("resource_items")
       .select("id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur")
-      .or(`slug.eq.${idOrSlug},id.eq.${idOrSlug}`)
-      .limit(1)
-      .maybeSingle(),
+      .limit(1);
+  const [resourceResult, fileResult] = await Promise.all([
+    (isUuid(idOrSlug) ? resourceQuery.eq("id", idOrSlug) : resourceQuery.eq("slug", idOrSlug)).maybeSingle(),
     supabase
       .from("resource_item_files")
       .select("id, resource_id, platform, label_fr, external_url, sort_order")
