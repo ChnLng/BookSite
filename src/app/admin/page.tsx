@@ -9,6 +9,7 @@ import { AdminGuard } from "@/components/admin-guard";
 import { AdminPartnerLinksPanel } from "@/components/admin-partner-links-panel";
 import { AdminProductDocumentsPanel } from "@/components/admin-product-documents-panel";
 import { AdminResourcesPanel } from "@/components/admin-resources-panel";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import { books as staticBooks, defaultRelatedBookIds } from "@/data/books";
@@ -1399,17 +1400,17 @@ function AdminPageContent() {
                       </option>
                     ))}
                   </select>
-                  <input
-                    className="input"
+                  <RichTextEditor
                     placeholder="Titre FR"
                     value={form.titleFr}
-                    onChange={(event) => setForm({ ...form, titleFr: event.target.value })}
+                    onChange={(titleFr) => setForm({ ...form, titleFr })}
+                    rows={2}
                   />
-                  <input
-                    className="input"
+                  <RichTextEditor
                     placeholder="Titre ZH"
                     value={form.titleZh}
-                    onChange={(event) => setForm({ ...form, titleZh: event.target.value })}
+                    onChange={(titleZh) => setForm({ ...form, titleZh })}
+                    rows={2}
                   />
                   <input
                     className="input"
@@ -1447,17 +1448,15 @@ function AdminPageContent() {
                     value={form.coverImage}
                     onChange={(event) => setForm({ ...form, coverImage: event.target.value })}
                   />
-                  <textarea
-                    className="textarea"
+                  <RichTextEditor
                     placeholder="Synopsis FR"
                     value={form.synopsisFr}
-                    onChange={(event) => setForm({ ...form, synopsisFr: event.target.value })}
+                    onChange={(synopsisFr) => setForm({ ...form, synopsisFr })}
                   />
-                  <textarea
-                    className="textarea"
+                  <RichTextEditor
                     placeholder="简介 ZH"
                     value={form.synopsisZh}
-                    onChange={(event) => setForm({ ...form, synopsisZh: event.target.value })}
+                    onChange={(synopsisZh) => setForm({ ...form, synopsisZh })}
                   />
                   <label className="tiny">
                     <input
@@ -1664,21 +1663,21 @@ function AdminPageContent() {
                                   </option>
                                 ))}
                               </select>
-                              <input
-                                className="input"
+                              <RichTextEditor
                                 placeholder="Titre FR"
                                 value={edit.titleFr}
-                                onChange={(event) =>
-                                  setBookEdits({ ...bookEdits, [book.id]: { ...edit, titleFr: event.target.value } })
+                                onChange={(titleFr) =>
+                                  setBookEdits({ ...bookEdits, [book.id]: { ...edit, titleFr } })
                                 }
+                                rows={2}
                               />
-                              <input
-                                className="input"
+                              <RichTextEditor
                                 placeholder="Titre ZH"
                                 value={edit.titleZh}
-                                onChange={(event) =>
-                                  setBookEdits({ ...bookEdits, [book.id]: { ...edit, titleZh: event.target.value } })
+                                onChange={(titleZh) =>
+                                  setBookEdits({ ...bookEdits, [book.id]: { ...edit, titleZh } })
                                 }
+                                rows={2}
                               />
                               <input
                                 className="input"
@@ -1728,20 +1727,18 @@ function AdminPageContent() {
                                   setBookEdits({ ...bookEdits, [book.id]: { ...edit, coverImage: event.target.value } })
                                 }
                               />
-                              <textarea
-                                className="textarea"
+                              <RichTextEditor
                                 placeholder="Synopsis FR"
                                 value={edit.synopsisFr}
-                                onChange={(event) =>
-                                  setBookEdits({ ...bookEdits, [book.id]: { ...edit, synopsisFr: event.target.value } })
+                                onChange={(synopsisFr) =>
+                                  setBookEdits({ ...bookEdits, [book.id]: { ...edit, synopsisFr } })
                                 }
                               />
-                              <textarea
-                                className="textarea"
+                              <RichTextEditor
                                 placeholder="简介 ZH"
                                 value={edit.synopsisZh}
-                                onChange={(event) =>
-                                  setBookEdits({ ...bookEdits, [book.id]: { ...edit, synopsisZh: event.target.value } })
+                                onChange={(synopsisZh) =>
+                                  setBookEdits({ ...bookEdits, [book.id]: { ...edit, synopsisZh } })
                                 }
                               />
                               <label className="tiny">

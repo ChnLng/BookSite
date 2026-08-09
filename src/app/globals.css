@@ -1966,6 +1966,36 @@ button,
   padding: clamp(18px, 3.5vw, 38px);
 }
 
+.rich-text-editor {
+  display: grid;
+  gap: 8px;
+}
+
+.rich-text-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.rich-text-editor-toolbar .pill-button {
+  min-height: 30px;
+  padding: 4px 9px;
+  font-size: 0.78rem;
+}
+
+.rich-text-editor-toolbar .tiny {
+  margin-left: 3px;
+}
+
+.formatted-text-paragraph {
+  margin: 0;
+}
+
+.formatted-text-paragraph + .formatted-text-paragraph {
+  margin-top: 0.95em;
+}
+
 .seo-article-header {
   position: relative;
   display: grid;

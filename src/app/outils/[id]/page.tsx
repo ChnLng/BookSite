@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink } from "lucide-react";
+import { FormattedInlineText, FormattedText } from "@/components/formatted-text";
 import { ProductDocumentsPanel } from "@/components/product-documents-panel";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
 import { TopNav } from "@/components/top-nav";
@@ -905,7 +906,7 @@ export default function ResourceDetailPage() {
 
         <section className="panel glass resource-detail-main">
           <span className="badge">Coin ludique & Outils</span>
-          <h1 className="book-detail-title" style={{ marginTop: 18 }}>{resource.titleFr}</h1>
+          <h1 className="book-detail-title" style={{ marginTop: 18 }}><FormattedInlineText text={resource.titleFr} /></h1>
           {!effectiveHasAccess ? <div className="resource-action-stack">
             <div className="resource-inline-price">
               <div className="promo-price-tag-wrap">
@@ -1003,7 +1004,7 @@ export default function ResourceDetailPage() {
             </div>
           )}
 
-          <p className="section-caption" style={{ marginTop: 18 }}>{resource.summaryFr}</p>
+          <div className="section-caption" style={{ marginTop: 18 }}><FormattedText text={resource.summaryFr} /></div>
 
           {promoSuccess ? <p className="tiny promo-message success">{promoSuccess}</p> : null}
 

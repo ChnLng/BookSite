@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutGrid } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
+import { FormattedInlineText, FormattedText } from "@/components/formatted-text";
 import { ProductDocumentsPanel } from "@/components/product-documents-panel";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
 import { TopNav } from "@/components/top-nav";
@@ -1035,7 +1036,7 @@ export default function BookDetailPage() {
               <div className="book-detail-copy">
                 <div className="badge" style={moduleStyle("collection", 10)}>Collection : Album illustré apaisant en chinois facile</div>
                 <div className="book-title-row" style={{ marginTop: 18, ...moduleStyle("title", 20) }}>
-                  <h1 className="section-title book-main-title">{book.titleFr}</h1>
+                  <h1 className="section-title book-main-title"><FormattedInlineText text={book.titleFr} /></h1>
                   {book.amazonPaperbackUrl ? (
                     <span className="purchase-link-tooltip-wrap book-external-purchase">
                       <a
@@ -1052,7 +1053,7 @@ export default function BookDetailPage() {
                     </span>
                   ) : null}
                 </div>
-                <p className="book-chinese-subtitle" lang="zh-Hans" style={moduleStyle("title", 20)}>{book.titleZh}</p>
+                <p className="book-chinese-subtitle" lang="zh-Hans" style={moduleStyle("title", 20)}><FormattedInlineText text={book.titleZh} /></p>
 
                 {!effectiveHasAccess ? <div className="promo-panel book-detail-cta-panel" style={moduleStyle("commerce", 30)}>
                   <div className="book-detail-cta-stack">
@@ -1172,8 +1173,8 @@ export default function BookDetailPage() {
                   ) : null}
                 </div>
 
-                <p className="muted" style={moduleStyle("synopsis", 40)}>{book.synopsisFr}</p>
-                {book.synopsisZh ? <p className="muted" style={moduleStyle("synopsis", 40)}>{book.synopsisZh}</p> : null}
+                <div className="muted" style={moduleStyle("synopsis", 40)}><FormattedText text={book.synopsisFr} /></div>
+                {book.synopsisZh ? <div className="muted" style={moduleStyle("synopsis", 40)}><FormattedText text={book.synopsisZh} /></div> : null}
 
                 {book.teachingPointFr ? (
                   <div className="book-detail-note" style={moduleStyle("teaching_point", 50)}>

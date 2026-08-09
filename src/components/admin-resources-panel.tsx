@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { AdminProductDocumentsPanel } from "@/components/admin-product-documents-panel";
+import { RichTextEditor } from "@/components/rich-text-editor";
 
 type CategoryOption = {
   id: string;
@@ -445,11 +446,11 @@ export function AdminResourcesPanel() {
           value={draft.slug}
           onChange={(event) => setDraft({ ...draft, slug: slugify(event.target.value) })}
         />
-        <input
-          className="input"
+        <RichTextEditor
           placeholder="Titre convivial"
           value={draft.titleFr}
-          onChange={(event) => setDraft({ ...draft, titleFr: event.target.value })}
+          onChange={(titleFr) => setDraft({ ...draft, titleFr })}
+          rows={2}
         />
         <input
           className="input"
@@ -489,11 +490,10 @@ export function AdminResourcesPanel() {
           />{" "}
           Visible
         </label>
-        <textarea
-          className="textarea"
+        <RichTextEditor
           placeholder="Résumé chaleureux"
           value={draft.summaryFr}
-          onChange={(event) => setDraft({ ...draft, summaryFr: event.target.value })}
+          onChange={(summaryFr) => setDraft({ ...draft, summaryFr })}
         />
       </div>
 

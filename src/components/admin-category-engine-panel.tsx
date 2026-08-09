@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { type HomeCategory } from "@/lib/home-sections";
 import { hasSupabaseConfig } from "@/lib/site-config";
@@ -462,17 +463,17 @@ export function AdminCategoryEnginePanel() {
           value={categoryDraft.slug}
           onChange={(event) => setCategoryDraft({ ...categoryDraft, slug: slugify(event.target.value) })}
         />
-        <input
-          className="input"
+        <RichTextEditor
           placeholder="Titre FR"
           value={categoryDraft.titleFr}
-          onChange={(event) => setCategoryDraft({ ...categoryDraft, titleFr: event.target.value })}
+          onChange={(titleFr) => setCategoryDraft({ ...categoryDraft, titleFr })}
+          rows={2}
         />
-        <input
-          className="input"
+        <RichTextEditor
           placeholder="Titre ZH"
           value={categoryDraft.titleZh}
-          onChange={(event) => setCategoryDraft({ ...categoryDraft, titleZh: event.target.value })}
+          onChange={(titleZh) => setCategoryDraft({ ...categoryDraft, titleZh })}
+          rows={2}
         />
         <select
           className="input"
@@ -548,11 +549,10 @@ export function AdminCategoryEnginePanel() {
           />{" "}
           Afficher sur l&apos;accueil
         </label>
-        <textarea
-          className="textarea"
+        <RichTextEditor
           placeholder="Introduction FR"
           value={categoryDraft.introFr}
-          onChange={(event) => setCategoryDraft({ ...categoryDraft, introFr: event.target.value })}
+          onChange={(introFr) => setCategoryDraft({ ...categoryDraft, introFr })}
         />
       </div>
 
@@ -699,17 +699,17 @@ export function AdminCategoryEnginePanel() {
           </div>
 
           <div className="input-group admin-form-grid">
-            <input
-              className="input"
+            <RichTextEditor
               placeholder="Titre"
               value={entryDraft.titleFr}
-              onChange={(event) => setEntryDraft({ ...entryDraft, titleFr: event.target.value })}
+              onChange={(titleFr) => setEntryDraft({ ...entryDraft, titleFr })}
+              rows={2}
             />
-            <input
-              className="input"
+            <RichTextEditor
               placeholder="Sous-titre"
               value={entryDraft.subtitleFr}
-              onChange={(event) => setEntryDraft({ ...entryDraft, subtitleFr: event.target.value })}
+              onChange={(subtitleFr) => setEntryDraft({ ...entryDraft, subtitleFr })}
+              rows={2}
             />
             <input
               className="input"
@@ -743,11 +743,10 @@ export function AdminCategoryEnginePanel() {
               />{" "}
               Visible
             </label>
-            <textarea
-              className="textarea"
+            <RichTextEditor
               placeholder="Résumé FR"
               value={entryDraft.summaryFr}
-              onChange={(event) => setEntryDraft({ ...entryDraft, summaryFr: event.target.value })}
+              onChange={(summaryFr) => setEntryDraft({ ...entryDraft, summaryFr })}
             />
           </div>
 
