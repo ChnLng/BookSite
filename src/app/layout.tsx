@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Cormorant_Garamond, Nunito } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
+import { StructuredData } from "@/components/structured-data";
 import "./globals.css";
 
 const googleTagManagerId = "GTM-N3S5X785";
@@ -19,12 +20,27 @@ const body = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Hub bilingue 🇨🇳 Chinois - Français 🇫🇷",
-  description: "Venez dans un univers tout doux de livres bilingues franco-chinois 🌸",
-  openGraph: {
-    title: "Hub bilingue 🇨🇳 Chinois - Français 🇫🇷",
-    description: "Venez dans un univers tout doux de livres bilingues franco-chinois 🌸",
+  metadataBase: new URL("https://visdar.fr"),
+  title: {
+    default: "Visd AR — livres et outils pour apprendre le chinois en français",
+    template: "%s | Visd AR",
   },
+  description: "Livres bilingues chinois-français, ebooks avec sinogrammes, pinyin et traduction, jeux et outils numériques pour apprendre le chinois en douceur.",
+  applicationName: "Visd AR",
+  authors: [{ name: "Visd AR", url: "https://visdar.fr" }],
+  creator: "Visd AR",
+  publisher: "Visd AR",
+  keywords: ["apprendre le chinois", "livre chinois débutant", "ebook chinois français", "pinyin traduction française", "jeu éducatif chinois"],
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    siteName: "Visd AR",
+    title: "Visd AR — apprendre le chinois par les histoires",
+    description: "Ebooks bilingues, sinogrammes, pinyin, traduction française et outils ludiques pour les apprenants francophones.",
+    images: [{ url: "/images/site-icon-512.png", width: 512, height: 512, alt: "Visd AR" }],
+  },
+  twitter: { card: "summary_large_image", title: "Visd AR — apprendre le chinois par les histoires", description: "Livres bilingues chinois-français et outils numériques pour débutants.", images: ["/images/site-icon-512.png"] },
   icons: {
     icon: [
       { url: "/images/site-icon-512.png", type: "image/png", sizes: "512x512" },
@@ -70,6 +86,18 @@ export default function RootLayout({
             style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
+        <StructuredData data={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "@id": "https://visdar.fr/#organization",
+          name: "Visd AR",
+          url: "https://visdar.fr",
+          logo: "https://visdar.fr/images/site-icon-512.png",
+          description: "Livres bilingues chinois-français et ressources numériques pour apprendre le chinois en français.",
+          email: "visdar@outlook.fr",
+          areaServed: "FR",
+          knowsLanguage: ["fr", "zh"],
+        }} />
         <Script
           id="visdar-preferred-view-bootstrap"
           strategy="beforeInteractive"
