@@ -1094,10 +1094,12 @@ export default function BookDetailPage() {
                           <button
                             className="cta-button book-buy-button"
                             type="button"
-                            disabled={paymentBusy}
+                            disabled={paymentBusy || accessLoading}
                             onClick={() => void handleBookCheckout()}
                           >
-                            {paymentBusy
+                            {accessLoading
+                              ? "Vérification..."
+                              : paymentBusy
                               ? "Ouverture du paiement..."
                               : promoUnlocksFreeAccess
                                 ? "Partager pour déverrouiller"
@@ -1107,7 +1109,7 @@ export default function BookDetailPage() {
                             <button
                               className="payment-fallback-link"
                               type="button"
-                              disabled={paymentBusy}
+                              disabled={paymentBusy || accessLoading}
                               onClick={() => void startPayPalCheckout()}
                             >
                               PayPal
@@ -1229,7 +1231,7 @@ export default function BookDetailPage() {
                 </p>
                 <div className="book-payment-shell">
                   <div className="actions-row">
-                    <button className="cta-button" type="button" onClick={() => void startPayPalCheckout()}>
+                    <button className="cta-button" type="button" disabled={paymentBusy || accessLoading} onClick={() => void startPayPalCheckout()}>
                       Payer avec PayPal
                     </button>
                   </div>

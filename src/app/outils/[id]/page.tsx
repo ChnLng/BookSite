@@ -950,12 +950,14 @@ export default function ResourceDetailPage() {
                   <button
                     type="button"
                     className="cta-button resource-buy-button"
-                    disabled={actionBusy || effectiveHasAccess}
+                    disabled={actionBusy || accessLoading || effectiveHasAccess}
                     onClick={() => void handleCheckout()}
                   >
                     {effectiveHasAccess
                       ? "Accès déjà débloqué"
-                      : actionBusy
+                      : accessLoading
+                        ? "Vérification..."
+                        : actionBusy
                         ? "Ouverture..."
                         : promoUnlocksFreeAccess
                           ? "Partager pour déverrouiller"
@@ -966,7 +968,7 @@ export default function ResourceDetailPage() {
                     <button
                       className="payment-fallback-link"
                       type="button"
-                      disabled={actionBusy}
+                      disabled={actionBusy || accessLoading}
                       onClick={() => void startPayPalCheckout()}
                     >
                       PayPal
@@ -1090,7 +1092,7 @@ export default function ResourceDetailPage() {
                 </p>
                 <div className="book-payment-shell">
                   <div className="actions-row">
-                    <button className="cta-button" type="button" onClick={() => void startPayPalCheckout()}>
+                    <button className="cta-button" type="button" disabled={actionBusy || accessLoading} onClick={() => void startPayPalCheckout()}>
                       Payer avec PayPal
                     </button>
                   </div>

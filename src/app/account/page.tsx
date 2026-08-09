@@ -296,7 +296,12 @@ export default function AccountPage() {
 
   const greeting = useMemo(() => profile?.displayName || user?.email || "Lecteur", [profile, user]);
   const downloadedRecords = useMemo(
-    () => downloads.filter((download) => download.payment_status !== "refunded" && !download.refunded_at),
+    () => downloads.filter(
+      (download) =>
+        download.payment_status !== "refunded"
+        && !download.refunded_at
+        && (Number(download.download_count || 0) > 0 || Boolean(download.last_downloaded_at)),
+    ),
     [downloads],
   );
 
@@ -745,7 +750,7 @@ export default function AccountPage() {
               {activeTab === "downloads" ? (
                 <div className="account-card">
                   <div className="account-card-stat">
-                    <span>Produits numériques disponibles : <strong>{downloadedRecords.length}</strong></span>
+                    <span>Produits téléchargés : <strong>{downloadedRecords.length}</strong></span>
                   </div>
                   {downloadedRecords.length === 0 ? (
                     <p className="muted">Aucun téléchargement enregistré.</p>

@@ -4,6 +4,7 @@ import { getUserFromRequest } from "@/lib/auth-request";
 import { isUuid } from "@/lib/database-identifiers";
 import { applyDiscount } from "@/lib/promo";
 import { paypalAccessToken, paypalBaseUrl } from "@/lib/paypal-server";
+import { hasPurchasedBook, hasPurchasedResource } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
 type ResolvedBook = {
@@ -160,6 +161,31 @@ export async function POST(request: Request) {
 
   if (!purchase) {
     return NextResponse.json({ ok: false, message: "Produit introuvable." }, { status: 404 });
+  }
+
+  const alreadyOwned = purchase.kind === "book"
+    ? await hasPurchasedBook(supabase, {
+        userId: user.id,
+        email: user.email,
+        bookId: purchase.id,
+      })
+    : await hasPurchasedResource(supabase, {
+        userId: user.id,
+        email: user.email,
+        resourceId: purchase.id,
+        resourceSlug: purchase.slug,
+      });
+
+  if (alreadyOwned) {
+    return NextResponse.json(
+      {
+        ok: false,
+        alreadyOwned: true,
+        message: "Vous possédez déjà ce produit. Retrouvez-le dans Ma page.",
+        accountUrl: "/account",
+      },
+      { status: 409 },
+    );
   }
 
   const amount = await expectedPrice(purchase.priceEur, promoCode);

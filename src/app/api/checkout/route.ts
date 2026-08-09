@@ -5,6 +5,7 @@ import { getUserFromRequest } from "@/lib/auth-request";
 import { bookPdfPath } from "@/lib/book-assets";
 import { isUuid } from "@/lib/database-identifiers";
 import { applyDiscount } from "@/lib/promo";
+import { hasPurchasedBook, hasPurchasedResource } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
 type CheckoutProduct = {
@@ -180,6 +181,36 @@ export async function POST(request: Request) {
   const product = kind === "resource" ? await resolveResource(itemId) : await resolveBook(itemId);
   if (!product) {
     return NextResponse.json({ ok: false, message: "Produit introuvable." }, { status: 404 });
+  }
+
+  const supabase = getSupabaseServiceClient();
+  if (!supabase) {
+    return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
+  }
+
+  const alreadyOwned = product.kind === "book"
+    ? await hasPurchasedBook(supabase, {
+        userId: user.id,
+        email: user.email,
+        bookId: product.slug,
+      })
+    : await hasPurchasedResource(supabase, {
+        userId: user.id,
+        email: user.email,
+        resourceId: product.id,
+        resourceSlug: product.slug,
+      });
+
+  if (alreadyOwned) {
+    return NextResponse.json(
+      {
+        ok: false,
+        alreadyOwned: true,
+        message: "Vous possédez déjà ce produit. Retrouvez-le dans Ma page.",
+        accountUrl: "/account",
+      },
+      { status: 409 },
+    );
   }
 
   const promoCode = String(payload?.promoCode || "").trim().toUpperCase();
