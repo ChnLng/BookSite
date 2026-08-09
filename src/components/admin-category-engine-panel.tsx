@@ -60,7 +60,7 @@ const defaultCategoryDraft: CategoryDraft = {
   slug: "",
   titleFr: "",
   titleZh: "",
-  kind: "custom",
+  kind: "resource",
   homepageVisible: true,
   homepageSortOrder: "20",
   iconName: "sparkles",
@@ -425,7 +425,8 @@ export function AdminCategoryEnginePanel() {
         <div>
           <h3>Moteur de catégories 动态类目引擎</h3>
           <p className="tiny" style={{ marginTop: 6 }}>
-            Créez des catégories flexibles, définissez leurs champs et ajoutez ensuite des contenus associés.
+            Créez des catégories flexibles. Pour vendre des fichiers avec accès permanent dans Ma page,
+            choisissez « Produit numérique vendable » ; « Contenu éditorial » reste sans paiement.
           </p>
         </div>
         <button className="pill-button" type="button" onClick={startNewCategory}>
@@ -483,9 +484,9 @@ export function AdminCategoryEnginePanel() {
             })
           }
         >
-          <option value="book">Livres</option>
-          <option value="resource">Ressources</option>
-          <option value="custom">Catégorie libre</option>
+          <option value="book">Livres numériques vendables</option>
+          <option value="resource">Produits numériques vendables</option>
+          <option value="custom">Contenu éditorial (sans paiement)</option>
         </select>
         <input
           className="input"

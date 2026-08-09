@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserFromRequest } from "@/lib/auth-request";
+import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
 import { hasPurchasedResource } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
@@ -32,11 +32,14 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: true, hasAccess: false, requiresLogin: true });
   }
 
-  const hasAccess = await hasPurchasedResource(supabase, {
+  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
+  const isAdmin = await isAdminUser(user, accessToken);
+  const hasAccess = isAdmin || await hasPurchasedResource(supabase, {
     userId: user.id,
     email: user.email,
     resourceId: resource.id,
+    resourceSlug: resource.slug,
   });
 
-  return NextResponse.json({ ok: true, hasAccess, requiresLogin: false });
+  return NextResponse.json({ ok: true, hasAccess, requiresLogin: false, isAdmin });
 }

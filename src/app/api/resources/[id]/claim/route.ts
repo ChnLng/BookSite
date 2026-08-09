@@ -68,6 +68,7 @@ export async function POST(request: Request, context: RouteContext) {
     userId: user.id,
     email: user.email,
     resourceId: resource.id,
+    resourceSlug: resource.slug,
   });
 
   if (!existing) {

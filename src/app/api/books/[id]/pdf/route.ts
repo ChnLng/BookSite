@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
-import { getUserFromRequest } from "@/lib/auth-request";
+import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
 import { books } from "@/data/books";
 import { bookPdfPath, booksBucketName, isSupabaseBookPdfAsset, normalizeBookPdfAsset } from "@/lib/book-assets";
 import { hasPurchasedBook } from "@/lib/purchase-access";
@@ -111,7 +111,9 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
   }
 
-  const hasAccess = await hasPurchasedBook(serviceClient, {
+  const accessToken = request.headers.get("Authorization")?.replace("Bearer ", "").trim() || undefined;
+  const admin = await isAdminUser(user, accessToken);
+  const hasAccess = admin || await hasPurchasedBook(serviceClient, {
     userId: user.id,
     email: user.email,
     bookId: id,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { books as fallbackBooks } from "@/data/books";
+import { getUserFromRequest } from "@/lib/auth-request";
 import { applyDiscount } from "@/lib/promo";
 import { paypalAccessToken, paypalBaseUrl } from "@/lib/paypal-server";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
@@ -121,6 +122,10 @@ function requestOrigin(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const user = await getUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json({ ok: false, message: "Connectez-vous avant de procéder au paiement." }, { status: 401 });
+  }
   const supabase = getSupabaseServiceClient();
 
   if (!supabase) {

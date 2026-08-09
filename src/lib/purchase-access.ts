@@ -11,6 +11,7 @@ type ResourcePurchaseCheckParams = {
   userId: string;
   email?: string | null;
   resourceId: string;
+  resourceSlug?: string | null;
 };
 
 function expectedPdfPath(bookId: string) {
@@ -51,7 +52,7 @@ async function matchDownload(
   const [byUserIdResult, byEmailResult] = await Promise.all([
     supabase.from("downloads").select("id, book_id, download_url, payment_status, refunded_at").eq("user_id", userId),
     email
-      ? supabase.from("downloads").select("id, book_id, download_url, payment_status, refunded_at").eq("user_email", email)
+      ? supabase.from("downloads").select("id, book_id, download_url, payment_status, refunded_at").ilike("user_email", email)
       : Promise.resolve({ data: [] as Array<{ id?: string; book_id?: string | null; download_url?: string | null; payment_status?: string | null; refunded_at?: string | null }> }),
   ]);
 
@@ -81,36 +82,52 @@ export function bookIdFromDownload(record: {
   return extractBookSlugFromPdfAsset(record.download_url);
 }
 
-function resourceDownloadMatches(
-  row: { resource_id?: string | null; download_kind?: string | null; payment_status?: string | null; refunded_at?: string | null },
-  resourceId: string,
+export function resourceDownloadMatches(
+  row: {
+    resource_id?: string | null;
+    resource_title?: string | null;
+    book_id?: string | null;
+    download_kind?: string | null;
+    payment_status?: string | null;
+    refunded_at?: string | null;
+  },
+  resourceIds: string[],
 ) {
   if (row.refunded_at || row.payment_status === "refunded" || row.payment_status === "failed") {
     return false;
   }
-  if (row.resource_id === resourceId) {
+  if (row.resource_id && resourceIds.includes(row.resource_id)) {
     return true;
   }
 
-  return row.download_kind === "resource" && row.resource_id === resourceId;
+  // Compatibility for resource orders created before downloads.resource_id was
+  // introduced. They were sometimes stored with the resource slug in book_id.
+  return Boolean(
+    !row.resource_id
+      && row.book_id
+      && resourceIds.includes(row.book_id)
+      && (row.download_kind === "resource" || row.resource_title),
+  );
 }
 
 export async function hasPurchasedResource(
   supabase: SupabaseClient,
   params: ResourcePurchaseCheckParams,
 ): Promise<boolean> {
-  const { userId, email, resourceId } = params;
+  const { userId, email, resourceId, resourceSlug } = params;
+  const resourceIds = Array.from(new Set([resourceId, resourceSlug].filter(Boolean) as string[]));
+  const fields = "id, resource_id, resource_title, book_id, download_kind, payment_status, refunded_at";
   const [byUserIdResult, byEmailResult] = await Promise.all([
-    supabase.from("downloads").select("id, resource_id, download_kind, payment_status, refunded_at").eq("user_id", userId),
+    supabase.from("downloads").select(fields).eq("user_id", userId),
     email
-      ? supabase.from("downloads").select("id, resource_id, download_kind, payment_status, refunded_at").eq("user_email", email)
-      : Promise.resolve({ data: [] as Array<{ id?: string; resource_id?: string | null; download_kind?: string | null; payment_status?: string | null; refunded_at?: string | null }> }),
+      ? supabase.from("downloads").select(fields).ilike("user_email", email)
+      : Promise.resolve({ data: [] as Array<{ id?: string; resource_id?: string | null; resource_title?: string | null; book_id?: string | null; download_kind?: string | null; payment_status?: string | null; refunded_at?: string | null }> }),
   ]);
 
-  if (byUserIdResult.data?.some((row) => resourceDownloadMatches(row, resourceId))) {
+  if (byUserIdResult.data?.some((row) => resourceDownloadMatches(row, resourceIds))) {
     return true;
   }
 
   const byEmail = byEmailResult.data || [];
-  return Boolean(byEmail?.some((row) => resourceDownloadMatches(row, resourceId)));
+  return Boolean(byEmail?.some((row) => resourceDownloadMatches(row, resourceIds)));
 }

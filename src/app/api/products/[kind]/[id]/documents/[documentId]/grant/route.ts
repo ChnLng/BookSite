@@ -54,7 +54,12 @@ export async function POST(request: Request, context: RouteContext) {
 
     const purchased = admin || (productKind === "book"
       ? await hasPurchasedBook(supabase, { userId: user.id, email: user.email, bookId: product.slug })
-      : await hasPurchasedResource(supabase, { userId: user.id, email: user.email, resourceId: product.id }));
+      : await hasPurchasedResource(supabase, {
+          userId: user.id,
+          email: user.email,
+          resourceId: product.id,
+          resourceSlug: product.slug,
+        }));
     if (!purchased) return NextResponse.json({ ok: false, message: "Accès non autorisé." }, { status: 403 });
 
     const grant = createProductDocumentGrant({

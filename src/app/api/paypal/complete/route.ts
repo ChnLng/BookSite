@@ -231,14 +231,29 @@ export async function POST(request: Request) {
 
   const payerEmail = String(verifiedOrder.payer?.email_address || "").trim();
   const captureId = String(capture?.id || "").trim() || null;
+  const user = await getUserFromRequest(request);
 
   const { data: existing } = await supabase
     .from("downloads")
-    .select("id")
+    .select("id, user_id, user_email")
     .eq("paypal_order_id", orderId)
     .maybeSingle();
 
   if (existing?.id) {
+    const accountEmail = String(user?.email || "").trim().toLowerCase();
+    const recordedEmail = String(existing.user_email || "").trim().toLowerCase();
+    const verifiedPayerEmail = payerEmail.toLowerCase();
+    const canAttachToAccount = Boolean(
+      user
+        && (!existing.user_id || existing.user_id === user.id)
+        && (!recordedEmail || recordedEmail === accountEmail || verifiedPayerEmail === accountEmail),
+    );
+    if (canAttachToAccount && user && existing.user_id !== user.id) {
+      await supabase.from("downloads").update({
+        user_id: user.id,
+        user_email: user.email || existing.user_email || payerEmail || null,
+      }).eq("id", existing.id);
+    }
     return NextResponse.json({
       ok: true,
       alreadyRecorded: true,
@@ -248,7 +263,6 @@ export async function POST(request: Request) {
     });
   }
 
-  const user = await getUserFromRequest(request);
   const purchaserEmail = user?.email || payerEmail || null;
 
   const { error } =

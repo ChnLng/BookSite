@@ -412,6 +412,7 @@ export default function ResourceDetailPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
           },
           body: JSON.stringify({
             kind: "resource",
@@ -441,7 +442,7 @@ export default function ResourceDetailPage() {
         setPaymentError(error instanceof Error ? error.message : "Impossible d'ouvrir PayPal pour le moment.");
       }
     },
-    [appliedPromo?.code, resource],
+    [appliedPromo?.code, resource, session?.access_token],
   );
 
   const startStripeCheckout = useCallback(async () => {

@@ -511,6 +511,7 @@ export default function BookDetailPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
           },
           body: JSON.stringify({
             kind: "book",
@@ -540,7 +541,7 @@ export default function BookDetailPage() {
         setPaymentError(error instanceof Error ? error.message : "Impossible d'ouvrir PayPal pour le moment.");
       }
     },
-    [appliedPromo?.code, book],
+    [appliedPromo?.code, book, session?.access_token],
   );
 
   const startStripeCheckout = useCallback(async () => {

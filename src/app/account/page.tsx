@@ -112,30 +112,31 @@ export default function AccountPage() {
 
     const load = async () => {
       setFetching(true);
-      const email = user.email || "";
       const [
         { data: commentData },
-        { data: downloadByUser },
-        { data: downloadByEmail },
+        purchaseResponse,
         { data: donationData },
         { data: likedRows },
         { data: bookReviewRows },
         { data: resourceReviewRows },
       ] = await Promise.all([
         supabase.from("comments").select("id, content, author_name, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("downloads").select("id, download_kind, book_id, book_title, resource_id, resource_title, download_url, created_at, amount_paid, currency, payment_status, paid_at, refunded_at, invoice_number, download_count, last_downloaded_at").eq("user_id", user.id).order("created_at", { ascending: false }),
-        email
-          ? supabase.from("downloads").select("id, download_kind, book_id, book_title, resource_id, resource_title, download_url, created_at, amount_paid, currency, payment_status, paid_at, refunded_at, invoice_number, download_count, last_downloaded_at").eq("user_email", email).order("created_at", { ascending: false })
-          : Promise.resolve({ data: [] }),
+        session?.access_token
+          ? fetch("/api/account/purchases", {
+              headers: { Authorization: `Bearer ${session.access_token}` },
+              cache: "no-store",
+            })
+          : Promise.resolve(null),
         supabase.from("donations").select("id, amount, currency, note, payment_status, paid_at, created_at").eq("user_id", user.id).order("paid_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }),
         supabase.from("comment_likes").select("id, comment_id").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("book_reviews").select("id, book_id, author_name, rating, review_text, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("resource_reviews").select("id, resource_id, author_name, rating, review_text, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
       ]);
 
-      const mergedDownloads = [...(downloadByUser || []), ...(downloadByEmail || [])].filter(
-        (item, index, array) => array.findIndex((entry) => entry.id === item.id) === index,
-      ) as DownloadRecord[];
+      const purchaseResult = purchaseResponse
+        ? await purchaseResponse.json().catch(() => null) as { ok?: boolean; purchases?: DownloadRecord[] } | null
+        : null;
+      const mergedDownloads = purchaseResult?.ok ? purchaseResult.purchases || [] : [];
 
       const documentTargets = Array.from(new Map(mergedDownloads.flatMap((download) => {
         const isResource = download.download_kind === "resource" && download.resource_id;
@@ -291,11 +292,11 @@ export default function AccountPage() {
     };
 
     void load();
-  }, [user]);
+  }, [session?.access_token, user]);
 
   const greeting = useMemo(() => profile?.displayName || user?.email || "Lecteur", [profile, user]);
   const downloadedRecords = useMemo(
-    () => downloads.filter((download) => Number(download.download_count || 0) > 0 || download.last_downloaded_at),
+    () => downloads.filter((download) => download.payment_status !== "refunded" && !download.refunded_at),
     [downloads],
   );
 
@@ -744,7 +745,7 @@ export default function AccountPage() {
               {activeTab === "downloads" ? (
                 <div className="account-card">
                   <div className="account-card-stat">
-                    <span>Produits téléchargés : <strong>{downloadedRecords.length}</strong></span>
+                    <span>Produits numériques disponibles : <strong>{downloadedRecords.length}</strong></span>
                   </div>
                   {downloadedRecords.length === 0 ? (
                     <p className="muted">Aucun téléchargement enregistré.</p>
