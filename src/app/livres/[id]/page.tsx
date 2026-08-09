@@ -1036,7 +1036,7 @@ export default function BookDetailPage() {
               <div className="book-detail-copy">
                 <div className="badge" style={moduleStyle("collection", 10)}>Collection : Album illustré apaisant en chinois facile</div>
                 <div className="book-title-row" style={{ marginTop: 18, ...moduleStyle("title", 20) }}>
-                  <h1 className="section-title book-main-title"><FormattedInlineText text={book.titleFr} /></h1>
+                  <h1 className="section-title book-main-title"><FormattedInlineText text={book.titleRichFr || book.titleFr} /></h1>
                   {book.amazonPaperbackUrl ? (
                     <span className="purchase-link-tooltip-wrap book-external-purchase">
                       <a
@@ -1053,7 +1053,7 @@ export default function BookDetailPage() {
                     </span>
                   ) : null}
                 </div>
-                <p className="book-chinese-subtitle" lang="zh-Hans" style={moduleStyle("title", 20)}><FormattedInlineText text={book.titleZh} /></p>
+                <p className="book-chinese-subtitle" lang="zh-Hans" style={moduleStyle("title", 20)}><FormattedInlineText text={book.titleRichZh || book.titleZh} /></p>
 
                 {!effectiveHasAccess ? <div className="promo-panel book-detail-cta-panel" style={moduleStyle("commerce", 30)}>
                   <div className="book-detail-cta-stack">
@@ -1173,8 +1173,8 @@ export default function BookDetailPage() {
                   ) : null}
                 </div>
 
-                <div className="muted" style={moduleStyle("synopsis", 40)}><FormattedText text={book.synopsisFr} /></div>
-                {book.synopsisZh ? <div className="muted" style={moduleStyle("synopsis", 40)}><FormattedText text={book.synopsisZh} /></div> : null}
+                <div className="muted" style={moduleStyle("synopsis", 40)}><FormattedText text={book.synopsisRichFr || book.synopsisFr} /></div>
+                {book.synopsisZh ? <div className="muted" style={moduleStyle("synopsis", 40)}><FormattedText text={book.synopsisRichZh || book.synopsisZh} /></div> : null}
 
                 {book.teachingPointFr ? (
                   <div className="book-detail-note" style={moduleStyle("teaching_point", 50)}>

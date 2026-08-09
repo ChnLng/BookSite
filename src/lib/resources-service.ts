@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { isUuid } from "@/lib/database-identifiers";
+import { richTextToPlainText } from "@/lib/rich-text";
 
 type ResourceItemRow = {
   id: string;
@@ -46,6 +47,8 @@ export type DisplayResource = {
   sortOrder: number;
   priceEur: number;
   downloads: DisplayResourceDownload[];
+  titleRichFr?: string;
+  summaryRichFr?: string;
 };
 
 const platformOrder = ["通用", "Mac", "Windows", "Linux", "手机"] as const;
@@ -150,11 +153,14 @@ function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) 
         .filter((entry) => entry.filePath || entry.externalUrl)
         .sort(sortDownloads);
 
+      const titleRichFr = row.title_fr || "Ressource ludique";
+      const summaryRichFr = row.summary_fr || "Une ressource numerique douce a decouvrir.";
+
       return {
         id: row.id,
         slug: row.slug || row.id,
-        titleFr: row.title_fr || "Ressource ludique",
-        summaryFr: row.summary_fr || "Une ressource numerique douce a decouvrir.",
+        titleFr: richTextToPlainText(titleRichFr),
+        summaryFr: richTextToPlainText(summaryRichFr),
         coverImageUrl: row.cover_image_url || row.qr_image_url || "/images/logo.png",
         qrImageUrl: row.qr_image_url || row.cover_image_url || "/images/logo.png",
         externalUrl: row.external_url || "",
@@ -162,6 +168,8 @@ function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) 
         sortOrder: row.sort_order ?? 0,
         priceEur: normalizePrice(row.price_eur),
         downloads,
+        titleRichFr,
+        summaryRichFr,
       };
     })
     .sort((left, right) => left.sortOrder - right.sortOrder || left.titleFr.localeCompare(right.titleFr));

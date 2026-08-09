@@ -3,6 +3,7 @@ import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-asse
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { isUuid } from "@/lib/database-identifiers";
 import { hasSupabaseConfig } from "@/lib/site-config";
+import { richTextToPlainText } from "@/lib/rich-text";
 
 export type BookRow = {
   id: string;
@@ -31,6 +32,10 @@ export type DisplayBook = Book & {
   coverImage: string;
   pdfFile: string;
   relatedBookIds: string[];
+  titleRichFr?: string;
+  titleRichZh?: string;
+  synopsisRichFr?: string;
+  synopsisRichZh?: string;
 };
 
 export const BOOK_PUBLIC_SELECT =
@@ -72,18 +77,22 @@ export function mapBookRow(row: BookRow, fallback?: Book): DisplayBook {
   const slug = row.slug || fallback?.id || row.id;
   const ext = bookAssetExtensions[slug] || "jpg";
   const normalizedRelatedBookIds = normalizeRelatedBookIds(row.related_book_ids);
+  const titleRichFr = row.title_fr;
+  const titleRichZh = row.title_zh;
+  const synopsisRichFr = row.synopsis_fr || fallback?.synopsisFr || "";
+  const synopsisRichZh = row.synopsis_zh || fallback?.synopsisZh || "";
 
   return {
     id: slug,
     dbId: row.id,
     asin: row.asin || fallback?.asin || "",
-    titleFr: row.title_fr,
-    titleZh: row.title_zh,
+    titleFr: richTextToPlainText(titleRichFr),
+    titleZh: richTextToPlainText(titleRichZh),
     accent: fallback?.accent || "linear-gradient(135deg, #f8c28f 0%, #f5e6ca 45%, #fff8ef 100%)",
     animal: fallback?.animal || "",
     priceEur: Number(row.price_eur ?? fallback?.priceEur ?? 0),
     publishDate: fallback?.publishDate || "",
-    synopsisFr: row.synopsis_fr || fallback?.synopsisFr || "",
+    synopsisFr: richTextToPlainText(synopsisRichFr),
     teachingPointFr: fallback?.teachingPointFr || "",
     amazonEbookUrl: row.amazon_ebook_url || fallback?.amazonEbookUrl || "",
     amazonPaperbackUrl: row.amazon_paperback_url || fallback?.amazonPaperbackUrl || "",
@@ -92,6 +101,10 @@ export function mapBookRow(row: BookRow, fallback?: Book): DisplayBook {
     coverImage: row.cover_image || bookCoverPath(slug, ext),
     pdfFile: row.pdf_file || bookPdfPath(slug),
     relatedBookIds: normalizedRelatedBookIds.length > 0 ? normalizedRelatedBookIds : defaultRelatedBookIds[slug] || [],
+    titleRichFr,
+    titleRichZh,
+    synopsisRichFr,
+    synopsisRichZh,
   };
 }
 

@@ -906,7 +906,7 @@ export default function ResourceDetailPage() {
 
         <section className="panel glass resource-detail-main">
           <span className="badge">Coin ludique & Outils</span>
-          <h1 className="book-detail-title" style={{ marginTop: 18 }}><FormattedInlineText text={resource.titleFr} /></h1>
+          <h1 className="book-detail-title" style={{ marginTop: 18 }}><FormattedInlineText text={resource.titleRichFr || resource.titleFr} /></h1>
           {!effectiveHasAccess ? <div className="resource-action-stack">
             <div className="resource-inline-price">
               <div className="promo-price-tag-wrap">
@@ -1004,7 +1004,7 @@ export default function ResourceDetailPage() {
             </div>
           )}
 
-          <div className="section-caption" style={{ marginTop: 18 }}><FormattedText text={resource.summaryFr} /></div>
+          <div className="section-caption" style={{ marginTop: 18 }}><FormattedText text={resource.summaryRichFr || resource.summaryFr} /></div>
 
           {promoSuccess ? <p className="tiny promo-message success">{promoSuccess}</p> : null}
 
