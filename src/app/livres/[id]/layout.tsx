@@ -13,7 +13,7 @@ async function getBook(id: string) {
 }
 
 function absoluteUrl(path: string) {
-  return path.startsWith("http") ? path : `https://visdar.fr${path.startsWith("/") ? path : `/${path}`}`;
+  return path.startsWith("http") ? path : `https://www.visdar.fr${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export async function generateMetadata({ params }: Omit<Props, "children">): Promise<Metadata> {
@@ -43,7 +43,7 @@ export default async function BookSeoLayout({ children, params }: Props) {
   const { id } = await params;
   const book = await getBook(id);
   if (!book) return children;
-  const url = `https://visdar.fr/livres/${book.id}`;
+  const url = `https://www.visdar.fr/livres/${book.id}`;
   const image = absoluteUrl(book.coverImage);
   const product = {
     "@context": "https://schema.org",
@@ -67,14 +67,14 @@ export default async function BookSeoLayout({ children, params }: Props) {
           price: book.priceEur.toFixed(2),
           availability: "https://schema.org/InStock",
           itemCondition: "https://schema.org/NewCondition",
-          seller: { "@type": "Organization", name: "Visd AR", url: "https://visdar.fr" },
+          seller: { "@type": "Organization", name: "Visd AR", url: "https://www.visdar.fr" },
         },
       },
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Accueil", item: "https://visdar.fr" },
-          { "@type": "ListItem", position: 2, name: "Catalogue", item: "https://visdar.fr/catalogue" },
+          { "@type": "ListItem", position: 1, name: "Accueil", item: "https://www.visdar.fr" },
+          { "@type": "ListItem", position: 2, name: "Catalogue", item: "https://www.visdar.fr/catalogue" },
           { "@type": "ListItem", position: 3, name: book.titleFr, item: url },
         ],
       },

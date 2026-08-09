@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 import { loadCachedPublicDisplayBooks } from "@/lib/books-public-server";
 import { loadPublicResourcesForSeo } from "@/lib/resources-public-server";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = "https://visdar.fr";
+  const siteUrl = "https://www.visdar.fr";
   const [books, resources] = await Promise.all([
     loadCachedPublicDisplayBooks(),
     loadPublicResourcesForSeo(),

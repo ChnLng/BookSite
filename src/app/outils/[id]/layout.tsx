@@ -10,7 +10,7 @@ async function getResource(id: string) {
 }
 
 function absoluteUrl(path: string) {
-  return path.startsWith("http") ? path : `https://visdar.fr${path.startsWith("/") ? path : `/${path}`}`;
+  return path.startsWith("http") ? path : `https://www.visdar.fr${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export async function generateMetadata({ params }: Omit<Props, "children">): Promise<Metadata> {
@@ -33,7 +33,7 @@ export default async function ResourceSeoLayout({ children, params }: Props) {
   const { id } = await params;
   const resource = await getResource(id);
   if (!resource) return children;
-  const url = `https://visdar.fr/outils/${resource.slug}`;
+  const url = `https://www.visdar.fr/outils/${resource.slug}`;
   return <><StructuredData data={{
     "@context": "https://schema.org",
     "@type": "Product",
@@ -51,7 +51,7 @@ export default async function ResourceSeoLayout({ children, params }: Props) {
       price: resource.priceEur.toFixed(2),
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
-      seller: { "@type": "Organization", name: "Visd AR", url: "https://visdar.fr" },
+      seller: { "@type": "Organization", name: "Visd AR", url: "https://www.visdar.fr" },
     },
   }} />{children}</>;
 }

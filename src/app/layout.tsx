@@ -20,14 +20,14 @@ const body = Nunito({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://visdar.fr"),
+  metadataBase: new URL("https://www.visdar.fr"),
   title: {
     default: "Visd AR — livres et outils pour apprendre le chinois en français",
     template: "%s | Visd AR",
   },
   description: "Livres bilingues chinois-français, ebooks avec sinogrammes, pinyin et traduction, jeux et outils numériques pour apprendre le chinois en douceur.",
   applicationName: "Visd AR",
-  authors: [{ name: "Visd AR", url: "https://visdar.fr" }],
+  authors: [{ name: "Visd AR", url: "https://www.visdar.fr" }],
   creator: "Visd AR",
   publisher: "Visd AR",
   keywords: ["apprendre le chinois", "livre chinois débutant", "ebook chinois français", "pinyin traduction française", "jeu éducatif chinois"],
@@ -89,10 +89,10 @@ export default function RootLayout({
         <StructuredData data={{
           "@context": "https://schema.org",
           "@type": "Organization",
-          "@id": "https://visdar.fr/#organization",
+          "@id": "https://www.visdar.fr/#organization",
           name: "Visd AR",
-          url: "https://visdar.fr",
-          logo: "https://visdar.fr/images/site-icon-512.png",
+          url: "https://www.visdar.fr",
+          logo: "https://www.visdar.fr/images/site-icon-512.png",
           description: "Livres bilingues chinois-français et ressources numériques pour apprendre le chinois en français.",
           email: "visdar@outlook.fr",
           areaServed: "FR",

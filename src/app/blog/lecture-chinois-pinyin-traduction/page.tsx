@@ -4,7 +4,7 @@ import { StructuredData } from "@/components/structured-data";
 import { TopNav } from "@/components/top-nav";
 import { loadCachedPublicDisplayBooks } from "@/lib/books-public-server";
 
-const pageUrl = "https://visdar.fr/blog/lecture-chinois-pinyin-traduction";
+const pageUrl = "https://www.visdar.fr/blog/lecture-chinois-pinyin-traduction";
 const title = "Lire le chinois avec sinogrammes, pinyin et traduction française";
 const description = "Passez du manuel à la lecture courante grâce aux histoires chinoises avec sinogrammes, pinyin et traduction française, pensées pour les débutants.";
 
@@ -46,12 +46,12 @@ export default async function ChineseReadingGuidePage() {
         datePublished: "2026-08-09",
         dateModified: "2026-08-09",
         mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
-        author: { "@type": "Organization", name: "Visd AR", url: "https://visdar.fr" },
+        author: { "@type": "Organization", name: "Visd AR", url: "https://www.visdar.fr" },
         publisher: {
           "@type": "Organization",
           name: "Visd AR",
-          url: "https://visdar.fr",
-          logo: { "@type": "ImageObject", url: "https://visdar.fr/images/site-icon-512.png" },
+          url: "https://www.visdar.fr",
+          logo: { "@type": "ImageObject", url: "https://www.visdar.fr/images/site-icon-512.png" },
         },
         about: ["Apprentissage du chinois", "Sinogrammes", "Pinyin", "Lecture bilingue chinois-français"],
       },
@@ -64,8 +64,8 @@ export default async function ChineseReadingGuidePage() {
           item: {
             "@type": "Product",
             name: book.titleFr,
-            url: `https://visdar.fr/livres/${book.id}`,
-            image: book.coverImage.startsWith("http") ? book.coverImage : `https://visdar.fr${book.coverImage}`,
+            url: `https://www.visdar.fr/livres/${book.id}`,
+            image: book.coverImage.startsWith("http") ? book.coverImage : `https://www.visdar.fr${book.coverImage}`,
             brand: { "@type": "Brand", name: "Visd AR" },
             offers: {
               "@type": "Offer",
@@ -79,7 +79,7 @@ export default async function ChineseReadingGuidePage() {
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Accueil", item: "https://visdar.fr" },
+          { "@type": "ListItem", position: 1, name: "Accueil", item: "https://www.visdar.fr" },
           { "@type": "ListItem", position: 2, name: "Guide de lecture chinoise", item: pageUrl },
         ],
       },

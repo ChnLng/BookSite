@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin", "/account", "/api/", "/read/"],
     },
-    sitemap: "https://visdar.fr/sitemap.xml",
-    host: "https://visdar.fr",
+    sitemap: "https://www.visdar.fr/sitemap.xml",
+    host: "https://www.visdar.fr",
   };
 }
