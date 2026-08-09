@@ -276,11 +276,14 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
               <Link className="cta-button" href="/catalogue">
                 Explorer les livres
               </Link>
-              {displayBooks[0]?.amazonPaperbackUrl ? (
-                <a className="cta-button secondary" href={displayBooks[0].amazonPaperbackUrl} target="_blank">
-                  Version papier Amazon
-                </a>
-              ) : null}
+              <a
+                className="cta-button secondary"
+                href="https://www.amazon.fr/dp/B0DYYCG9XV?binding=paperback"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Version papier Amazon
+              </a>
             </div>
           </section>
 
