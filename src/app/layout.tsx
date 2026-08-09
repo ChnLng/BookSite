@@ -26,9 +26,13 @@ export const metadata: Metadata = {
     description: "Venez dans un univers tout doux de livres bilingues franco-chinois 🌸",
   },
   icons: {
-    icon: "/images/logo.png",
-    shortcut: "/images/logo.png",
-    apple: "/images/logo.png",
+    icon: [
+      { url: "/images/site-icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/images/site-icon-512.png",
+    apple: [
+      { url: "/images/apple-touch-icon.png", type: "image/png", sizes: "180x180" },
+    ],
   },
 };
 
