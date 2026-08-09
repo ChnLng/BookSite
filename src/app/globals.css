@@ -3371,6 +3371,7 @@ button,
   display: grid;
   justify-items: center;
   max-width: min(78%, 720px);
+  transform: translateX(-50%);
   padding: 8px 16px 9px;
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 18px;
@@ -3381,7 +3382,7 @@ button,
   pointer-events: none;
   text-align: center;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.58);
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition: opacity 180ms ease;
   backdrop-filter: blur(14px) saturate(1.15);
 }
 
@@ -3408,7 +3409,6 @@ button,
 }
 
 .reader-book-viewer:has(.reader-title-reveal-zone:hover) .reader-hover-title {
-  transform: translate(-50%, 0);
   opacity: 1;
 }
 

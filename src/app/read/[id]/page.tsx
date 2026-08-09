@@ -213,6 +213,8 @@ export default function ReadBookPage() {
   const spreadCount = pdfDocument ? 1 + Math.ceil(Math.max(0, pdfDocument.numPages - 1) / 2) : 0;
   const leftPdfPage = spreadIndex > 0 ? spreadIndex * 2 : null;
   const rightPdfPage = spreadIndex === 0 ? 1 : spreadIndex * 2 + 1;
+  const previousSpread = () => setSpreadIndex((current) => Math.max(0, current - 1));
+  const nextSpread = () => setSpreadIndex((current) => Math.min(spreadCount - 1, current + 1));
 
   useEffect(() => {
     if (!pdfDocument) return;
@@ -223,11 +225,11 @@ export default function ReadBookPage() {
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         event.stopPropagation();
-        setSpreadIndex((current) => Math.max(0, current - 1));
+        previousSpread();
       } else if (event.key === "ArrowRight") {
         event.preventDefault();
         event.stopPropagation();
-        setSpreadIndex((current) => Math.min(spreadCount - 1, current + 1));
+        nextSpread();
       }
     };
     window.addEventListener("keydown", handleKeyDown, { capture: true });
@@ -343,9 +345,9 @@ export default function ReadBookPage() {
                     touchStartX.current = null;
                     if (Math.abs(distance) < 45) return;
                     if (distance > 0) {
-                      setSpreadIndex((current) => Math.max(0, current - 1));
+                      previousSpread();
                     } else {
-                      setSpreadIndex((current) => Math.min(spreadCount - 1, current + 1));
+                      nextSpread();
                     }
                   }}
                 >
@@ -360,13 +362,13 @@ export default function ReadBookPage() {
                       <span className="reader-page-number">Couverture</span>
                     </div>
                   ) : leftPdfPage && leftPdfPage <= pdfDocument.numPages ? (
-                    <PdfCanvasPage document={pdfDocument} pageNumber={leftPdfPage} side="left" />
+                    <PdfCanvasPage key={`left-${leftPdfPage}`} document={pdfDocument} pageNumber={leftPdfPage} side="left" />
                   ) : (
                     <div className="reader-page-slot reader-page-slot-empty" aria-hidden="true" />
                   )}
 
                   {rightPdfPage <= pdfDocument.numPages ? (
-                    <PdfCanvasPage document={pdfDocument} pageNumber={rightPdfPage} side="right" />
+                    <PdfCanvasPage key={`right-${rightPdfPage}`} document={pdfDocument} pageNumber={rightPdfPage} side="right" />
                   ) : (
                     <div className="reader-page-slot reader-page-slot-empty" aria-hidden="true" />
                   )}
@@ -377,7 +379,13 @@ export default function ReadBookPage() {
                   aria-label="Page précédente"
                   title="Précédent"
                   disabled={spreadIndex === 0}
-                  onClick={() => setSpreadIndex((current) => Math.max(0, current - 1))}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    previousSpread();
+                  }}
+                  onClick={(event) => {
+                    if (event.detail === 0) previousSpread();
+                  }}
                 >
                   <ChevronLeft size={25} />
                 </button>
@@ -387,7 +395,13 @@ export default function ReadBookPage() {
                   aria-label="Page suivante"
                   title="Suivant"
                   disabled={spreadIndex >= spreadCount - 1}
-                  onClick={() => setSpreadIndex((current) => Math.min(spreadCount - 1, current + 1))}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    nextSpread();
+                  }}
+                  onClick={(event) => {
+                    if (event.detail === 0) nextSpread();
+                  }}
                 >
                   <ChevronRight size={25} />
                 </button>
