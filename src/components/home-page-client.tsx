@@ -307,9 +307,6 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
                 {item.label}
               </button>
             ))}
-            <Link className="footer-link-button" href="/blog/lecture-chinois-pinyin-traduction">
-              Conseils pour lire le chinois
-            </Link>
           </div>
         </div>
       </footer>
@@ -423,7 +420,7 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
       {activeInfo ? (
         <div className="overlay-backdrop" role="presentation" onClick={() => setActiveInfoId(null)}>
           <div
-            className="overlay-card overlay-card-small glass"
+            className={`overlay-card overlay-card-small glass${activeInfo.id === "guide-lecture" ? " guide-overlay-card" : ""}`}
             role="dialog"
             aria-modal="true"
             onClick={(event) => event.stopPropagation()}
@@ -431,9 +428,14 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
             <button className="overlay-close" type="button" onClick={() => setActiveInfoId(null)}>
               <X size={18} />
             </button>
-            <div className="badge">Information</div>
+            <div className="badge">{activeInfo.id === "guide-lecture" ? "Guide de lecture" : "Information"}</div>
             <h3 style={{ margin: "14px 0 10px" }}>{activeInfo.title}</h3>
             <p className="muted">{activeInfo.body}</p>
+            {activeInfo.href ? (
+              <Link className="cta-button guide-overlay-cta" href={activeInfo.href} onClick={() => setActiveInfoId(null)}>
+                {activeInfo.ctaLabel || "En savoir plus"}
+              </Link>
+            ) : null}
           </div>
         </div>
       ) : null}

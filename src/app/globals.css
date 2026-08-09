@@ -1204,6 +1204,34 @@ button,
   width: min(460px, 100%);
 }
 
+.guide-overlay-card {
+  overflow: hidden;
+  border-color: rgba(244, 163, 190, 0.32);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 196, 148, 0.3), transparent 42%),
+    radial-gradient(circle at 0% 100%, rgba(196, 181, 253, 0.26), transparent 44%),
+    rgba(255, 255, 255, 0.9);
+  box-shadow: 0 28px 80px rgba(128, 87, 145, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.guide-overlay-card h3 {
+  padding-right: 40px;
+  font-family: var(--font-heading), serif;
+  font-size: 1.65rem;
+  line-height: 1.12;
+}
+
+.guide-overlay-card .muted {
+  color: #5f5870;
+  line-height: 1.75;
+}
+
+.guide-overlay-cta {
+  width: fit-content;
+  margin-top: 16px;
+  padding: 10px 16px;
+}
+
 .overlay-close {
   position: absolute;
   top: 16px;

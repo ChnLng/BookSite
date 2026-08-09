@@ -1,4 +1,21 @@
-export const infoLinks = [
+export type InfoLink = {
+  id: string;
+  label: string;
+  title: string;
+  body: string;
+  href?: string;
+  ctaLabel?: string;
+};
+
+export const infoLinks: InfoLink[] = [
+  {
+    id: "guide-lecture",
+    label: "Guide de lecture",
+    title: "Du manuel aux vraies histoires ✨",
+    body: "Un petit pont tout doux vers la lecture chinoise : les sinogrammes entraînent l’œil, le pinyin guide la prononciation et la traduction française éclaire le sens. Avec nos ebooks bilingues chinois-français, les débutants avancent page après page, sans passer leur temps dans le dictionnaire. Prêt à laisser le mandarin raconter ses premières histoires ?",
+    href: "/blog/lecture-chinois-pinyin-traduction",
+    ctaLabel: "Lire le guide complet",
+  },
   {
     id: "livraison",
     label: "Livraison digitale",
