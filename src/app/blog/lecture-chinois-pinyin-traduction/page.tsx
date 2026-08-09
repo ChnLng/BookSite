@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { StructuredData } from "@/components/structured-data";
 import { TopNav } from "@/components/top-nav";
@@ -93,11 +94,28 @@ export default async function ChineseReadingGuidePage() {
       <TopNav className="topbar-luxury" showAdmin showLogout />
       <article className="panel glass seo-article">
         <header className="seo-article-header">
-          <span className="badge">Guide · Apprendre le chinois en français</span>
+          <Image
+            className="seo-article-hero-icon"
+            src="/images/site-icon-512.png"
+            width={132}
+            height={132}
+            alt=""
+            aria-hidden="true"
+          />
+          <div className="seo-article-meta">
+            <span className="badge">Guide · Apprendre le chinois en français</span>
+            <span>6 min de lecture</span>
+            <span>Niveau débutant</span>
+          </div>
           <h1>{headline}</h1>
-          <p className="section-caption">
+          <p className="seo-article-deck">
             Passer du manuel à une lecture chinoise fluide grâce à trois appuis complémentaires : les sinogrammes, le pinyin et la traduction française.
           </p>
+          <div className="seo-article-topics" aria-label="Thèmes de l’article">
+            <span>Sinogrammes</span>
+            <span>Pinyin</span>
+            <span>Traduction française</span>
+          </div>
         </header>
 
         <section>
@@ -141,9 +159,12 @@ export default async function ChineseReadingGuidePage() {
             <div className="seo-book-links">
               {books.map((book) => (
                 <Link href={`/livres/${book.id}`} className="seo-book-link" key={book.id}>
-                  <strong>{book.titleFr}</strong>
-                  <span>{book.titleZh}</span>
-                  <span>{book.priceEur.toFixed(2)} EUR · Ebook avec lecture en ligne</span>
+                  <Image src={book.coverImage} alt={`Couverture de ${book.titleFr}`} width={74} height={98} />
+                  <span className="seo-book-link-copy">
+                    <strong>{book.titleFr}</strong>
+                    <span>{book.titleZh}</span>
+                    <span>{book.priceEur.toFixed(2)} EUR · Lecture en ligne</span>
+                  </span>
                 </Link>
               ))}
             </div>
