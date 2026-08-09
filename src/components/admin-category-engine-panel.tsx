@@ -16,6 +16,7 @@ type CategoryDraft = {
   iconName: string;
   introFr: string;
   allowedFileTypes: string;
+  allowedDeliveryModes: Array<"download" | "view">;
 };
 
 type RuleDraft = {
@@ -64,7 +65,8 @@ const defaultCategoryDraft: CategoryDraft = {
   homepageSortOrder: "20",
   iconName: "sparkles",
   introFr: "",
-  allowedFileTypes: "",
+  allowedFileTypes: ".pdf, .epub, .zip, .svg, .png, .jpg, .txt, .md",
+  allowedDeliveryModes: ["download", "view"],
 };
 
 const defaultRuleDraft = (): RuleDraft => ({
@@ -122,7 +124,7 @@ export function AdminCategoryEnginePanel() {
     const [categoriesResult, rulesResult, entriesResult] = await Promise.all([
       supabase
         .from("categories")
-        .select("id, slug, title_fr, title_zh, kind, homepage_visible, homepage_sort_order, icon_name, intro_fr, allowed_file_types")
+        .select("id, slug, title_fr, title_zh, kind, homepage_visible, homepage_sort_order, icon_name, intro_fr, allowed_file_types, allowed_delivery_modes")
         .order("homepage_sort_order", { ascending: true })
         .order("created_at", { ascending: true }),
       supabase
@@ -147,6 +149,9 @@ export function AdminCategoryEnginePanel() {
       iconName: String(row.icon_name || "sparkles"),
       introFr: String(row.intro_fr || ""),
       allowedFileTypes: Array.isArray(row.allowed_file_types) ? (row.allowed_file_types as string[]) : [],
+      allowedDeliveryModes: Array.isArray(row.allowed_delivery_modes)
+        ? (row.allowed_delivery_modes as Array<"download" | "view">)
+        : ["download"],
     })) as HomeCategory[];
 
     const nextRulesByCategory = ((rulesResult.data || []) as Array<Record<string, unknown>>).reduce<Record<string, RuleDraft[]>>(
@@ -209,6 +214,7 @@ export function AdminCategoryEnginePanel() {
       iconName: category.iconName,
       introFr: category.introFr,
       allowedFileTypes: category.allowedFileTypes.join(", "),
+      allowedDeliveryModes: category.allowedDeliveryModes,
     });
     setRuleDrafts(rulesByCategory[category.id]?.length ? rulesByCategory[category.id] : [defaultRuleDraft()]);
     setEntryDraft(defaultEntryDraft);
@@ -233,6 +239,14 @@ export function AdminCategoryEnginePanel() {
       setStatusMessage("Renseignez au minimum le titre FR et le slug de la catégorie.");
       return;
     }
+    if (!categoryDraft.allowedFileTypes.split(",").some((item) => item.trim())) {
+      setStatusMessage("请至少填写一种允许上传的文档扩展名，例如 .pdf 或 .zip。");
+      return;
+    }
+    if (categoryDraft.allowedDeliveryModes.length === 0) {
+      setStatusMessage("请至少允许一种交付方式：下载或在线浏览。");
+      return;
+    }
 
     setBusyKey("save-category-engine");
 
@@ -249,8 +263,10 @@ export function AdminCategoryEnginePanel() {
         intro_fr: categoryDraft.introFr.trim() || null,
         allowed_file_types: categoryDraft.allowedFileTypes
           .split(",")
-          .map((item) => item.trim())
+          .map((item) => item.trim().toLowerCase())
+          .map((item) => item && !item.startsWith(".") ? `.${item}` : item)
           .filter(Boolean),
+        allowed_delivery_modes: categoryDraft.allowedDeliveryModes,
       };
 
       if (categoryDraft.id) {
@@ -485,10 +501,39 @@ export function AdminCategoryEnginePanel() {
         />
         <input
           className="input"
-          placeholder="Formats autorises (.pdf, .zip...)"
+          placeholder="Formats autorisés (.pdf, .zip, .fbx, .svg...)"
           value={categoryDraft.allowedFileTypes}
           onChange={(event) => setCategoryDraft({ ...categoryDraft, allowedFileTypes: event.target.value })}
         />
+        <div className="admin-inline-card">
+          <strong>交付方式 Modes autorisés</strong>
+          <label className="tiny">
+            <input
+              type="checkbox"
+              checked={categoryDraft.allowedDeliveryModes.includes("download")}
+              onChange={() => setCategoryDraft((current) => ({
+                ...current,
+                allowedDeliveryModes: current.allowedDeliveryModes.includes("download")
+                  ? current.allowedDeliveryModes.filter((mode) => mode !== "download")
+                  : [...current.allowedDeliveryModes, "download"],
+              }))}
+            />{" "}
+            允许付费后下载 Autoriser le téléchargement
+          </label>
+          <label className="tiny">
+            <input
+              type="checkbox"
+              checked={categoryDraft.allowedDeliveryModes.includes("view")}
+              onChange={() => setCategoryDraft((current) => ({
+                ...current,
+                allowedDeliveryModes: current.allowedDeliveryModes.includes("view")
+                  ? current.allowedDeliveryModes.filter((mode) => mode !== "view")
+                  : [...current.allowedDeliveryModes, "view"],
+              }))}
+            />{" "}
+            允许付费后在线浏览 Autoriser la lecture en ligne
+          </label>
+        </div>
         <label className="tiny">
           <input
             type="checkbox"

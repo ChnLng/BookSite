@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { AdminProductDocumentsPanel } from "@/components/admin-product-documents-panel";
 
 type CategoryOption = {
   id: string;
@@ -103,7 +104,6 @@ export function AdminResourcesPanel() {
   const [lastDeleted, setLastDeleted] = useState<{ id: string; title: string; wasVisible: boolean } | null>(null);
   const [selectedCoverFile, setSelectedCoverFile] = useState<File | null>(null);
   const [selectedQrFile, setSelectedQrFile] = useState<File | null>(null);
-  const [selectedVariantFiles, setSelectedVariantFiles] = useState<Record<number, File | null>>({});
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -204,7 +204,6 @@ export function AdminResourcesPanel() {
     setEditingId(null);
     setSelectedCoverFile(null);
     setSelectedQrFile(null);
-    setSelectedVariantFiles({});
   };
 
   const startNewResource = () => {
@@ -389,29 +388,6 @@ export function AdminResourcesPanel() {
     }
   };
 
-  const uploadVariantFile = async (index: number, file: File) => {
-    const extension = file.name.split(".").pop()?.toLowerCase() || "zip";
-    const filename = `${slugify(draft.slug || draft.titleFr || `resource-${Date.now()}`)}-${index + 1}.${extension}`;
-
-    setBusyKey(`upload-resource-file-${index}`);
-
-    try {
-      const assetPath = await uploadAsset("resource-download", file, filename);
-      setDraft((current) => ({
-        ...current,
-        downloads: current.downloads.map((entry, entryIndex) =>
-          entryIndex === index ? { ...entry, filePath: assetPath } : entry,
-        ),
-      }));
-      setSelectedVariantFiles((current) => ({ ...current, [index]: null }));
-      setStatusMessage("付费文件已上传到统一的 GitHub Release。保存商品后生效。");
-    } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "Upload impossible.");
-    } finally {
-      setBusyKey(null);
-    }
-  };
-
   const resourceCount = useMemo(() => resources.length, [resources.length]);
 
   return (
@@ -565,127 +541,16 @@ export function AdminResourcesPanel() {
 
       <div className="section-block">
         <div className="split-line">
-          <strong>Versions téléchargeables 多系统上传槽位</strong>
-          <button
-            className="pill-button"
-            type="button"
-            onClick={() =>
-              setDraft((current) => ({
-                ...current,
-                downloads: [...current.downloads, defaultVariant()],
-              }))
-            }
-          >
-            Ajouter un slot
-          </button>
+          <strong>文档 Documents numériques privés</strong>
+          <span className="tiny">由所属类目控制格式与交付方式</span>
         </div>
-
-        <div className="admin-dynamic-stack">
-          {draft.downloads.map((entry, index) => (
-            <div className="admin-inline-card" key={`${entry.id || "new"}-${index}`}>
-              <select
-                className="input"
-                value={entry.platform}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    downloads: current.downloads.map((item, itemIndex) =>
-                      itemIndex === index ? { ...item, platform: event.target.value } : item,
-                    ),
-                  }))
-                }
-              >
-                <option value="通用">通用</option>
-                <option value="Mac">Mac</option>
-                <option value="Windows">Windows</option>
-                <option value="Linux">Linux</option>
-                <option value="手机">手机</option>
-              </select>
-              <input
-                className="input"
-                placeholder="Label FR"
-                value={entry.labelFr}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    downloads: current.downloads.map((item, itemIndex) =>
-                      itemIndex === index ? { ...item, labelFr: event.target.value } : item,
-                    ),
-                  }))
-                }
-              />
-              <input
-                className="input"
-                placeholder="GitHub Release 付费文件地址"
-                value={entry.filePath}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    downloads: current.downloads.map((item, itemIndex) =>
-                      itemIndex === index ? { ...item, filePath: event.target.value } : item,
-                    ),
-                  }))
-                }
-              />
-              <input
-                className="input"
-                placeholder="Lien externe de cette version"
-                value={entry.externalUrl}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    downloads: current.downloads.map((item, itemIndex) =>
-                      itemIndex === index ? { ...item, externalUrl: event.target.value } : item,
-                    ),
-                  }))
-                }
-              />
-              <input
-                className="input"
-                placeholder="Ordre"
-                value={entry.sortOrder}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    downloads: current.downloads.map((item, itemIndex) =>
-                      itemIndex === index ? { ...item, sortOrder: event.target.value } : item,
-                    ),
-                  }))
-                }
-              />
-              <input
-                className="input"
-                type="file"
-                accept=".zip,.7z,.rar,application/zip,application/x-zip-compressed,application/octet-stream"
-                onChange={(event) => {
-                  const file = event.target.files?.[0] || null;
-                  setSelectedVariantFiles((current) => ({ ...current, [index]: file }));
-                  setStatusMessage(file ? `已选择付费文件：${file.name}，请点击上传文件。` : "");
-                }}
-              />
-              <button
-                className="pill-button"
-                type="button"
-                disabled={!selectedVariantFiles[index] || busyKey === `upload-resource-file-${index}`}
-                onClick={() => selectedVariantFiles[index] ? void uploadVariantFile(index, selectedVariantFiles[index] as File) : undefined}
-              >
-                {busyKey === `upload-resource-file-${index}` ? "上传中..." : "上传并绑定文件"}
-              </button>
-              <button
-                className="pill-button"
-                type="button"
-                onClick={() =>
-                  setDraft((current) => ({
-                    ...current,
-                    downloads: current.downloads.filter((_, itemIndex) => itemIndex !== index),
-                  }))
-                }
-              >
-                Supprimer
-              </button>
-            </div>
-          ))}
-        </div>
+        {editingId ? (
+          <AdminProductDocumentsPanel productKind="resource" productId={editingId} />
+        ) : (
+          <p className="tiny" style={{ marginTop: 10 }}>
+            请先保存新商品，再进入“编辑已有”上传一个或多个私有文档。
+          </p>
+        )}
       </div>
 
       <div className="actions-row">

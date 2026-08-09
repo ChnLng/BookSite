@@ -49,7 +49,7 @@ export async function resolveLegacyGithubReleaseAsset(value: string) {
   return asset ? { assetId: asset.id, fileName: asset.name } : null;
 }
 
-export async function fetchGithubPaidAsset(value: string) {
+export async function fetchGithubPaidAsset(value: string, range?: string | null) {
   if (!githubPaidOwner || !githubPaidRepo || !process.env.GITHUB_TOKEN) {
     throw new Error("Configuration du depot GitHub prive manquante.");
   }
@@ -57,7 +57,33 @@ export async function fetchGithubPaidAsset(value: string) {
   if (!parsed) return null;
   const response = await fetch(
     `https://api.github.com/repos/${githubPaidOwner}/${githubPaidRepo}/releases/assets/${parsed.assetId}`,
-    { headers: githubPaidHeaders(true), redirect: "follow", cache: "no-store" },
+    {
+      headers: { ...githubPaidHeaders(true), ...(range ? { Range: range } : {}) },
+      redirect: "follow",
+      cache: "no-store",
+    },
   );
   return { response, fileName: parsed.fileName, assetId: parsed.assetId };
+}
+
+export async function resolveGithubPaidAssetRedirect(value: string) {
+  if (!githubPaidOwner || !githubPaidRepo || !process.env.GITHUB_TOKEN) {
+    throw new Error("Configuration du depot GitHub prive manquante.");
+  }
+  const parsed = parseGithubPaidAssetReference(value) || await resolveLegacyGithubReleaseAsset(value);
+  if (!parsed) return null;
+  const response = await fetch(
+    `https://api.github.com/repos/${githubPaidOwner}/${githubPaidRepo}/releases/assets/${parsed.assetId}`,
+    {
+      headers: githubPaidHeaders(true),
+      redirect: "manual",
+      cache: "no-store",
+    },
+  );
+  return {
+    response,
+    redirectUrl: response.headers.get("location"),
+    fileName: parsed.fileName,
+    assetId: parsed.assetId,
+  };
 }

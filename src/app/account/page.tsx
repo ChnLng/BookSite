@@ -675,32 +675,14 @@ export default function AccountPage() {
                         </span>
                         <div className="actions-row account-download-actions">
                             {isResourceDownload ? (
-                              <Link className="cta-button compact-submit" href={`/outils/${download.resource_id}`}>
-                                Voir la fiche
-                              </Link>
-                            ) : null}
-                            {isResourceDownload && download.resource_id ? (
-                              <button
-                                className="cta-button secondary compact-submit"
-                                type="button"
-                                onClick={() => void handleResourceDownload(download.resource_id as string)}
-                              >
-                                Télécharger
-                              </button>
-                            ) : null}
-                            {!isResourceDownload && readBookId ? (
-                              <Link className="cta-button compact-submit" href={`/read/${readBookId}`}>
-                                Lire en ligne
+                              <Link className="cta-button compact-submit" href={`/outils/${download.resource_id}#documents-numeriques`}>
+                                Voir les documents
                               </Link>
                             ) : null}
                             {!isResourceDownload && readBookId ? (
-                              <button
-                                className="cta-button secondary compact-submit"
-                                type="button"
-                                onClick={() => void handlePdfDownload(readBookId)}
-                              >
-                                Télécharger le PDF
-                              </button>
+                              <Link className="cta-button compact-submit" href={`/livres/${readBookId}#documents-numeriques`}>
+                                Voir les documents
+                              </Link>
                             ) : null}
                         </div>
                         <span className="account-download-meta tiny">
@@ -727,9 +709,8 @@ export default function AccountPage() {
                       <span className="account-purchase-status">{Number(purchase.amount_paid || 0) > 0 ? "Payé" : "Gratuit"}</span>
                       <strong className="account-purchase-amount">{Number(purchase.amount_paid || 0).toFixed(2)} {purchase.currency || "EUR"}</strong>
                       <div className="account-purchase-actions">
-                        {downloadable && isResource ? <button className="pill-button" type="button" onClick={() => void handleResourceDownload(purchase.resource_id as string)}>Télécharger</button> : null}
-                        {downloadable && !isResource && bookId ? <Link className="pill-button" href={`/read/${bookId}`}>Lire en ligne</Link> : null}
-                        {downloadable && !isResource && bookId ? <button className="pill-button" type="button" onClick={() => void handlePdfDownload(bookId)}>Télécharger</button> : null}
+                        {downloadable && isResource ? <Link className="pill-button" href={`/outils/${purchase.resource_id}#documents-numeriques`}>Voir les documents</Link> : null}
+                        {downloadable && !isResource && bookId ? <Link className="pill-button" href={`/livres/${bookId}#documents-numeriques`}>Voir les documents</Link> : null}
                         <button className="pill-button" type="button" onClick={() => void downloadInvoice(purchase.id, purchase.invoice_number)}>Facture PDF</button>
                       </div>
                     </div>;

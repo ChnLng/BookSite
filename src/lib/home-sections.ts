@@ -12,6 +12,7 @@ export type HomeCategory = {
   iconName: string;
   introFr: string;
   allowedFileTypes: string[];
+  allowedDeliveryModes: Array<"download" | "view">;
 };
 
 export type CategoryFieldRule = {
@@ -85,6 +86,7 @@ type CategoryRow = {
   icon_name?: string | null;
   intro_fr?: string | null;
   allowed_file_types?: string[] | null;
+  allowed_delivery_modes?: string[] | null;
 };
 
 type CategoryFieldRuleRow = {
@@ -158,6 +160,9 @@ function mapCategory(row: CategoryRow): HomeCategory {
     iconName: row.icon_name || "sparkles",
     introFr: row.intro_fr || "",
     allowedFileTypes: row.allowed_file_types || [],
+    allowedDeliveryModes: Array.isArray(row.allowed_delivery_modes)
+      ? row.allowed_delivery_modes.filter((mode): mode is "download" | "view" => mode === "download" || mode === "view")
+      : ["download"],
   };
 }
 
@@ -258,7 +263,7 @@ export async function loadExpandedHomeData() {
     await Promise.all([
       supabase
         .from("categories")
-        .select("id, slug, title_fr, title_zh, kind, homepage_visible, homepage_sort_order, icon_name, intro_fr, allowed_file_types")
+        .select("id, slug, title_fr, title_zh, kind, homepage_visible, homepage_sort_order, icon_name, intro_fr, allowed_file_types, allowed_delivery_modes")
         .eq("homepage_visible", true)
         .order("homepage_sort_order", { ascending: true })
         .order("created_at", { ascending: true }),

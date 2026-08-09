@@ -196,7 +196,7 @@ async function fetchDisplayResources() {
     (filesResult.data || []) as ResourceItemFileRow[],
   );
 
-  return mapped.length > 0 ? mapped : sampleResources;
+  return resourcesResult.error ? sampleResources : mapped;
 }
 
 export async function loadDisplayResources() {

@@ -112,13 +112,13 @@ async function fetchDisplayBooks(includeHidden = false): Promise<DisplayBook[]> 
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
-  const { data } = includeHidden ? await query : await query.eq("visible", true);
+  const { data, error } = includeHidden ? await query : await query.eq("visible", true);
 
-  if (!data || data.length === 0) {
+  if (error) {
     return getStaticDisplayBooks();
   }
 
-  return (data as BookRow[]).map((row) => {
+  return ((data || []) as BookRow[]).map((row) => {
     const fallback = staticBooks.find((book) => book.id === (row.slug || row.id));
     return mapBookRow(row, fallback);
   });
@@ -179,7 +179,7 @@ export async function resolveDisplayBookById(
       query = query.eq("visible", true);
     }
 
-    const { data } = await query.maybeSingle();
+    const { data, error } = await query.maybeSingle();
 
     if (data) {
       const row = data as BookRow;
@@ -196,6 +196,10 @@ export async function resolveDisplayBookById(
 
       return mapped;
     }
+
+    // When Supabase answered successfully, it is authoritative: a hidden or
+    // deleted product must not reappear from the bundled demonstration data.
+    if (!error) return null;
   }
 
   const fallback = fallbackBookById(bookId);

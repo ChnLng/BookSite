@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutGrid } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
+import { ProductDocumentsPanel } from "@/components/product-documents-panel";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
@@ -1084,14 +1085,9 @@ export default function BookDetailPage() {
 
                       <div className="book-buy-row">
                       {effectiveHasAccess ? (
-                        <>
-                          <Link className="cta-button book-buy-button" href={`/read/${book.id}`}>
-                            Lire maintenant
-                          </Link>
-                          <button className="cta-button secondary book-buy-button" type="button" onClick={() => void handleBookDownload()}>
-                            Télécharger le contenu
-                          </button>
-                        </>
+                        <a className="cta-button book-buy-button" href="#documents-numeriques">
+                          Ouvrir vos documents
+                        </a>
                       ) : (
                         <>
                           <button
@@ -1140,6 +1136,13 @@ export default function BookDetailPage() {
                   {accessLoading ? <p className="tiny">Vérification de vos droits...</p> : null}
                   {paymentError ? <p className="tiny promo-message error">{paymentError}</p> : null}
                 </div>
+
+                <ProductDocumentsPanel
+                  productKind="book"
+                  productId={book.id}
+                  hasAccess={effectiveHasAccess}
+                  accessToken={session?.access_token}
+                />
 
                 <div className="book-detail-facts" style={moduleStyle("commerce", 30)}>
                   <div className="split-line">
@@ -1207,9 +1210,9 @@ export default function BookDetailPage() {
               <div className="book-payment-success">
                 <p className="muted">{purchaseThankYouMessage}</p>
                 <div className="actions-row">
-                  <Link className="cta-button" href={paymentSuccess.readUrl}>
-                    Lire maintenant
-                  </Link>
+                  <a className="cta-button" href="#documents-numeriques" onClick={() => setShowPayment(false)}>
+                    Ouvrir vos documents
+                  </a>
                   <Link className="pill-button" href={paymentSuccess.accountUrl}>
                     Ouvrir Ma page
                   </Link>

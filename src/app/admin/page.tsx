@@ -7,6 +7,7 @@ import { AdminDownloadReport } from "@/components/admin-download-report";
 import { AdminPurchaseSearch } from "@/components/admin-purchase-search";
 import { AdminGuard } from "@/components/admin-guard";
 import { AdminPartnerLinksPanel } from "@/components/admin-partner-links-panel";
+import { AdminProductDocumentsPanel } from "@/components/admin-product-documents-panel";
 import { AdminResourcesPanel } from "@/components/admin-resources-panel";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
@@ -131,15 +132,6 @@ type PromoFormState = {
 
 type PromoEditState = PromoFormState;
 type AssetKind = "image" | "pdf";
-type PdfStorageStatus = {
-  exists: boolean;
-  message: string;
-};
-type PaidReleaseAsset = {
-  id: number;
-  name: string;
-  reference: string;
-};
 
 const adminSections = [
   { key: "purchases", label: "🔎 用户购买记录" },
@@ -383,8 +375,6 @@ function AdminPageContent() {
   const [bookEdits, setBookEdits] = useState<Record<string, BookEditState>>({});
   const [categoryEdits, setCategoryEdits] = useState<Record<string, CategoryEditState>>({});
   const [promoEdits, setPromoEdits] = useState<Record<string, PromoEditState>>({});
-  const [pdfStatuses, setPdfStatuses] = useState<Record<string, PdfStorageStatus>>({});
-  const [paidReleaseAssets, setPaidReleaseAssets] = useState<PaidReleaseAsset[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [createSelectedFiles, setCreateSelectedFiles] = useState<Partial<Record<AssetKind, File | null>>>({});
@@ -581,97 +571,6 @@ function AdminPageContent() {
   useEffect(() => {
     void loadDisplayResources().then(setRelatedResources).catch(() => setRelatedResources([]));
   }, []);
-
-  useEffect(() => {
-    if (!session?.access_token) {
-      setPaidReleaseAssets([]);
-      return;
-    }
-
-    const controller = new AbortController();
-    void authorizedAdminFetch("/api/admin/assets?kind=paid-assets", {
-      signal: controller.signal,
-      cache: "no-store",
-    })
-      .then(async (response) => {
-        const result = (await response.json()) as { ok?: boolean; assets?: PaidReleaseAsset[]; message?: string };
-        if (!response.ok || !result.ok) throw new Error(result.message || "无法读取私有 Release 文件。");
-        setPaidReleaseAssets(result.assets || []);
-      })
-      .catch((error) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setStatusMessage(error instanceof Error ? error.message : "无法读取私有 Release 文件。");
-      });
-
-    return () => controller.abort();
-  }, [session?.access_token]);
-
-  useEffect(() => {
-    if (!session?.access_token || books.length === 0) {
-      setPdfStatuses({});
-      return;
-    }
-
-    const controller = new AbortController();
-
-    const loadPdfStatuses = async () => {
-      const assetPaths = books
-        .map((book) => book.pdf_file || bookPdfPath(book.slug || book.id))
-        .filter(Boolean);
-
-      if (assetPaths.length === 0) {
-        setPdfStatuses({});
-        return;
-      }
-
-      try {
-        const params = new URLSearchParams();
-        params.set("kind", "pdf-status");
-        assetPaths.forEach((assetPath) => params.append("assetPath", assetPath));
-
-        const response = await authorizedAdminFetch(`/api/admin/assets?${params.toString()}`, {
-          method: "GET",
-          signal: controller.signal,
-        });
-
-        const result = (await response.json()) as {
-          ok?: boolean;
-          statuses?: Record<string, PdfStorageStatus>;
-          message?: string;
-        };
-
-        if (!response.ok || !result.statuses) {
-          throw new Error(result.message || "无法读取 PDF 状态。");
-        }
-
-        const mappedStatuses = Object.fromEntries(
-          books.map((book) => {
-            const assetPath = book.pdf_file || bookPdfPath(book.slug || book.id);
-            return [book.id, result.statuses?.[assetPath] || { exists: false, message: "未上传到 Supabase" }];
-          }),
-        );
-
-        setPdfStatuses(mappedStatuses);
-      } catch (error) {
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        const fallbackMessage = error instanceof Error ? error.message : "状态检查失败";
-        setPdfStatuses(
-          Object.fromEntries(
-            books.map((book) => [book.id, { exists: false, message: fallbackMessage }]),
-          ),
-        );
-      }
-    };
-
-    void loadPdfStatuses();
-
-    return () => {
-      controller.abort();
-    };
-  }, [books, session?.access_token]);
 
   const sectionCounts = useMemo(
     () => ({
@@ -1082,12 +981,6 @@ function AdminPageContent() {
             pdfFile: kind === "pdf" ? assetPath : current[book.id].pdfFile,
           },
         }));
-        if (kind === "pdf") {
-          setPdfStatuses((current) => ({
-            ...current,
-            [book.id]: { exists: true, message: `已上传到私有 GitHub Releases: ${assetPath}` },
-          }));
-        }
         setEditSelectedFiles((current) => ({
           ...current,
           [book.id]: { ...(current[book.id] || {}), [kind]: null },
@@ -1129,12 +1022,6 @@ function AdminPageContent() {
             pdfFile: kind === "pdf" ? "" : current[book.id].pdfFile,
           },
         }));
-        if (kind === "pdf") {
-          setPdfStatuses((current) => ({
-            ...current,
-            [book.id]: { exists: false, message: "未上传到 Supabase" },
-          }));
-        }
         setEditUploadStatus((current) => ({
           ...current,
           [book.id]: {
@@ -1560,12 +1447,6 @@ function AdminPageContent() {
                     value={form.coverImage}
                     onChange={(event) => setForm({ ...form, coverImage: event.target.value })}
                   />
-                  <input
-                    className="input"
-                    placeholder="付费内容文件 Supabase（PDF、ZIP、EXE、DMG、FBX、GLT 等）"
-                    value={form.pdfFile}
-                    onChange={(event) => setForm({ ...form, pdfFile: event.target.value })}
-                  />
                   <textarea
                     className="textarea"
                     placeholder="Synopsis FR"
@@ -1688,61 +1569,12 @@ function AdminPageContent() {
 
                 <div className="section-block" style={{ marginTop: 14 }}>
                   <div className="split-line">
-                    <strong>付费后下载的内容文件 私有 GitHub Releases</strong>
-                    {form.pdfFile ? <span className="tiny">{form.pdfFile}</span> : <span className="tiny">未上传内容文件</span>}
+                    <strong>数码文档 Documents numériques</strong>
+                    <span className="tiny">创建商品后管理</span>
                   </div>
-                  <label className="tiny" htmlFor="create-paid-release-asset">绑定已经上传的文件</label>
-                  <select
-                    className="input"
-                    id="create-paid-release-asset"
-                    value={form.pdfFile}
-                    onChange={(event) => {
-                      const reference = event.target.value;
-                      const asset = paidReleaseAssets.find((entry) => entry.reference === reference);
-                      setForm((current) => ({ ...current, pdfFile: reference }));
-                      setCreateUploadStatus((current) => ({
-                        ...current,
-                        pdf: asset ? `已绑定 ${asset.name}，创建商品时生效。` : "",
-                      }));
-                    }}
-                  >
-                    <option value="">选择私有 Release 文件...</option>
-                    {paidReleaseAssets.map((asset) => (
-                      <option key={asset.id} value={asset.reference}>{asset.name}</option>
-                    ))}
-                  </select>
-                  {createUploadStatus.pdf ? <p className="tiny">{createUploadStatus.pdf}</p> : null}
-                  <div className="actions-row">
-                    <input
-                      className="input"
-                      type="file"
-                      onChange={(event) => {
-                        const file = event.target.files?.[0] || null;
-                        setCreateSelectedFiles((current) => ({ ...current, pdf: file }));
-                        setCreateUploadStatus((current) => ({
-                          ...current,
-                          pdf: file ? `已选中文件: ${file.name}` : "",
-                        }));
-                      }}
-                    />
-                    <button
-                      className="pill-button"
-                      type="button"
-                      disabled={!createSelectedFiles.pdf || busyKey === "create-pdf"}
-                      onClick={() => createSelectedFiles.pdf ? void handleCreateAssetUpload("pdf", createSelectedFiles.pdf) : undefined}
-                    >
-                      {busyKey === "create-pdf" ? "Upload..." : "上传内容文件 Upload"}
-                    </button>
-                    {form.pdfFile ? (
-                      <button
-                        className="pill-button"
-                        type="button"
-                        onClick={() => void handleCreateAssetDelete("pdf")}
-                      >
-                        删除内容文件
-                      </button>
-                    ) : null}
-                  </div>
+                  <p className="tiny">
+                    请先创建商品，再进入“编辑已有”上传一个或多个私有文档。系统会严格按照所选类目的格式与下载/浏览规则处理。
+                  </p>
                 </div>
 
                 <div className="actions-row" style={{ marginTop: 14 }}>
@@ -1782,7 +1614,6 @@ function AdminPageContent() {
                     const edit = bookEdits[book.id];
                     const isEditing = editingBookId === book.id;
                     const downloadCount = downloadCounts[book.slug || book.id] || 0;
-                    const pdfStatus = pdfStatuses[book.id];
 
                     return (
                       <div className="admin-book-card" key={book.id}>
@@ -1805,9 +1636,6 @@ function AdminPageContent() {
                             </div>
                             <div className="tiny">Downloads 下载次数: {downloadCount}</div>
                             <div className="tiny">{book.visible ? "已上架 Visible" : "已隐藏 Hidden"}</div>
-                            <div className="tiny">
-                              PDF 状态: {pdfStatus ? pdfStatus.message : "检查中..."}
-                            </div>
                           </div>
                         </div>
 
@@ -1898,14 +1726,6 @@ function AdminPageContent() {
                                 value={edit.coverImage}
                                 onChange={(event) =>
                                   setBookEdits({ ...bookEdits, [book.id]: { ...edit, coverImage: event.target.value } })
-                                }
-                              />
-                              <input
-                                className="input"
-                                placeholder="付费内容文件（PDF、ZIP、EXE、DMG、FBX、GLT 等）"
-                                value={edit.pdfFile}
-                                onChange={(event) =>
-                                  setBookEdits({ ...bookEdits, [book.id]: { ...edit, pdfFile: event.target.value } })
                                 }
                               />
                               <textarea
@@ -2040,82 +1860,7 @@ function AdminPageContent() {
                               </div>
                             </div>
 
-                            <div className="section-block" style={{ marginTop: 14 }}>
-                              <div className="split-line">
-                                <strong>付费后下载的内容文件 私有 GitHub Releases</strong>
-                                {edit.pdfFile ? <span className="tiny">{edit.pdfFile}</span> : <span className="tiny">暂无内容文件</span>}
-                              </div>
-                              <label className="tiny" htmlFor={`paid-release-asset-${book.id}`}>绑定已经上传的文件</label>
-                              <select
-                                className="input"
-                                id={`paid-release-asset-${book.id}`}
-                                value={edit.pdfFile}
-                                onChange={(event) => {
-                                  const reference = event.target.value;
-                                  const asset = paidReleaseAssets.find((entry) => entry.reference === reference);
-                                  setBookEdits((current) => ({
-                                    ...current,
-                                    [book.id]: { ...current[book.id], pdfFile: reference },
-                                  }));
-                                  setEditUploadStatus((current) => ({
-                                    ...current,
-                                    [book.id]: {
-                                      ...(current[book.id] || {}),
-                                      pdf: asset ? `已绑定 ${asset.name}，点击 Enregistrer 保存。` : "",
-                                    },
-                                  }));
-                                }}
-                              >
-                                <option value="">选择私有 Release 文件...</option>
-                                {edit.pdfFile && !paidReleaseAssets.some((asset) => asset.reference === edit.pdfFile) ? (
-                                  <option value={edit.pdfFile}>当前文件（旧记录）</option>
-                                ) : null}
-                                {paidReleaseAssets.map((asset) => (
-                                  <option key={asset.id} value={asset.reference}>{asset.name}</option>
-                                ))}
-                              </select>
-                              <p className="tiny" style={{ marginTop: 8 }}>
-                                当前状态: {pdfStatus ? pdfStatus.message : "检查中..."}
-                              </p>
-                              {editUploadStatus[book.id]?.pdf ? <p className="tiny">{editUploadStatus[book.id]?.pdf}</p> : null}
-                              <div className="actions-row">
-                                <input
-                                  className="input"
-                                  type="file"
-                                  onChange={(event) => {
-                                    const file = event.target.files?.[0] || null;
-                                    setEditSelectedFiles((current) => ({
-                                      ...current,
-                                      [book.id]: { ...(current[book.id] || {}), pdf: file },
-                                    }));
-                                    setEditUploadStatus((current) => ({
-                                      ...current,
-                                      [book.id]: {
-                                        ...(current[book.id] || {}),
-                                        pdf: file ? `已选中文件: ${file.name}` : "",
-                                      },
-                                    }));
-                                  }}
-                                />
-                                <button
-                                  className="pill-button"
-                                  type="button"
-                                  disabled={!editSelectedFiles[book.id]?.pdf || busyKey === `upload-pdf-${book.id}`}
-                                  onClick={() => editSelectedFiles[book.id]?.pdf ? void handleExistingAssetUpload(book, "pdf", editSelectedFiles[book.id]!.pdf as File) : undefined}
-                                >
-                                  {busyKey === `upload-pdf-${book.id}` ? "Upload..." : "上传/覆盖内容文件 Upload"}
-                                </button>
-                                {edit.pdfFile ? (
-                                  <button
-                                    className="pill-button"
-                                    type="button"
-                                    onClick={() => void handleExistingAssetDelete(book, "pdf")}
-                                  >
-                                    删除内容文件
-                                  </button>
-                                ) : null}
-                              </div>
-                            </div>
+                            <AdminProductDocumentsPanel productKind="book" productId={book.id} />
                           </>
                         ) : (
                           <p className="muted tiny">{book.synopsis_fr || "Sans synopsis"}</p>

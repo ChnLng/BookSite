@@ -33,18 +33,19 @@ export async function loadCachedPublicDisplayBooks(): Promise<DisplayBook[]> {
     return getStaticDisplayBooks();
   }
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("books")
     .select(BOOK_PUBLIC_SELECT)
     .eq("visible", true)
+    .is("deleted_at", null)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
-  if (!data || data.length === 0) {
+  if (error) {
     return getStaticDisplayBooks();
   }
 
-  return (data as BookRow[]).map((row) => {
+  return ((data || []) as BookRow[]).map((row) => {
     const fallback = staticBooks.find((book) => book.id === (row.slug || row.id));
     return mapBookRow(row, fallback);
   });

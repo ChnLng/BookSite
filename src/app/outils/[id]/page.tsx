@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { ProductDocumentsPanel } from "@/components/product-documents-panel";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
@@ -1009,34 +1010,12 @@ export default function ResourceDetailPage() {
             </div>
           ) : null}
 
-          <div className="resource-download-panel">
-            <div className="split-line">
-              <strong>Téléchargements disponibles</strong>
-              <span>{resource.downloads.length}</span>
-            </div>
-
-            <div className="coin-ludique-downloads" style={{ marginTop: 14 }}>
-              {resource.downloads.map((download) => (
-                <button
-                  key={download.id}
-                  className={effectiveHasAccess ? "coin-ludique-download-button" : "coin-ludique-download-button disabled"}
-                  type="button"
-                  disabled={!effectiveHasAccess || actionBusy}
-                  onClick={() => void handleDownload(download.id)}
-                >
-                  <span className="coin-ludique-platform">{download.platform}</span>
-                  <span>{download.labelFr}</span>
-                  <Download size={15} />
-                </button>
-              ))}
-            </div>
-
-            {!effectiveHasAccess ? (
-              <p className="tiny" style={{ marginTop: 12 }}>
-                Connectez-vous puis validez le paiement pour débloquer ces fichiers.
-              </p>
-            ) : null}
-          </div>
+          <ProductDocumentsPanel
+            productKind="resource"
+            productId={resource.id}
+            hasAccess={effectiveHasAccess}
+            accessToken={session?.access_token}
+          />
 
           {relatedResources.length > 0 ? (
             <div className="resource-related-strip">
