@@ -31,22 +31,31 @@ end $$;
 create table if not exists public.comments (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
+  user_email text,
   author_name text,
   content text not null,
+  visible boolean not null default true,
   created_at timestamptz default now()
 );
 
 alter table public.comments add column if not exists author_name text;
+alter table public.comments add column if not exists user_email text;
+alter table public.comments add column if not exists visible boolean not null default true;
+
+create index if not exists comments_visible_created_idx
+  on public.comments (visible, created_at desc);
 
 alter table public.comments enable row level security;
+
+drop policy if exists "Anyone can read comments" on public.comments;
 
 do $$
 begin
   if not exists (
-    select 1 from pg_policies where schemaname = 'public' and tablename = 'comments' and policyname = 'Anyone can read comments'
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'comments' and policyname = 'Anyone can read visible comments'
   ) then
-    create policy "Anyone can read comments" on public.comments
-      for select using (true);
+    create policy "Anyone can read visible comments" on public.comments
+      for select using (visible = true or auth.uid() = user_id);
   end if;
 
   if not exists (

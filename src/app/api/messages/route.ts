@@ -154,13 +154,34 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, message: "Service indisponible." }, { status: 503 });
   }
   
-  const { data } = await supabase
+  const commentsResult = await supabase
     .from("comments")
-    .select("id, content, author_name, created_at")
+    .select("id, content, author_name, created_at, visible")
+    .eq("visible", true)
     .order("created_at", { ascending: false })
     .limit(2);
+  let rows = (commentsResult.data || []) as Array<{
+    id: string;
+    content: string | null;
+    author_name: string | null;
+    created_at: string | null;
+  }>;
 
-  const rows = [...(data || [])].reverse();
+  if (commentsResult.error) {
+    const fallbackResult = await supabase
+      .from("comments")
+      .select("id, content, author_name, created_at")
+      .order("created_at", { ascending: false })
+      .limit(2);
+
+    if (fallbackResult.error) {
+      return NextResponse.json({ ok: false, message: fallbackResult.error.message }, { status: 500 });
+    }
+
+    rows = fallbackResult.data || [];
+  }
+
+  rows = [...rows].reverse();
   const likeStats = await buildLikeStats({
     supabase,
     commentIds: rows.map((item) => item.id),
@@ -262,15 +283,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Configuration Supabase manquante sur le serveur." }, { status: 503 });
   }
 
-  const { data, error } = await supabase
+  let insertResult = await supabase
     .from("comments")
     .insert({
       author_name: name,
       content: content,
       user_id: user?.id || null,
+      user_email: userEmail,
+      visible: true,
     })
     .select("id, author_name, content, created_at")
     .single();
+
+  if (insertResult.error && /user_email|visible|column|schema cache/i.test(insertResult.error.message)) {
+    insertResult = await supabase
+      .from("comments")
+      .insert({
+        author_name: name,
+        content: content,
+        user_id: user?.id || null,
+      })
+      .select("id, author_name, content, created_at")
+      .single();
+  }
+
+  const { data, error } = insertResult;
 
   if (error) {
     return NextResponse.json(

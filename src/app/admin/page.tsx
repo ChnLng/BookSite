@@ -8,6 +8,7 @@ import { AdminPurchaseSearch } from "@/components/admin-purchase-search";
 import { AdminGuard } from "@/components/admin-guard";
 import { AdminPartnerLinksPanel } from "@/components/admin-partner-links-panel";
 import { AdminProductDocumentsPanel } from "@/components/admin-product-documents-panel";
+import { AdminReviewManagement } from "@/components/admin-review-management";
 import { AdminResourcesPanel } from "@/components/admin-resources-panel";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import { TopNav } from "@/components/top-nav";
@@ -136,6 +137,7 @@ type AssetKind = "image" | "pdf";
 
 const adminSections = [
   { key: "purchases", label: "🔎 用户购买记录" },
+  { key: "reviews", label: "🔎 所有用户评价" },
   { key: "categories", label: "类目 Categories" },
   { key: "books", label: "图书 Livres" },
   { key: "resources", label: "资源 Outils" },
@@ -362,6 +364,7 @@ function AdminPageContent() {
   const [donations, setDonations] = useState<DonationRow[]>([]);
   const [resourceCount, setResourceCount] = useState(0);
   const [partnerCount, setPartnerCount] = useState(0);
+  const [reviewCount, setReviewCount] = useState<number | null>(null);
   const [loadWarnings, setLoadWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<AdminSectionKey>("categories");
@@ -583,8 +586,9 @@ function AdminPageContent() {
       downloads: downloads.length,
       donations: donations.length,
       purchases: downloads.length,
+      reviews: reviewCount ?? "—",
     }),
-    [books.length, categories.length, resourceCount, partnerCount, promoCodes.length, downloads.length, donations.length],
+    [books.length, categories.length, resourceCount, partnerCount, promoCodes.length, downloads.length, donations.length, reviewCount],
   );
 
   const downloadCounts = useMemo(() => {
@@ -2336,6 +2340,8 @@ function AdminPageContent() {
           ) : null}
 
           {activeSection === "purchases" ? <AdminPurchaseSearch /> : null}
+
+          {activeSection === "reviews" ? <AdminReviewManagement onCountChange={setReviewCount} /> : null}
 
           {activeSection === "donations" ? (
             <div className="section-block">
