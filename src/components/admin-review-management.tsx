@@ -57,6 +57,7 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
   const [loading, setLoading] = useState(true);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [homeSupportsVisibility, setHomeSupportsVisibility] = useState(true);
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   const loadReviews = useCallback(async () => {
     if (!session?.access_token) return;
@@ -68,7 +69,7 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
         cache: "no-store",
       });
       const result = (await response.json().catch(() => null)) as
-        | { ok?: boolean; message?: string; reviews?: AdminReview[]; homeSupportsVisibility?: boolean }
+        | { ok?: boolean; message?: string; reviews?: AdminReview[]; homeSupportsVisibility?: boolean; warnings?: string[] }
         | null;
 
       if (!response.ok || !result?.ok) {
@@ -79,6 +80,7 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
       const nextReviews = result.reviews || [];
       setReviews(nextReviews);
       setHomeSupportsVisibility(result.homeSupportsVisibility !== false);
+      setWarnings(result.warnings || []);
       onCountChange?.(nextReviews.length);
       setMessage("");
     } catch (error) {
@@ -164,6 +166,11 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
           主页评论已读取；执行 Supabase migration 后即可使用隐藏/恢复功能。
         </p>
       ) : null}
+      {warnings.map((warning) => (
+        <p className="admin-review-migration-note" key={warning} role="status">
+          Une source d&apos;évaluations est en attente de migration : {warning}
+        </p>
+      ))}
       {message ? <p className="admin-action-status" role="status">{message}</p> : null}
 
       <div className="admin-table-wrap admin-review-table-wrap">

@@ -97,7 +97,10 @@ export async function GET(request: Request) {
     }
   }
 
-  const fatalError = bookResult.error || resourceResult.error || homeError;
+  // Reviews for older optional product types must never prevent the rest of
+  // the moderation screen from loading. A missing legacy review table is
+  // reported as a warning and becomes available as soon as its migration runs.
+  const fatalError = homeError;
   if (fatalError) {
     return NextResponse.json({ ok: false, message: fatalError.message }, { status: 500 });
   }
@@ -177,7 +180,7 @@ export async function GET(request: Request) {
     ok: true,
     reviews,
     homeSupportsVisibility,
-    warnings: [profileResult.error, booksResult.error, resourcesResult.error]
+    warnings: [bookResult.error, resourceResult.error, profileResult.error, booksResult.error, resourcesResult.error]
       .filter(Boolean)
       .map((error) => error?.message || ""),
   });
