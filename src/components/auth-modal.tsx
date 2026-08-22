@@ -67,21 +67,28 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
     onClose();
   };
 
-  const handleMagicLink = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handlePasswordReset = async () => {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setMessage("Indiquez votre e-mail, puis cliquez sur « Mot de passe oublié ? ».");
+      return;
+    }
+
     const supabase = getSupabaseBrowserClient();
     if (!supabase) {
       setMessage("Configuration Supabase indisponible.");
       return;
     }
+
     setSubmitting(true);
     setMessage("");
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: currentPageUrl() },
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: `${window.location.origin}/reinitialiser-mot-de-passe`,
     });
     setSubmitting(false);
-    setMessage(error ? error.message : "Lien magique envoyé. Vérifiez votre boîte e-mail pour continuer.");
+    setMessage(error
+      ? error.message
+      : "E-mail envoyé. Ouvrez le lien reçu pour choisir un nouveau mot de passe.");
   };
 
   return (
@@ -107,11 +114,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
           <div className="email-inline"><ShieldCheck size={18} /><input className="input email-input" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Votre mot de passe" required /></div>
           {mode === "signup" ? <div className="email-inline"><ShieldCheck size={18} /><input className="input email-input" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirmer le mot de passe" required /></div> : null}
           <button className="cta-button" type="submit" disabled={submitting}>{submitting ? "Chargement..." : mode === "signup" ? "Créer mon compte" : "Se connecter"}</button>
-        </form>
-        <form className="input-group auth-email-form" onSubmit={handleMagicLink}>
-          <label className="tiny" htmlFor="global-magic-email">Recevoir un lien magique</label>
-          <div className="email-inline"><Mail size={18} /><input id="global-magic-email" className="input email-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Votre e-mail" required /></div>
-          <button className="pill-button" type="submit" disabled={submitting}>Recevoir un lien magique</button>
+          {mode === "signin" ? <button className="text-button tiny" type="button" onClick={() => void handlePasswordReset()} disabled={submitting}>Mot de passe oublié ?</button> : null}
         </form>
         {message ? <p className="tiny">{message}</p> : null}
       </div>

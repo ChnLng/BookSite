@@ -47,7 +47,6 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
   const [confirmPassword, setConfirmPassword] = useState("");
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authMessage, setAuthMessage] = useState("");
-  const [isSubmittingEmail, setIsSubmittingEmail] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState<"google" | "github" | null>(null);
   const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>(defaultCarouselBooks);
@@ -124,35 +123,29 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
     }
   };
 
-  const handleEmailAuth = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handlePasswordReset = async () => {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setAuthMessage("Indiquez votre e-mail, puis cliquez sur « Mot de passe oublié ? ».");
+      return;
+    }
 
     const { getSupabaseBrowserClient } = await import("@/lib/supabase-browser");
     const supabase = getSupabaseBrowserClient();
-
     if (!supabase) {
-      setAuthMessage("Configuration Supabase manquante pour lancer l'email magique.");
+      setAuthMessage("Configuration Supabase manquante pour réinitialiser le mot de passe.");
       return;
     }
 
-    setIsSubmittingEmail(true);
+    setIsSubmittingPassword(true);
     setAuthMessage("");
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: window.location.origin,
-      },
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: `${window.location.origin}/reinitialiser-mot-de-passe`,
     });
-
-    setIsSubmittingEmail(false);
-
-    if (error) {
-      setAuthMessage(error.message);
-      return;
-    }
-
-    setAuthMessage("Lien magique envoye. Verifie ta boite email pour continuer.");
+    setIsSubmittingPassword(false);
+    setAuthMessage(error
+      ? error.message
+      : "E-mail envoyé. Ouvrez le lien reçu pour choisir un nouveau mot de passe.");
   };
 
   const handlePasswordAuth = async (event: FormEvent<HTMLFormElement>) => {
@@ -394,26 +387,7 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
               <button className="cta-button" type="submit" disabled={isSubmittingPassword}>
                 {isSubmittingPassword ? "Chargement..." : authMode === "signup" ? "Créer mon compte" : "Se connecter"}
               </button>
-            </form>
-            <form className="input-group auth-email-form" onSubmit={handleEmailAuth}>
-              <label className="tiny" htmlFor="email-auth">
-                Recevoir un lien magique
-              </label>
-              <div className="email-inline">
-                <Mail size={18} />
-                <input
-                  id="email-auth"
-                  className="input email-input"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="Votre email"
-                  required
-                />
-              </div>
-              <button className="cta-button" type="submit" disabled={isSubmittingEmail}>
-                {isSubmittingEmail ? "Envoi..." : "Recevoir un lien magique"}
-              </button>
+              {authMode === "signin" ? <button className="text-button tiny" type="button" onClick={() => void handlePasswordReset()} disabled={isSubmittingPassword}>Mot de passe oublié ?</button> : null}
             </form>
             {authMessage ? <p className="tiny">{authMessage}</p> : null}
           </div>
