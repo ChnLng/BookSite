@@ -4,6 +4,7 @@ import Link from "next/link";
 import { StructuredData } from "@/components/structured-data";
 import { TopNav } from "@/components/top-nav";
 import { loadCachedPublicDisplayBooks } from "@/lib/books-public-server";
+import { learningArticles } from "@/lib/learning-articles";
 
 const pageUrl = "https://www.visdar.fr/blog/lecture-chinois-pinyin-traduction";
 const title = "Lire le chinois avec sinogrammes, pinyin et traduction française";
@@ -179,6 +180,21 @@ export default async function ChineseReadingGuidePage() {
           <div className="actions-row">
             <Link className="cta-button" href="/catalogue">Découvrir le catalogue Visd AR</Link>
             <Link className="pill-button" href="/">Voir les outils et jeux numériques</Link>
+          </div>
+        </section>
+
+        <section>
+          <h2>Pour aller plus loin</h2>
+          <p>Des conseils concrets, toujours pensés pour les francophones qui apprennent le chinois sans pression.</p>
+          <div className="seo-book-links">
+            {learningArticles.map((article) => (
+              <Link href={`/blog/${article.slug}`} className="seo-book-link" key={article.slug}>
+                <span className="seo-book-link-copy">
+                  <strong>{article.title}</strong>
+                  <span>{article.description}</span>
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
       </article>

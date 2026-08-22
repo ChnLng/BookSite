@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { loadCachedPublicDisplayBooks } from "@/lib/books-public-server";
 import { loadPublicResourcesForSeo } from "@/lib/resources-public-server";
+import { learningArticles } from "@/lib/learning-articles";
 
 export const revalidate = 3600;
 
@@ -20,6 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.85,
     },
+    ...learningArticles.map((article) => ({
+      url: `${siteUrl}/blog/${article.slug}`,
+      lastModified: new Date("2026-08-22"),
+      changeFrequency: "monthly" as const,
+      priority: 0.78,
+    })),
     ...books.map((book) => ({
       url: `${siteUrl}/livres/${encodeURIComponent(book.id)}`,
       changeFrequency: "monthly" as const,
