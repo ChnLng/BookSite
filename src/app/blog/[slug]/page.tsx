@@ -6,13 +6,15 @@ import { TopNav } from "@/components/top-nav";
 import { getLearningArticle, learningArticles } from "@/lib/learning-articles";
 
 const siteUrl = "https://www.visdar.fr";
+type LearningArticlePageProps = { params: Promise<{ slug: string }> };
 
 export function generateStaticParams() {
   return learningArticles.map((article) => ({ slug: article.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const article = getLearningArticle(params.slug);
+export async function generateMetadata({ params }: LearningArticlePageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const article = getLearningArticle(slug);
   if (!article) return {};
   const url = `${siteUrl}/blog/${article.slug}`;
   return {
@@ -24,8 +26,9 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   };
 }
 
-export default function LearningArticlePage({ params }: { params: { slug: string } }) {
-  const article = getLearningArticle(params.slug);
+export default async function LearningArticlePage({ params }: LearningArticlePageProps) {
+  const { slug } = await params;
+  const article = getLearningArticle(slug);
   if (!article) notFound();
   const url = `${siteUrl}/blog/${article.slug}`;
   const related = learningArticles.filter((item) => item.slug !== article.slug).slice(0, 3);
