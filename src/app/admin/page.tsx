@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { AdminContentSectionsPanel } from "@/components/admin-content-sections-panel";
+import { AdminCategoryEnginePanel } from "@/components/admin-category-engine-panel";
 import { AdminDownloadReport } from "@/components/admin-download-report";
 import { AdminPurchaseSearch } from "@/components/admin-purchase-search";
 import { AdminGuard } from "@/components/admin-guard";
@@ -1353,7 +1354,16 @@ function AdminPageContent() {
           ) : null}
           {statusMessage ? <p className="admin-action-status" role="alert">{statusMessage}</p> : null}
 
-          {activeSection === "categories" ? <AdminContentSectionsPanel /> : null}
+          {activeSection === "categories" ? (
+            <>
+              <AdminContentSectionsPanel />
+              <div className="section-block" style={{ marginTop: 24 }}>
+                <h2>Catégories de produits & fichiers payants</h2>
+                <p className="muted">Créez les catégories destinées aux produits vendus et choisissez les formats privés autorisés, y compris les applications mobiles.</p>
+                <AdminCategoryEnginePanel />
+              </div>
+            </>
+          ) : null}
 
           {activeSection === "resources" ? <AdminResourcesPanel /> : null}
 

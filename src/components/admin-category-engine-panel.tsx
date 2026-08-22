@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { type HomeCategory } from "@/lib/home-sections";
+import { mobileAppPackageExtensions } from "@/lib/product-documents";
 import { hasSupabaseConfig } from "@/lib/site-config";
 
 type CategoryDraft = {
@@ -507,6 +508,21 @@ export function AdminCategoryEnginePanel() {
           value={categoryDraft.allowedFileTypes}
           onChange={(event) => setCategoryDraft({ ...categoryDraft, allowedFileTypes: event.target.value })}
         />
+        <div className="admin-inline-card">
+          <strong>应用软件包 Apps mobiles</strong>
+          <p className="tiny">Android : APK / AAB / APKS / XAPK · iPhone et iPad : IPA. Ces fichiers sont livrés uniquement après paiement.</p>
+          <button
+            className="pill-button"
+            type="button"
+            onClick={() => setCategoryDraft((current) => {
+              const currentTypes = current.allowedFileTypes.split(",").map((item) => item.trim()).filter(Boolean);
+              const nextTypes = Array.from(new Set([...currentTypes, ...mobileAppPackageExtensions]));
+              return { ...current, allowedFileTypes: nextTypes.join(", ") };
+            })}
+          >
+            Autoriser les apps mobiles
+          </button>
+        </div>
         <div className="admin-inline-card">
           <strong>交付方式 Modes autorisés</strong>
           <label className="tiny">

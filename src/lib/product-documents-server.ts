@@ -6,6 +6,7 @@ import {
   canViewMimeType,
   deliveryModeAllowed,
   extensionFromFilename,
+  mobileAppPackageExtensions,
   normalizeAllowedFileTypes,
   normalizeDeliveryModes,
   type DocumentDeliveryMode,
@@ -78,7 +79,7 @@ export async function resolveCategoryDocumentRules(
           ".pdf", ".epub", ".zip", ".7z", ".rar", ".svg", ".png", ".jpg", ".jpeg", ".webp",
           ".txt", ".md", ".csv", ".json", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx",
           ".fbx", ".glb", ".gltf", ".obj", ".stl", ".blend", ".usdz", ".dwg", ".dxf",
-          ".mp3", ".wav", ".mp4", ".mov", ".webm", ".exe", ".dmg", ".apk",
+          ".mp3", ".wav", ".mp4", ".mov", ".webm", ".exe", ".dmg", ...mobileAppPackageExtensions,
         ],
     allowedDeliveryModes: ["download", "view"] as Array<"download" | "view">,
   };

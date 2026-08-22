@@ -4,6 +4,11 @@ export type DocumentDeliveryMode = "download" | "view" | "both";
 export const adminUploadStagingBucketName = "admin-upload-staging";
 export const githubReleaseMaxAssetBytes = 2 * 1024 * 1024 * 1024 - 1;
 
+// Android packages can be delivered directly after purchase. Apple uses the
+// same IPA package for iPhone and iPad; its installation still requires an
+// Apple-approved signing/distribution method outside the website.
+export const mobileAppPackageExtensions = [".apk", ".aab", ".apks", ".xapk", ".ipa"] as const;
+
 export type ProductDocumentRecord = {
   id: string;
   product_kind: ProductKind;

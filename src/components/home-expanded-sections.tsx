@@ -164,6 +164,11 @@ export function HomeExpandedSections() {
   const [activeSectionId, setActiveSectionId] = useState<string>("scene");
   const [sectionSettings, setSectionSettings] = useState<Record<string, { title: string; order: number; type: string }>>({});
 
+  const homepageExcerpt = (value: string, maxLength = 150) => {
+    const normalized = value.replace(/\s+/g, " ").trim();
+    return normalized.length > maxLength ? `${normalized.slice(0, maxLength).trimEnd()}…` : normalized;
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -173,6 +178,7 @@ export function HomeExpandedSections() {
         slug: resource.slug,
         categoryId: null,
         titleFr: resource.titleFr,
+        homepageSummaryFr: resource.homepageSummaryFr,
         summaryFr: resource.summaryFr,
         coverImageUrl: resource.coverImageUrl || resource.qrImageUrl || "/images/logo.png",
         qrImageUrl: resource.qrImageUrl || resource.coverImageUrl,
@@ -524,7 +530,7 @@ export function HomeExpandedSections() {
                                 <strong>{resource.titleFr}</strong>
                                 <span>{resource.priceEur.toFixed(2)} EUR</span>
                               </div>
-                              <p className="tiny">{resource.summaryFr || "Ouvrez la fiche pour voir les détails et les options de téléchargement."}</p>
+                              <p className="tiny">{homepageExcerpt(resource.homepageSummaryFr || resource.summaryFr) || "Ouvrez la fiche pour voir les détails et les options de téléchargement."}</p>
                               <span className="home-resource-carousel-meta">
                                 {resource.downloads.length > 0 ? `${resource.downloads.length} version(s)` : "Voir la fiche"}
                               </span>

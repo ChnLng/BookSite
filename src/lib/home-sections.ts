@@ -56,6 +56,7 @@ export type ResourceItem = {
   slug: string;
   categoryId: string | null;
   titleFr: string;
+  homepageSummaryFr: string;
   summaryFr: string;
   coverImageUrl: string;
   qrImageUrl: string;
@@ -121,6 +122,7 @@ type ResourceItemRow = {
   slug: string | null;
   category_id: string | null;
   title_fr: string | null;
+  homepage_summary_fr?: string | null;
   summary_fr: string | null;
   cover_image_url: string | null;
   qr_image_url: string | null;
@@ -226,6 +228,7 @@ function mapResource(row: ResourceItemRow, variants: ResourceDownloadVariant[]):
     slug: row.slug || row.id,
     categoryId: row.category_id || null,
     titleFr: row.title_fr || "Ressource",
+    homepageSummaryFr: row.homepage_summary_fr || row.summary_fr || "",
     summaryFr: row.summary_fr || "",
     coverImageUrl: row.cover_image_url || row.qr_image_url || "/images/logo.png",
     qrImageUrl: row.qr_image_url || "",
@@ -282,7 +285,7 @@ export async function loadExpandedHomeData() {
         .order("created_at", { ascending: true }),
       supabase
         .from("resource_items")
-        .select("id, slug, category_id, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
+        .select("id, slug, category_id, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
         .eq("visible", true)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true }),

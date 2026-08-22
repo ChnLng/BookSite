@@ -24,6 +24,7 @@ type ResourcePayload = {
   categoryId?: string;
   slug?: string;
   titleFr?: string;
+  homepageSummaryFr?: string;
   summaryFr?: string;
   coverImageUrl?: string;
   qrImageUrl?: string;
@@ -118,7 +119,7 @@ export async function GET(request: Request) {
 
   const resourcesResult = await supabase
     .from("resource_items")
-    .select("id, category_id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
+    .select("id, category_id, slug, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
     .is("deleted_at", null)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
@@ -128,7 +129,7 @@ export async function GET(request: Request) {
   if (resourcesResult.error) {
     const fallbackResourcesResult = await supabase
       .from("resource_items")
-      .select("id, category_id, slug, title_fr, summary_fr, qr_image_url, external_url, visible, sort_order")
+        .select("id, category_id, slug, title_fr, summary_fr, qr_image_url, external_url, visible, sort_order")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
 
@@ -137,6 +138,7 @@ export async function GET(request: Request) {
     } else {
       resources = (fallbackResourcesResult.data || []).map((item) => ({
         ...item,
+        homepage_summary_fr: null,
         cover_image_url: item.qr_image_url || null,
         price_eur: 0,
       }));
@@ -214,6 +216,7 @@ export async function POST(request: Request) {
     category_id: (resource?.categoryId || "").trim() || null,
     slug: normalizedSlug,
     title_fr: normalizedTitle,
+    homepage_summary_fr: (resource?.homepageSummaryFr || "").trim() || null,
     summary_fr: (resource?.summaryFr || "").trim() || null,
     cover_image_url: (resource?.coverImageUrl || "").trim() || null,
     qr_image_url: (resource?.qrImageUrl || "").trim() || null,
@@ -226,13 +229,23 @@ export async function POST(request: Request) {
   let resourceId = (resource?.id || "").trim();
 
   if (resourceId) {
-    const { error } = await supabase.from("resource_items").update(rowPayload).eq("id", resourceId);
+    let { error } = await supabase.from("resource_items").update(rowPayload).eq("id", resourceId);
+
+    if (error && /homepage_summary_fr|column|schema cache/i.test(error.message)) {
+      const { homepage_summary_fr: _unusedHomepageSummary, ...legacyPayload } = rowPayload;
+      ({ error } = await supabase.from("resource_items").update(legacyPayload).eq("id", resourceId));
+    }
 
     if (error) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
     }
   } else {
-    const { data, error } = await supabase.from("resource_items").insert(rowPayload).select("id").single();
+    let { data, error } = await supabase.from("resource_items").insert(rowPayload).select("id").single();
+
+    if (error && /homepage_summary_fr|column|schema cache/i.test(error.message)) {
+      const { homepage_summary_fr: _unusedHomepageSummary, ...legacyPayload } = rowPayload;
+      ({ data, error } = await supabase.from("resource_items").insert(legacyPayload).select("id").single());
+    }
 
     if (error || !data?.id) {
       return NextResponse.json({ ok: false, message: error?.message || "Creation de ressource impossible." }, { status: 500 });

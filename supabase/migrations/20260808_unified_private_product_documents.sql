@@ -28,7 +28,7 @@ set allowed_file_types = case
     '.pdf', '.epub', '.zip', '.7z', '.rar', '.svg', '.png', '.jpg', '.jpeg', '.webp',
     '.txt', '.md', '.csv', '.json', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
     '.fbx', '.glb', '.gltf', '.obj', '.stl', '.blend', '.usdz', '.dwg', '.dxf',
-    '.mp3', '.wav', '.mp4', '.mov', '.webm', '.exe', '.dmg', '.apk'
+    '.mp3', '.wav', '.mp4', '.mov', '.webm', '.exe', '.dmg', '.apk', '.aab', '.apks', '.xapk', '.ipa'
   ]::text[]
 end
 where coalesce(array_length(allowed_file_types, 1), 0) = 0;

@@ -6,6 +6,7 @@ type ResourceItemRow = {
   id: string;
   slug: string | null;
   title_fr: string | null;
+  homepage_summary_fr?: string | null;
   summary_fr: string | null;
   cover_image_url: string | null;
   qr_image_url: string | null;
@@ -39,6 +40,7 @@ export type DisplayResource = {
   id: string;
   slug: string;
   titleFr: string;
+  homepageSummaryFr: string;
   summaryFr: string;
   coverImageUrl: string;
   qrImageUrl: string;
@@ -62,6 +64,8 @@ const sampleResources: DisplayResource[] = [
     id: "mini-loto-sons",
     slug: "mini-loto-sons",
     titleFr: "Mini loto des sons doux",
+    homepageSummaryFr:
+      "Un aperçu tout doux pour découvrir les sons, les images et quelques petits mots du quotidien.",
     summaryFr:
       "Un mini-jeu numerique tres simple pour revoir les sons, les images et les petits mots du quotidien en douceur.",
     coverImageUrl: "/images/logo.png",
@@ -93,6 +97,8 @@ const sampleResources: DisplayResource[] = [
     id: "cartes-vie-calme",
     slug: "cartes-vie-calme",
     titleFr: "Cartes visuelles du quotidien",
+    homepageSummaryFr:
+      "Des cartes simples et rassurantes pour revoir des mots utiles, à son rythme.",
     summaryFr:
       "Un petit outil a garder sous la main pour revoir calmement des mots et des gestes utiles, sur ordinateur ou mobile.",
     coverImageUrl: "/images/logo.png",
@@ -127,6 +133,12 @@ function normalizePrice(value: number | string | null | undefined) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function clampHomepageSummary(value: string, maxLength = 150) {
+  const normalized = richTextToPlainText(value);
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength).trimEnd()}…`;
+}
+
 function sortDownloads(left: DisplayResourceDownload, right: DisplayResourceDownload) {
   const leftIndex = platformOrder.indexOf(left.platform as (typeof platformOrder)[number]);
   const rightIndex = platformOrder.indexOf(right.platform as (typeof platformOrder)[number]);
@@ -155,11 +167,13 @@ function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) 
 
       const titleRichFr = row.title_fr || "Ressource ludique";
       const summaryRichFr = row.summary_fr || "Une ressource numerique douce a decouvrir.";
+      const homepageSummaryRichFr = row.homepage_summary_fr || summaryRichFr;
 
       return {
         id: row.id,
         slug: row.slug || row.id,
         titleFr: richTextToPlainText(titleRichFr),
+        homepageSummaryFr: clampHomepageSummary(homepageSummaryRichFr),
         summaryFr: richTextToPlainText(summaryRichFr),
         coverImageUrl: row.cover_image_url || row.qr_image_url || "/images/logo.png",
         qrImageUrl: row.qr_image_url || row.cover_image_url || "/images/logo.png",
@@ -186,19 +200,20 @@ async function fetchDisplayResources() {
     return sampleResources;
   }
 
-  const [resourcesResult, filesResult] = await Promise.all([
-    supabase
-      .from("resource_items")
-      .select("id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur")
-      .eq("visible", true)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true }),
+  const resourceSelect = "id, slug, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur";
+  const legacyResourceSelect = "id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur";
+  const [initialResourcesResult, filesResult] = await Promise.all([
+    supabase.from("resource_items").select(resourceSelect).eq("visible", true).order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
     supabase
       .from("resource_item_files")
       .select("id, resource_id, platform, label_fr, external_url, sort_order")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true }),
   ]);
+
+  const resourcesResult = initialResourcesResult.error && /homepage_summary_fr|schema cache|column/i.test(initialResourcesResult.error.message)
+    ? await supabase.from("resource_items").select(legacyResourceSelect).eq("visible", true).order("sort_order", { ascending: true }).order("created_at", { ascending: true })
+    : initialResourcesResult;
 
   const mapped = mapResources(
     (resourcesResult.data || []) as ResourceItemRow[],
@@ -250,7 +265,7 @@ export async function resolveDisplayResourceById(idOrSlug: string) {
 
   const resourceQuery = supabase
       .from("resource_items")
-      .select("id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur")
+      .select("id, slug, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur")
       .limit(1);
   const [resourceResult, fileResult] = await Promise.all([
     (isUuid(idOrSlug) ? resourceQuery.eq("id", idOrSlug) : resourceQuery.eq("slug", idOrSlug)).maybeSingle(),

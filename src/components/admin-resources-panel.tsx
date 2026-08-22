@@ -25,6 +25,7 @@ type ResourceDraft = {
   categoryId: string;
   slug: string;
   titleFr: string;
+  homepageSummaryFr: string;
   summaryFr: string;
   coverImageUrl: string;
   qrImageUrl: string;
@@ -40,6 +41,7 @@ type ResourceRow = {
   category_id: string | null;
   slug: string | null;
   title_fr: string | null;
+  homepage_summary_fr?: string | null;
   summary_fr: string | null;
   cover_image_url: string | null;
   qr_image_url: string | null;
@@ -71,6 +73,7 @@ const defaultDraft: ResourceDraft = {
   categoryId: "",
   slug: "",
   titleFr: "",
+  homepageSummaryFr: "",
   summaryFr: "",
   coverImageUrl: "",
   qrImageUrl: "",
@@ -221,6 +224,7 @@ export function AdminResourcesPanel() {
       categoryId: resource.category_id || "",
       slug: resource.slug || "",
       titleFr: resource.title_fr || "",
+      homepageSummaryFr: resource.homepage_summary_fr || "",
       summaryFr: resource.summary_fr || "",
       coverImageUrl: resource.cover_image_url || "",
       qrImageUrl: resource.qr_image_url || "",
@@ -491,9 +495,15 @@ export function AdminResourcesPanel() {
           Visible
         </label>
         <RichTextEditor
-          placeholder="Résumé chaleureux"
+          placeholder="Résumé détaillé de la fiche produit"
           value={draft.summaryFr}
           onChange={(summaryFr) => setDraft({ ...draft, summaryFr })}
+        />
+        <RichTextEditor
+          placeholder="Petit résumé pour le carrousel de l'accueil (court)"
+          value={draft.homepageSummaryFr}
+          onChange={(homepageSummaryFr) => setDraft({ ...draft, homepageSummaryFr })}
+          rows={2}
         />
       </div>
 
