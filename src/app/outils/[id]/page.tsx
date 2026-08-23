@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, LayoutGrid } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, LayoutGrid } from "lucide-react";
 import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { FormattedInlineText, FormattedText } from "@/components/formatted-text";
 import { ProductDocumentsPanel } from "@/components/product-documents-panel";
@@ -115,6 +115,7 @@ export default function ResourceDetailPage() {
   const { user, session } = useAuth();
   const [resource, setResource] = useState<DisplayResource | null>(null);
   const [relatedResources, setRelatedResources] = useState<DisplayResource[]>([]);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
@@ -779,6 +780,9 @@ export default function ResourceDetailPage() {
     );
   }
 
+  const galleryImages = Array.from(new Set([resource.coverImageUrl, ...resource.galleryImages])).slice(0, 8);
+  const selectedGalleryImage = galleryImages[galleryIndex] || resource.coverImageUrl;
+
   return (
     <main className="page-shell">
       <TopNav title="Visd AR" subtitle="Hub bilingue 🇨🇳 Chinois - Français 🇫🇷" />
@@ -832,11 +836,14 @@ export default function ResourceDetailPage() {
             <div className="book-detail-cover-column resource-detail-cover-column">
           <article className="panel glass resource-cover-panel">
             <div className="resource-detail-cover">
+              {galleryImages.length > 1 ? <button className="resource-gallery-arrow previous" type="button" aria-label="Image précédente" disabled={galleryIndex === 0} onClick={() => setGalleryIndex((index) => Math.max(0, index - 1))}><ChevronLeft size={20} /></button> : null}
               <img
-                src={resource.coverImageUrl}
+                src={selectedGalleryImage}
                 alt={resource.titleFr}
                 className="resource-detail-cover-image"
               />
+              {galleryImages.length > 1 ? <button className="resource-gallery-arrow next" type="button" aria-label="Image suivante" disabled={galleryIndex === galleryImages.length - 1} onClick={() => setGalleryIndex((index) => Math.min(galleryImages.length - 1, index + 1))}><ChevronRight size={20} /></button> : null}
+              {galleryImages.length > 1 ? <span className="resource-gallery-count">{galleryIndex + 1} / {galleryImages.length}</span> : null}
             </div>
           </article>
 

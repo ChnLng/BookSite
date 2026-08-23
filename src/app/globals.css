@@ -4519,10 +4519,20 @@ button,
 }
 
 .resource-detail-cover {
+  position: relative;
   width: 100%;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.86);
 }
+
+.resource-gallery-arrow { position: absolute; z-index: 2; top: 50%; display: grid; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 50%; background: rgba(255,255,255,.88); color: #635bff; box-shadow: 0 8px 20px rgba(30,41,59,.16); transform: translateY(-50%); }
+.resource-gallery-arrow.previous { left: 10px; }
+.resource-gallery-arrow.next { right: 10px; }
+.resource-gallery-arrow:disabled { opacity: .35; cursor: default; }
+.resource-gallery-count { position: absolute; right: 12px; bottom: 12px; padding: 4px 8px; border-radius: 999px; background: rgba(31,41,55,.7); color: white; font-size: .75rem; }
+
+.admin-gallery-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 8px; }
+.admin-gallery-row > span { flex: 1 1 130px; font-size: .82rem; color: var(--text-muted); }
 
 .resource-detail-cover-image {
   display: block;

@@ -14,6 +14,7 @@ type ResourceItemRow = {
   visible: boolean | null;
   sort_order: number | null;
   price_eur: number | string | null;
+  gallery_images?: unknown;
 };
 
 type ResourceItemFileRow = {
@@ -49,6 +50,7 @@ export type DisplayResource = {
   sortOrder: number;
   priceEur: number;
   downloads: DisplayResourceDownload[];
+  galleryImages: string[];
   titleRichFr?: string;
   summaryRichFr?: string;
 };
@@ -74,6 +76,7 @@ const sampleResources: DisplayResource[] = [
     visible: true,
     sortOrder: 10,
     priceEur: 0,
+    galleryImages: [],
     downloads: [
       {
         id: "mini-loto-common",
@@ -107,6 +110,7 @@ const sampleResources: DisplayResource[] = [
     visible: true,
     sortOrder: 20,
     priceEur: 2.99,
+    galleryImages: [],
     downloads: [
       {
         id: "cartes-mac",
@@ -137,6 +141,15 @@ function clampHomepageSummary(value: string, maxLength = 150) {
   const normalized = richTextToPlainText(value);
   if (normalized.length <= maxLength) return normalized;
   return `${normalized.slice(0, maxLength).trimEnd()}…`;
+}
+
+function normalizeGalleryImages(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry): entry is { url?: unknown; visible?: unknown } => Boolean(entry) && typeof entry === "object")
+    .filter((entry) => entry.visible !== false && typeof entry.url === "string" && entry.url.trim().length > 0)
+    .map((entry) => String(entry.url).trim())
+    .slice(0, 7);
 }
 
 function sortDownloads(left: DisplayResourceDownload, right: DisplayResourceDownload) {
@@ -181,6 +194,7 @@ function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) 
         visible: row.visible !== false,
         sortOrder: row.sort_order ?? 0,
         priceEur: normalizePrice(row.price_eur),
+        galleryImages: normalizeGalleryImages(row.gallery_images),
         downloads,
         titleRichFr,
         summaryRichFr,
@@ -200,7 +214,7 @@ async function fetchDisplayResources() {
     return sampleResources;
   }
 
-  const resourceSelect = "id, slug, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur";
+  const resourceSelect = "id, slug, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur, gallery_images";
   const legacyResourceSelect = "id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur";
   const [initialResourcesResult, filesResult] = await Promise.all([
     supabase.from("resource_items").select(resourceSelect).eq("visible", true).order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
@@ -265,7 +279,7 @@ export async function resolveDisplayResourceById(idOrSlug: string) {
 
   const resourceQuery = supabase
       .from("resource_items")
-      .select("id, slug, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur")
+      .select("id, slug, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur, gallery_images")
       .limit(1);
   const [resourceResult, fileResult] = await Promise.all([
     (isUuid(idOrSlug) ? resourceQuery.eq("id", idOrSlug) : resourceQuery.eq("slug", idOrSlug)).maybeSingle(),

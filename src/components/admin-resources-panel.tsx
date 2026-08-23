@@ -33,6 +33,7 @@ type ResourceDraft = {
   priceEur: string;
   visible: boolean;
   sortOrder: string;
+  galleryImages: Array<{ url: string; visible: boolean }>;
   downloads: ResourceVariantDraft[];
 };
 
@@ -49,6 +50,7 @@ type ResourceRow = {
   price_eur: number | string | null;
   visible: boolean | null;
   sort_order: number | null;
+  gallery_images?: Array<{ url?: string; visible?: boolean }> | null;
 };
 
 type ResourceFileRow = {
@@ -81,6 +83,7 @@ const defaultDraft: ResourceDraft = {
   priceEur: "0",
   visible: true,
   sortOrder: "10",
+  galleryImages: [],
   downloads: [defaultVariant()],
 };
 
@@ -108,6 +111,7 @@ export function AdminResourcesPanel() {
   const [lastDeleted, setLastDeleted] = useState<{ id: string; title: string; wasVisible: boolean } | null>(null);
   const [selectedCoverFile, setSelectedCoverFile] = useState<File | null>(null);
   const [selectedQrFile, setSelectedQrFile] = useState<File | null>(null);
+  const [selectedGalleryFiles, setSelectedGalleryFiles] = useState<File[]>([]);
 
   const authorizedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!session?.access_token) {
@@ -208,6 +212,7 @@ export function AdminResourcesPanel() {
     setEditingId(null);
     setSelectedCoverFile(null);
     setSelectedQrFile(null);
+    setSelectedGalleryFiles([]);
   };
 
   const startNewResource = () => {
@@ -232,6 +237,7 @@ export function AdminResourcesPanel() {
       priceEur: String(resource.price_eur ?? 0),
       visible: resource.visible !== false,
       sortOrder: String(resource.sort_order || 0),
+      galleryImages: Array.isArray(resource.gallery_images) ? resource.gallery_images.filter((image) => image?.url).slice(0, 7).map((image) => ({ url: image.url!, visible: image.visible !== false })) : [],
       downloads:
         relatedFiles.length > 0
           ? relatedFiles.map((file) => ({
@@ -403,6 +409,20 @@ export function AdminResourcesPanel() {
     }
   };
 
+  const uploadGalleryImages = async () => {
+    if (!editingId || selectedGalleryFiles.length === 0) return;
+    const capacity = 7 - draft.galleryImages.length;
+    const files = selectedGalleryFiles.slice(0, capacity);
+    setBusyKey("upload-resource-gallery");
+    try {
+      const uploaded = await Promise.all(files.map((file, index) => uploadAsset("image", file, `${slugify(draft.slug || draft.titleFr || "outil")}-gallery-${Date.now()}-${index}.${file.name.split(".").pop() || "png"}`)));
+      setDraft((current) => ({ ...current, galleryImages: [...current.galleryImages, ...uploaded.map((url) => ({ url, visible: true }))] }));
+      setSelectedGalleryFiles([]);
+      setStatusMessage("Images ajoutées. Cliquez sur « Mettre à jour la ressource » pour les publier.");
+    } catch (error) { setStatusMessage(error instanceof Error ? error.message : "Upload images impossible."); }
+    finally { setBusyKey(null); }
+  };
+
   const resourceCount = useMemo(() => resources.length, [resources.length]);
 
   return (
@@ -506,6 +526,14 @@ export function AdminResourcesPanel() {
         >
           {busyKey === "upload-resource-qr" ? "上传中..." : "上传 QR 并绑定"}
         </button>
+      </div>
+      <div className="admin-asset-upload-card">
+        <strong>展示图轮播 · Galerie du produit (封面之外最多 7 张)</strong>
+        <p className="tiny">商品页共最多 8 张（封面 + 7 张展示图）。可隐藏、删除；保存后生效。</p>
+        <input className="input" type="file" accept="image/*" multiple disabled={!editingId} onChange={(event) => setSelectedGalleryFiles(Array.from(event.target.files || []))} />
+        <button className="pill-button" type="button" disabled={!editingId || selectedGalleryFiles.length === 0 || busyKey === "upload-resource-gallery" || draft.galleryImages.length >= 7} onClick={() => void uploadGalleryImages()}>{busyKey === "upload-resource-gallery" ? "上传中..." : "上传展示图"}</button>
+        {!editingId ? <p className="tiny">请先保存商品，再上传展示图。</p> : null}
+        {draft.galleryImages.map((image, index) => <div className="admin-gallery-row" key={image.url}><span>展示图 {index + 2}</span><button className="pill-button" type="button" onClick={() => setDraft((current) => ({ ...current, galleryImages: current.galleryImages.map((entry, currentIndex) => currentIndex === index ? { ...entry, visible: !entry.visible } : entry) }))}>{image.visible ? "隐藏 Masquer" : "显示 Afficher"}</button><button className="pill-button" type="button" onClick={() => setDraft((current) => ({ ...current, galleryImages: current.galleryImages.filter((_, currentIndex) => currentIndex !== index) }))}>删除 Supprimer</button></div>)}
       </div>
       </div>
 

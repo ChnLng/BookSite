@@ -32,6 +32,7 @@ type ResourcePayload = {
   priceEur?: string;
   visible?: boolean;
   sortOrder?: string;
+  galleryImages?: Array<{ url?: string; visible?: boolean }>;
   downloads?: ResourceVariantPayload[];
 };
 
@@ -119,7 +120,7 @@ export async function GET(request: Request) {
 
   const resourcesResult = await supabase
     .from("resource_items")
-    .select("id, category_id, slug, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
+    .select("id, category_id, slug, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order, gallery_images")
     .is("deleted_at", null)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
@@ -141,6 +142,7 @@ export async function GET(request: Request) {
         homepage_summary_fr: null,
         cover_image_url: item.qr_image_url || null,
         price_eur: 0,
+        gallery_images: [],
       }));
     }
   }
@@ -224,6 +226,7 @@ export async function POST(request: Request) {
     price_eur: Number.parseFloat(String(resource?.priceEur || "0")) || 0,
     visible: resource?.visible !== false,
     sort_order: Number(resource?.sortOrder || 0),
+    gallery_images: (resource?.galleryImages || []).filter((image) => image?.url?.trim()).slice(0, 7).map((image) => ({ url: image.url!.trim(), visible: image.visible !== false })),
   };
 
   let resourceId = (resource?.id || "").trim();
@@ -231,8 +234,8 @@ export async function POST(request: Request) {
   if (resourceId) {
     let { error } = await supabase.from("resource_items").update(rowPayload).eq("id", resourceId);
 
-    if (error && /homepage_summary_fr|column|schema cache/i.test(error.message)) {
-      const { homepage_summary_fr: _unusedHomepageSummary, ...legacyPayload } = rowPayload;
+    if (error && /homepage_summary_fr|gallery_images|column|schema cache/i.test(error.message)) {
+      const { homepage_summary_fr: _unusedHomepageSummary, gallery_images: _unusedGalleryImages, ...legacyPayload } = rowPayload;
       ({ error } = await supabase.from("resource_items").update(legacyPayload).eq("id", resourceId));
     }
 
@@ -242,8 +245,8 @@ export async function POST(request: Request) {
   } else {
     let { data, error } = await supabase.from("resource_items").insert(rowPayload).select("id").single();
 
-    if (error && /homepage_summary_fr|column|schema cache/i.test(error.message)) {
-      const { homepage_summary_fr: _unusedHomepageSummary, ...legacyPayload } = rowPayload;
+    if (error && /homepage_summary_fr|gallery_images|column|schema cache/i.test(error.message)) {
+      const { homepage_summary_fr: _unusedHomepageSummary, gallery_images: _unusedGalleryImages, ...legacyPayload } = rowPayload;
       ({ data, error } = await supabase.from("resource_items").insert(legacyPayload).select("id").single());
     }
 
