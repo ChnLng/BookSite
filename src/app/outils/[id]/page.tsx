@@ -786,11 +786,9 @@ export default function ResourceDetailPage() {
         <aside className="resource-detail-sidebar">
           <article className="panel glass resource-cover-panel">
             <div className="resource-detail-cover">
-              <Image
+              <img
                 src={resource.coverImageUrl}
                 alt={resource.titleFr}
-                fill
-                sizes="(max-width: 767px) 100vw, 380px"
                 className="resource-detail-cover-image"
               />
             </div>
@@ -981,10 +979,13 @@ export default function ResourceDetailPage() {
                       href={resource.externalUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="pill-button shrink-0 flex items-center gap-2"
+                      className="pill-button external-link-button shrink-0 flex items-center gap-2"
                     >
                       <ExternalLink size={14} />
                       <span>Lien externe</span>
+                      <span className="external-link-tooltip" role="tooltip">
+                        {resource.externalUrl}
+                      </span>
                     </a>
                   ) : null}
                 </div>
