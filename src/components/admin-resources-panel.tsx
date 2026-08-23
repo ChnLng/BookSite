@@ -270,16 +270,26 @@ export function AdminResourcesPanel() {
           },
         }),
       });
-      const result = (await response.json()) as { ok?: boolean; message?: string };
+      const result = (await response.json()) as { ok?: boolean; id?: string; message?: string };
 
       if (!response.ok || !result.ok) {
         setStatusMessage(result.message || "Creation de ressource impossible.");
         return;
       }
 
-      setStatusMessage("Ressource ludique enregistree.");
-      resetDraft();
+      const savedId = result.id || editingId;
+      setStatusMessage(editingId
+        ? "Produit mis à jour. Les fichiers privés restent disponibles ci-dessous."
+        : "Produit créé. Vous pouvez maintenant ajouter son fichier privé payant ci-dessous.");
+      if (savedId) {
+        setEditingId(savedId);
+        setActiveTab("edit");
+        setDraft((current) => ({ ...current, id: savedId, slug: normalizedSlug }));
+      }
       await loadData();
+      if (!editingId && savedId) {
+        window.setTimeout(() => document.getElementById("private-product-files")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+      }
     } finally {
       setBusyKey(null);
     }
@@ -499,7 +509,7 @@ export function AdminResourcesPanel() {
       </div>
       </div>
 
-      <div className="section-block admin-resource-form-section">
+      <div className="section-block admin-resource-form-section" id="private-product-files">
         <div className="split-line">
           <div><strong>④ 付费私有文件 · Documents numériques privés</strong><p className="tiny">上传路径：临时私有 Supabase Storage → 自动转存 GitHub 私有 Release → 用户付款后才得到受控下载链接。</p></div>
           <span className="tiny">类目决定允许格式</span>
@@ -508,7 +518,7 @@ export function AdminResourcesPanel() {
           <AdminProductDocumentsPanel productKind="resource" productId={editingId} />
         ) : (
           <p className="tiny" style={{ marginTop: 10 }}>
-            请先保存新商品，再进入“编辑已有”上传一个或多个私有文档。
+            先点击下方“Ajouter la ressource”保存商品；系统会自动留在本页并立即打开上传区，无需手动再找“编辑已有”。
           </p>
         )}
       </div>
