@@ -11,6 +11,7 @@ import {
   type ProductKind,
 } from "@/lib/product-documents";
 import { addVisdArAuthorWatermark, isPdfUpload } from "@/lib/pdf-author-watermark";
+import { addVisdArImageWatermark, isWatermarkableImageUpload } from "@/lib/image-author-watermark";
 import { signedStorageTusEndpoint } from "@/lib/supabase-storage-upload";
 
 type CategoryRules = {
@@ -67,6 +68,7 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
   const [newLabelZh, setNewLabelZh] = useState("");
   const [newMode, setNewMode] = useState<DocumentDeliveryMode>("download");
   const [watermarkPdf, setWatermarkPdf] = useState(true);
+  const [watermarkImage, setWatermarkImage] = useState(true);
   const [replacementFiles, setReplacementFiles] = useState<Record<string, File | null>>({});
   const [busyKey, setBusyKey] = useState("");
   const [message, setMessage] = useState("");
@@ -115,6 +117,9 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
     if (watermarkPdf && isPdfUpload(file)) {
       setMessage("Ajout de la signature discrète Auteur : Visd AR au PDF...");
       uploadFile = await addVisdArAuthorWatermark(file);
+    } else if (watermarkImage && isWatermarkableImageUpload(file)) {
+      setMessage("Ajout de la signature discrète Auteur : Visd AR à l'image...");
+      uploadFile = await addVisdArImageWatermark(file);
     }
 
     setMessage("1/3 Préparation de l'envoi privé...");
@@ -312,6 +317,9 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
     </>;
   };
 
+  const selectedFileIsPdf = Boolean(newFile && isPdfUpload(newFile));
+  const selectedFileIsWatermarkableImage = Boolean(newFile && isWatermarkableImageUpload(newFile));
+
   return (
     <div className="section-block admin-product-documents" style={{ marginTop: 14 }}>
       <div className="split-line">
@@ -320,6 +328,11 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
           <p className="tiny" style={{ marginTop: 6 }}>
             Formats autorisés par la catégorie : {rules.allowedFileTypes.join(", ") || "aucun format configuré"}
           </p>
+          <div className="admin-storage-route">
+            <span>① 临时私有存储 · Supabase Storage : <code>admin-upload-staging/pending/…</code></span>
+            <span>② 最终付费文件库 · GitHub Release privée : <code>référence masquée</code></span>
+            <span>③ 权限记录 · Base de données : <code>product_documents</code> · 下载仅在付款后生成</span>
+          </div>
         </div>
         <span className="tiny">{documents.length} fichier(s)</span>
       </div>
@@ -349,7 +362,8 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
             }
           }}
         />
-        <label className="admin-pdf-watermark-option">
+        {newFile ? <p className="tiny">已选择 · Fichier sélectionné : <strong>{newFile.name}</strong> · {isPdfUpload(newFile) ? "PDF" : isWatermarkableImageUpload(newFile) ? "Image" : "Application / archive / autre fichier"}</p> : null}
+        {selectedFileIsPdf ? <label className="admin-pdf-watermark-option">
           <input
             type="checkbox"
             checked={watermarkPdf}
@@ -359,7 +373,12 @@ export function AdminProductDocumentsPanel({ productKind, productId }: Props) {
             <strong>PDF：添加左右竖排作者署名</strong>
             <small>Auteur : 猫咪 Logo Visd AR（字面朝两侧外边，浅蓝紫灰、低透明度）</small>
           </span>
-        </label>
+        </label> : null}
+        {selectedFileIsWatermarkableImage ? <label className="admin-pdf-watermark-option">
+          <input type="checkbox" checked={watermarkImage} onChange={(event) => setWatermarkImage(event.target.checked)} />
+          <span><strong>图片：添加左右竖排作者署名</strong><small>PNG / JPG / WebP：Auteur · Visd AR（浅蓝紫灰、低透明度）。APK、IPA、ZIP 等应用或压缩文件不会显示或使用水印。</small></span>
+        </label> : null}
+        {newFile && !selectedFileIsPdf && !selectedFileIsWatermarkableImage ? <p className="tiny admin-file-no-watermark">此文件不适用水印 · Pas de filigrane : les APK, IPA, AAB, ZIP et autres fichiers techniques sont livrés intacts.</p> : null}
         <button className="cta-button" type="button" disabled={!newFile || busyKey === "add"} onClick={() => void addDocument()}>
           {busyKey === "add" ? "Upload en cours..." : "上传到私有 GitHub并绑定"}
         </button>

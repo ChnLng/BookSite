@@ -399,9 +399,9 @@ export function AdminResourcesPanel() {
     <div className="section-block">
       <div className="split-line">
         <div>
-          <h3>Coin ludique & Outils</h3>
+          <h3>资源 Outils & produits numériques</h3>
           <p className="tiny" style={{ marginTop: 6 }}>
-            {resourceCount} ressource(s) gérée(s), avec versions téléchargeables illimitées.
+            {resourceCount} produit(s) géré(s). Créez la fiche, puis ajoutez les fichiers privés payants.
           </p>
         </div>
       </div>
@@ -431,83 +431,31 @@ export function AdminResourcesPanel() {
       {loading ? <p className="muted">Chargement des ressources...</p> : null}
 
       {activeTab === "create" || editingId ? <>
-      <div className="input-group admin-form-grid">
-        <select
-          className="input"
-          value={draft.categoryId}
-          onChange={(event) => setDraft({ ...draft, categoryId: event.target.value })}
-        >
-          <option value="">Catégorie de rattachement</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.titleFr} · {category.kind}
-            </option>
-          ))}
-        </select>
-        <input
-          className="input"
-          placeholder="Slug"
-          value={draft.slug}
-          onChange={(event) => setDraft({ ...draft, slug: slugify(event.target.value) })}
-        />
-        <RichTextEditor
-          placeholder="Titre convivial"
-          value={draft.titleFr}
-          onChange={(titleFr) => setDraft({ ...draft, titleFr })}
-          rows={2}
-        />
-        <input
-          className="input"
-          placeholder="Prix EUR"
-          value={draft.priceEur}
-          onChange={(event) => setDraft({ ...draft, priceEur: event.target.value })}
-        />
-        <input
-          className="input"
-          placeholder="Ordre"
-          value={draft.sortOrder}
-          onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })}
-        />
-        <input
-          className="input"
-          placeholder="Image carree /images/..."
-          value={draft.coverImageUrl}
-          onChange={(event) => setDraft({ ...draft, coverImageUrl: event.target.value })}
-        />
-        <input
-          className="input"
-          placeholder="Image QR /images/..."
-          value={draft.qrImageUrl}
-          onChange={(event) => setDraft({ ...draft, qrImageUrl: event.target.value })}
-        />
-        <input
-          className="input"
-          placeholder="Lien externe de téléchargement"
-          value={draft.externalUrl}
-          onChange={(event) => setDraft({ ...draft, externalUrl: event.target.value })}
-        />
-        <label className="tiny">
-          <input
-            type="checkbox"
-            checked={draft.visible}
-            onChange={() => setDraft({ ...draft, visible: !draft.visible })}
-          />{" "}
-          Visible
-        </label>
-        <RichTextEditor
-          placeholder="Résumé détaillé de la fiche produit"
-          value={draft.summaryFr}
-          onChange={(summaryFr) => setDraft({ ...draft, summaryFr })}
-        />
-        <RichTextEditor
-          placeholder="Petit résumé pour le carrousel de l'accueil (court)"
-          value={draft.homepageSummaryFr}
-          onChange={(homepageSummaryFr) => setDraft({ ...draft, homepageSummaryFr })}
-          rows={2}
-        />
+      <div className="admin-resource-form-section">
+        <div className="admin-form-section-heading"><strong>① 商品基本信息 · Informations du produit</strong><p className="tiny">这些内容展示在商品页。Slug 是网页地址代号，不会向用户展示。</p></div>
+        <div className="input-group admin-form-grid">
+          <label className="admin-field-label"><span>商品类目 · Catégorie</span><select className="input" value={draft.categoryId} onChange={(event) => setDraft({ ...draft, categoryId: event.target.value })}><option value="">选择类目 · Choisir une catégorie</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.titleFr} · {category.kind}</option>)}</select></label>
+          <label className="admin-field-label"><span>网页地址代号 · Slug</span><input className="input" placeholder="calendrier-chinois-android" value={draft.slug} onChange={(event) => setDraft({ ...draft, slug: slugify(event.target.value) })} /><small>小写英文与连字符，例如 calendrier-chinois-android。</small></label>
+          <div className="admin-field-label admin-field-full"><span>商品标题 · Titre affiché</span><RichTextEditor placeholder="例如：Calendrier lunisolaire chinois (Android)" value={draft.titleFr} onChange={(titleFr) => setDraft({ ...draft, titleFr })} rows={2} /></div>
+          <label className="admin-field-label"><span>售价（欧元）· Prix EUR</span><input className="input" inputMode="decimal" placeholder="例如 1.68" value={draft.priceEur} onChange={(event) => setDraft({ ...draft, priceEur: event.target.value })} /><small>0 = 免费；付费商品请填写大于 0 的金额。</small></label>
+          <label className="admin-field-label"><span>首页排序 · Ordre</span><input className="input" inputMode="numeric" placeholder="10" value={draft.sortOrder} onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} /><small>数字小的排在前面：10、20、30。</small></label>
+          <label className="admin-field-label admin-field-full"><span>公开外链（可选）· Lien externe public</span><input className="input" placeholder="仅用于公开网页；私有付费文件请留空" value={draft.externalUrl} onChange={(event) => setDraft({ ...draft, externalUrl: event.target.value })} /><small>⚠️ 不要填写 GitHub、Supabase 或付费文件链接；请在下方的私有文件区上传。</small></label>
+          <label className="tiny admin-field-full"><input type="checkbox" checked={draft.visible} onChange={() => setDraft({ ...draft, visible: !draft.visible })} /> 商品可见 · Visible</label>
+        </div>
       </div>
 
-      <div className="actions-row">
+      <div className="admin-resource-form-section">
+        <div className="admin-form-section-heading"><strong>② 商品介绍 · Description</strong><p className="tiny">详情介绍只出现在商品页；首页摘要只显示在主页跑马灯，会自动截短。</p></div>
+        <div className="input-group admin-form-grid">
+          <div className="admin-field-label admin-field-full"><span>详情介绍 · Résumé détaillé</span><RichTextEditor placeholder="完整介绍：功能、适用人群、安装/使用说明…" value={draft.summaryFr} onChange={(summaryFr) => setDraft({ ...draft, summaryFr })} /></div>
+          <div className="admin-field-label admin-field-full"><span>首页短摘要 · Petit résumé pour le carrousel</span><RichTextEditor placeholder="用一两句话吸引用户，例如：适合初学者的…" value={draft.homepageSummaryFr} onChange={(homepageSummaryFr) => setDraft({ ...draft, homepageSummaryFr })} rows={2} /></div>
+        </div>
+      </div>
+
+      <div className="admin-resource-form-section">
+        <div className="admin-form-section-heading"><strong>③ 商品图片 · Visuels</strong><p className="tiny">封面与 QR 图片保存在 Supabase Storage，并自动绑定到这个商品；它们不是付款后才可见的私有文件。</p></div>
+      <div className="admin-asset-upload-card">
+        <strong>商品封面 · Image de couverture</strong>
         <input
           className="input"
           type="file"
@@ -528,7 +476,8 @@ export function AdminResourcesPanel() {
         </button>
       </div>
 
-      <div className="actions-row">
+      <div className="admin-asset-upload-card">
+        <strong>二维码图片（可选）· Image QR</strong>
         <input
           className="input"
           type="file"
@@ -548,11 +497,12 @@ export function AdminResourcesPanel() {
           {busyKey === "upload-resource-qr" ? "上传中..." : "上传 QR 并绑定"}
         </button>
       </div>
+      </div>
 
-      <div className="section-block">
+      <div className="section-block admin-resource-form-section">
         <div className="split-line">
-          <strong>文档 Documents numériques privés</strong>
-          <span className="tiny">由所属类目控制格式与交付方式</span>
+          <div><strong>④ 付费私有文件 · Documents numériques privés</strong><p className="tiny">上传路径：临时私有 Supabase Storage → 自动转存 GitHub 私有 Release → 用户付款后才得到受控下载链接。</p></div>
+          <span className="tiny">类目决定允许格式</span>
         </div>
         {editingId ? (
           <AdminProductDocumentsPanel productKind="resource" productId={editingId} />
