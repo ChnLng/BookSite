@@ -4581,6 +4581,21 @@ button,
   gap: 10px;
 }
 
+.resource-detail-hero {
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1fr);
+}
+
+.resource-detail-content {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.resource-related-cover .book-cover-image {
+  object-fit: contain;
+  padding: 5px;
+}
+
 .resource-inline-price {
   display: flex;
   flex-wrap: wrap;

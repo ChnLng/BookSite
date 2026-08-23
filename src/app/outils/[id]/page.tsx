@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, LayoutGrid } from "lucide-react";
+import { GoogleAdsSlot } from "@/components/google-ads-slot";
 import { FormattedInlineText, FormattedText } from "@/components/formatted-text";
 import { ProductDocumentsPanel } from "@/components/product-documents-panel";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
@@ -783,7 +784,52 @@ export default function ResourceDetailPage() {
       <TopNav title="Visd AR" subtitle="Hub bilingue 🇨🇳 Chinois - Français 🇫🇷" />
 
       <section className="book-detail-layout resource-detail-layout" style={{ marginTop: 22 }}>
-        <aside className="resource-detail-sidebar">
+        <aside className="book-detail-sidebar resource-related-sidebar">
+          <div className="panel glass">
+            <div className="section-heading">
+              <span className="section-heading-icon" aria-hidden="true">
+                <LayoutGrid size={17} />
+              </span>
+              <span className="section-heading-text">Produits associés</span>
+            </div>
+            <div className="book-detail-related-list">
+              {loading ? (
+                <p className="muted">Chargement des suggestions...</p>
+              ) : relatedResources.length > 0 ? (
+                relatedResources.map((item) => (
+                  <Link className="book-detail-related-card" key={item.id} href={`/outils/${item.slug || item.id}`}>
+                    <div className="book-detail-related-cover resource-related-cover">
+                      <Image
+                        src={item.coverImageUrl}
+                        alt={item.titleFr}
+                        fill
+                        sizes="140px"
+                        className="book-cover-image"
+                      />
+                    </div>
+                    <div className="book-detail-related-copy">
+                      <strong>{item.titleFr}</strong>
+                      <span className="tiny">{item.priceEur.toFixed(2)} EUR</span>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="muted">Aucun produit associé pour le moment.</p>
+              )}
+            </div>
+          </div>
+
+          <GoogleAdsSlot
+            client="ca-pub-6796254088003500"
+            className="panel glass ad-slot-panel"
+            label="Ads"
+            slot="8355506858"
+          />
+        </aside>
+
+        <section className="panel glass resource-detail-main">
+          <div className="book-detail-hero resource-detail-hero">
+            <div className="book-detail-cover-column resource-detail-cover-column">
           <article className="panel glass resource-cover-panel">
             <div className="resource-detail-cover">
               <img
@@ -900,9 +946,9 @@ export default function ResourceDetailPage() {
               )}
             </div>
           </div>
-        </aside>
+            </div>
 
-        <section className="panel glass resource-detail-main">
+            <div className="resource-detail-content">
           <span className="badge">Coin ludique & Outils</span>
           <h1 className="book-detail-title" style={{ marginTop: 18 }}><FormattedInlineText text={resource.titleRichFr || resource.titleFr} /></h1>
           {!effectiveHasAccess ? <div className="resource-action-stack">
@@ -1025,31 +1071,8 @@ export default function ResourceDetailPage() {
             </div>
           ) : null}
 
-          {relatedResources.length > 0 ? (
-            <div className="resource-related-strip">
-              <div className="split-line">
-                <strong>Autres outils a decouvrir</strong>
-                <span>{relatedResources.length}</span>
-              </div>
-              <div className="resource-related-grid">
-                {relatedResources.map((item) => (
-                  <Link className="resource-related-card" key={item.id} href={`/outils/${item.slug || item.id}`}>
-                    <div className="resource-related-image">
-                      <Image
-                        src={item.coverImageUrl}
-                        alt={item.titleFr}
-                        fill
-                        sizes="180px"
-                        className="carousel-cover-image"
-                      />
-                    </div>
-                    <strong>{item.titleFr}</strong>
-                    <span>{item.priceEur.toFixed(2)} EUR</span>
-                  </Link>
-                ))}
-              </div>
             </div>
-          ) : null}
+          </div>
         </section>
       </section>
 
