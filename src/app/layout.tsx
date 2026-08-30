@@ -5,6 +5,7 @@ import { AuthProvider } from "@/components/auth-provider";
 import { StructuredData } from "@/components/structured-data";
 import "./globals.css";
 import "./brand-glass.css";
+import "./admin-workspace.css";
 
 const googleTagManagerId = "GTM-N3S5X785";
 

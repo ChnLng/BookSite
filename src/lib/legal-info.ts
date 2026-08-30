@@ -38,6 +38,6 @@ export const infoLinks: InfoLink[] = [
     id: "confidentialite",
     label: "Confidentialité",
     title: "Protection des données",
-    body: "Vos données personnelles sont traitées dans le strict respect du RGPD. Seules les informations strictement nécessaires à la validation de votre commande et à la prévention des fraudes sont conservées, sans jamais être cédées à des tiers.",
+    body: "Vos informations servent à gérer votre compte, vos commandes, vos messages et vos demandes de test. Les prestataires techniques et de paiement peuvent traiter les données nécessaires à ces services. Les publicités Adsterra sont désactivées tant que vous ne les avez pas acceptées dans le bloc Ads. Vous pouvez refuser ou retirer cet accord dans ce même bloc ; le site reste accessible. Le choix publicitaire est conservé pendant 180 jours dans votre navigateur. Cette option ne règle pas les autres services du site.",
   },
 ];

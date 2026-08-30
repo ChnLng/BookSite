@@ -7,6 +7,7 @@ import { AdminCategoryEnginePanel } from "@/components/admin-category-engine-pan
 import { AdminDownloadReport } from "@/components/admin-download-report";
 import { AdminPurchaseSearch } from "@/components/admin-purchase-search";
 import { AdminGuard } from "@/components/admin-guard";
+import { AdminInbox } from "@/components/admin-inbox";
 import { AdminPartnerLinksPanel } from "@/components/admin-partner-links-panel";
 import { AdminProductDocumentsPanel } from "@/components/admin-product-documents-panel";
 import { AdminReviewManagement } from "@/components/admin-review-management";
@@ -20,6 +21,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { bookIdFromDownload } from "@/lib/purchase-access";
 import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib/promo";
 import { loadDisplayResources, type DisplayResource } from "@/lib/resources-service";
+import { adsterraUnitId } from "@/lib/advertising";
 
 type BookRow = {
   id: string;
@@ -137,15 +139,19 @@ type PromoEditState = PromoFormState;
 type AssetKind = "image" | "pdf";
 
 const adminSections = [
-  { key: "purchases", label: "🔎 用户购买记录" },
-  { key: "reviews", label: "🔎 所有用户评价" },
-  { key: "categories", label: "类目 Categories" },
-  { key: "books", label: "图书 Livres" },
-  { key: "resources", label: "资源 Outils" },
-  { key: "partners", label: "友链 Liens" },
-  { key: "promo", label: "优惠码 Codes promo" },
-  { key: "downloads", label: "下载 Downloads" },
-  { key: "donations", label: "赞助 Donations" },
+  { key: "overview", label: "工作台", subtitle: "Vue d’ensemble", group: "日常管理", description: "从常用操作开始，快速进入商品、交易和用户管理。" },
+  { key: "books", label: "图书商品", subtitle: "Livres", group: "商品与内容", description: "编辑图书、价格、封面、介绍及关联的付费文件。" },
+  { key: "resources", label: "工具与应用", subtitle: "Outils & applications", group: "商品与内容", description: "管理工具、Android 应用、商品图片与下载文件。" },
+  { key: "categories", label: "类目与首页板块", subtitle: "Catégories & sections", group: "商品与内容", description: "整理首页内容板块、商品类目及允许上传的文件格式。" },
+  { key: "purchases", label: "购买记录", subtitle: "Achats", group: "交易与交付", description: "查找用户订单与购买记录，核对支付与商品访问权限。" },
+  { key: "downloads", label: "下载记录", subtitle: "Téléchargements", group: "交易与交付", description: "查看下载报告，核对数字商品交付情况。" },
+  { key: "promo", label: "网站优惠码", subtitle: "Codes promo du site", group: "交易与交付", description: "管理网站结账优惠与促销横幅；这里不是 Google Play 兑换码库存。" },
+  { key: "donations", label: "赞助记录", subtitle: "Dons", group: "交易与交付", description: "查看历史赞助与退款。首页赞助入口隐藏，历史记录仍保留。" },
+  { key: "testing", label: "免费测试申请", subtitle: "Tests Google Play", group: "用户与反馈", description: "核对测试申请及 Google Play 邮箱，再人工确认入群与发码。" },
+  { key: "messages", label: "联系留言", subtitle: "Messages privés", group: "用户与反馈", description: "查看发给管理员的联系留言及测试申请。" },
+  { key: "reviews", label: "商品评价", subtitle: "Avis des utilisateurs", group: "用户与反馈", description: "统一查看、隐藏或恢复各个商品页的用户评价。" },
+  { key: "partners", label: "友情链接", subtitle: "Liens partenaires", group: "推广与合作", description: "管理推荐链接、图标和显示顺序，与 Ads 展示广告分开。" },
+  { key: "advertising", label: "展示广告", subtitle: "Ads · Adsterra", group: "推广与合作", description: "查看本站广告配置，进入 Adsterra 管理广告内容与收益。" },
 ] as const;
 
 type AdminSectionKey = (typeof adminSections)[number]["key"];
@@ -368,8 +374,11 @@ function AdminPageContent() {
   const [reviewCount, setReviewCount] = useState<number | null>(null);
   const [loadWarnings, setLoadWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState<AdminSectionKey>("categories");
-  const [bookAdminTab, setBookAdminTab] = useState<"create" | "edit">("create");
+  const [activeSection, setActiveSection] = useState<AdminSectionKey>("overview");
+  const [navigationQuery, setNavigationQuery] = useState("");
+  const [messageCount, setMessageCount] = useState<number | null>(null);
+  const [testingCount, setTestingCount] = useState<number | null>(null);
+  const [bookAdminTab, setBookAdminTab] = useState<"create" | "edit">("edit");
   const [lastDeletedBook, setLastDeletedBook] = useState<{ id: string; title: string; wasVisible: boolean } | null>(null);
   const [form, setForm] = useState<BookFormState>(defaultBookForm);
   const [categoryForm, setCategoryForm] = useState<CategoryFormState>(defaultCategoryForm);
@@ -579,6 +588,10 @@ function AdminPageContent() {
 
   const sectionCounts = useMemo(
     () => ({
+      overview: "",
+      advertising: "",
+      messages: messageCount ?? "—",
+      testing: testingCount ?? "—",
       books: books.length,
       categories: categories.length,
       resources: resourceCount,
@@ -589,7 +602,7 @@ function AdminPageContent() {
       purchases: downloads.length,
       reviews: reviewCount ?? "—",
     }),
-    [books.length, categories.length, resourceCount, partnerCount, promoCodes.length, downloads.length, donations.length, reviewCount],
+    [books.length, categories.length, resourceCount, partnerCount, promoCodes.length, downloads.length, donations.length, reviewCount, messageCount, testingCount],
   );
 
   const downloadCounts = useMemo(() => {
@@ -1313,46 +1326,81 @@ function AdminPageContent() {
     if (result?.ok) await reload();
   };
 
+  const currentSection = adminSections.find((section) => section.key === activeSection)!;
+  const matchingSections = adminSections.filter((section) => `${section.label} ${section.subtitle} ${section.description}`.toLowerCase().includes(navigationQuery.trim().toLowerCase()));
+  const navigateSection = (key: AdminSectionKey) => { setActiveSection(key); setStatusMessage(""); };
+
   return (
-    <main className="page-shell">
+    <main className="page-shell admin-page">
       <TopNav subtitle="后台概览 Admin" title="Visd AR 管理台" showAdmin showLogout />
 
-      <section className="dashboard-grid">
+      <section className="dashboard-grid admin-dashboard-grid">
         <aside className="admin-sidebar">
           <div className="admin-sidebar-header">
             <div className="admin-sidebar-title">
-              <strong>Admin</strong>
-              <span className="tiny">后台管理</span>
+              <strong>管理导航</strong>
+              <span className="tiny muted">Visd AR · Administration</span>
             </div>
           </div>
-          <div className="admin-sidebar-sections">
-            {adminSections.map((section) => (
+          <label className="admin-navigation-search"><span className="tiny muted">查找功能</span><input className="input" type="search" value={navigationQuery} onChange={(event) => setNavigationQuery(event.target.value)} placeholder="商品、申请、订单…" /></label>
+          <nav className="admin-sidebar-sections" aria-label="后台功能">
+            {[...new Set(matchingSections.map((section) => section.group))].map((group) => <div className="admin-nav-group" key={group}>
+              <h2>{group}</h2>
+              {matchingSections.filter((section) => section.group === group).map((section) => (
               <button
                 key={section.key}
                 className={activeSection === section.key ? "admin-sidebar-item active" : "admin-sidebar-item"}
                 type="button"
-                onClick={() => {
-                  setActiveSection(section.key);
-                  setStatusMessage("");
-                }}
+                aria-current={activeSection === section.key ? "page" : undefined}
+                onClick={() => navigateSection(section.key)}
               >
                 <span className="admin-sidebar-item-line" />
-                <span>{section.label}</span>
-                <span className="admin-sidebar-count">{sectionCounts[section.key]}</span>
+                <span className="admin-nav-label"><strong>{section.label}</strong><small>{section.subtitle}</small></span>
+                {sectionCounts[section.key] !== "" ? <span className="admin-sidebar-count">{loading ? "…" : sectionCounts[section.key]}</span> : null}
               </button>
-            ))}
-          </div>
+            ))}</div>)}
+            {matchingSections.length === 0 ? <p className="tiny muted">没有匹配的功能，换个关键词试试。</p> : null}
+          </nav>
         </aside>
 
-        <section className="panel glass">
+        <section className="panel glass admin-workspace">
+          <header className="admin-workspace-header">
+            <div><span className="admin-breadcrumb">管理台 / {currentSection.group}</span><h1>{currentSection.label}</h1><p className="muted">{currentSection.description}</p></div>
+            <button className="pill-button" type="button" disabled={loading || Boolean(busyKey)} onClick={() => void reload()}>{loading ? "正在读取…" : "刷新数据"}</button>
+          </header>
           {loadWarnings.length > 0 ? (
-            <div className="section-block" style={{ marginTop: 12 }}>
+            <details className="admin-load-warnings">
+              <summary>有 {loadWarnings.length} 项数据需要检查</summary>
               {loadWarnings.map((warning) => (
                 <p className="tiny" key={warning}>{warning}</p>
               ))}
-            </div>
+            </details>
           ) : null}
           {statusMessage ? <p className="admin-action-status" role="alert">{statusMessage}</p> : null}
+
+          {activeSection === "overview" ? <div className="admin-overview">
+            <div className="admin-summary-grid">
+              {(["books", "resources", "downloads", "donations"] as const).map((key) => <button key={key} type="button" className="admin-summary-card" onClick={() => navigateSection(key)}>
+                <span>{adminSections.find((section) => section.key === key)!.label}</span><strong>{loading ? "—" : sectionCounts[key]}</strong><small>查看管理 →</small>
+              </button>)}
+            </div>
+            <section className="admin-quick-section"><h2>常用操作</h2><div className="admin-quick-grid">
+              <button className="admin-quick-card" type="button" onClick={() => { setBookAdminTab("create"); navigateSection("books"); }}><strong>新增图书</strong><span>填写介绍、价格并上传封面与文件</span></button>
+              <button className="admin-quick-card" type="button" onClick={() => navigateSection("resources")}><strong>管理工具与应用</strong><span>编辑商品信息、图片和下载内容</span></button>
+              <button className="admin-quick-card" type="button" onClick={() => navigateSection("testing")}><strong>处理免费测试申请</strong><span>核对 Google Play 邮箱及测试资格</span></button>
+              <button className="admin-quick-card" type="button" onClick={() => navigateSection("purchases")}><strong>查找用户购买</strong><span>核对交易与数字商品访问权限</span></button>
+            </div></section>
+            <div className="admin-help-card"><strong>功能说明</strong><p>付费文件在各商品的编辑页面管理；网站优惠码与 Google Play 兑换码分开。测试申请目前由管理员人工审核，尚未自动入群或发码。</p><p className="tiny muted">概览数量来自当前读取的数据；“—”表示尚未读取，不代表没有记录。</p></div>
+          </div> : null}
+
+          {activeSection === "messages" ? <AdminInbox key="messages" onCountChange={setMessageCount} /> : null}
+          {activeSection === "testing" ? <AdminInbox key="testing" testingOnly onCountChange={setTestingCount} /> : null}
+          {activeSection === "advertising" ? <div className="admin-ad-settings">
+            <div className="admin-help-card"><strong>Native Banner · 代码已配置</strong><dl className="admin-config-list"><div><dt>网站</dt><dd>visdar.fr</dd></div><div><dt>广告单元 ID</dt><dd>{adsterraUnitId}</dd></div><div><dt>推荐布局</dt><dd>1:1 · 字体和颜色 Inherit</dd></div><div><dt>展示位置</dt><dd>首页、目录和商品页原有 Ads 区域</dd></div></dl></div>
+            <p className="muted">广告仅在正式域名、广告位可见且访客同意后加载。本地预览不请求真实广告。访客可以在 Ads 中拒绝或撤回同意。</p>
+            <p className="muted">成人广告保持关闭。广告内容、平台审核状态、展示统计和收益以 Adsterra 后台为准；本站不显示未经核实的收入。</p>
+            <a className="cta-button" href="https://beta.publishers.adsterra.com/" target="_blank" rel="noopener noreferrer">打开 Adsterra 后台</a>
+          </div> : null}
 
           {activeSection === "categories" ? (
             <>

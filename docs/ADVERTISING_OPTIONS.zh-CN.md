@@ -9,7 +9,9 @@
 - 商品信息在服务端读取，每次访问重新查询；数据库故障时显示目录入口，不影响页面其余部分。
 - 手机手机版继续隐藏整个左栏；电脑／平板电脑版和手机切换后的电脑版展示左栏。原有两个手机模式切换按钮和缩放逻辑未修改。
 - 已停止在页面布局加载 AdSense 脚本，原 GoogleAdsSlot 组件和 `public/ads.txt` 保留，便于将来重新审核。
-- 首页、目录及图书／工具详情页的原广告位置改为合作广告卡。没有专属联盟链接时，仅展示合作联系入口，**不代表已经有广告收入**。新卡不会自动加载第三方广告脚本、像素、弹窗或通知订阅。
+- 首页、目录及图书／工具详情页的原 Ads 位置接入站主提供的 Adsterra Native Banner。单元 ID `30994241`，网站 ID `6017866`，截图显示 Active、Books 类别、成人广告关闭。建议在平台保存 1:1 布局；字体和颜色使用 Inherit。平台当前状态与实际收益仍以平台后台为准。
+- 默认不加载广告；接受和拒绝按钮外观一致，可在 Ads 中一键撤回。选择保存 180 天，过期或无效记录不会被当成同意。仅生产环境的 `visdar.fr`／`www.visdar.fr` 且广告位实际可见时加载。手机版隐藏侧栏、本地及 Vercel 预览环境均不请求真实广告。
+- 广告在隔离的 sandbox iframe 中异步执行，不授予 `allow-same-origin`，避免访问网站登录存储和表单；允许广告点击打开独立窗口，但不允许改写顶层页面。撤回同意或隐藏广告位时移除 iframe。不能保证第三方始终填充广告、素材质量或浏览器不会拦截。
 
 ## 候选平台
 
@@ -22,19 +24,16 @@
 | [The Moneytizer](https://www.themoneytizer.com/faq/criteres-de-validation) | 法语官方 FAQ 当前要求申请前 30 天至少 30,000 独立访客，并有足量、优质、经常更新的内容；仅三四篇文章不被接受。不同地区页面条件不同。 | 不把旧文章中的“10,000 访客”当作当前标准。先核实本站流量再考虑。 |
 | [Ezoic](https://www.ezoic.com/services) | 当前完整服务公开门槛为每月 250,000 用户；[支持文档](https://support.ezoic.com/kb/article/getting-started-ezoics-requirements%3Fid%3Dgetting-started-ezoics-requirements%26lang%3Den-US)另述低于门槛可申请 Incubator。 | 不是当前低流量网站的直接替代方案；不要沿用旧的“无流量门槛”介绍。 |
 
-## 现有合作广告位接入
+## 当前广告配置
 
-在 Vercel 的项目环境变量里配置以下**公开信息**，然后重新部署 Production：
+公开配置在 `src/lib/advertising.ts`，展示组件在 `src/components/partner-ad-slot.tsx`。旧的 `NEXT_PUBLIC_PARTNER_AD_*` 合作卡环境变量已不再用于 Ads；友情链接板块仍独立保留。
 
-```dotenv
-NEXT_PUBLIC_PARTNER_AD_URL=站主获批后生成的完整HTTPS联盟链接
-NEXT_PUBLIC_PARTNER_AD_TITLE=读者看到的广告标题
-NEXT_PUBLIC_PARTNER_AD_DESCRIPTION=对应产品的简短说明
-```
+脚本地址：`https://pl31094740.profitableratecpmnetwork.com/0cb5354fc99d2b62ae8e5ef57f726c6c/invoke.js`。
+容器 ID：`container-0cb5354fc99d2b62ae8e5ef57f726c6c`。
 
-代码仅接受 HTTPS 链接，不接受脚本或含用户名密码的 URL。卡片标题统一显示“Ads”，已配置联盟链接时附佣金说明，链接标记 `rel="sponsored noopener noreferrer"`。不要把 Awin API 密钥、账号密码或收款资料放入这些变量。
+这些是公开嵌入参数，不是账户凭据。更换单元时同步更新脚本、容器和配置，并重新部署。后台“展示广告”入口会列出配置和 Adsterra 管理入口，不伪造实时收益数据。
 
-只有商家明确允许直链归因时才使用此入口；需要脚本、展示像素或特殊素材时，按商家要求另行集成。当前入口不支持把 Adsterra/Monetag 的 JavaScript 粘贴进 URL，也不应把会随机跳向不相关广告的 SmartLink 伪装为产品推荐。
+布局是平台侧配置，选择 1:1 后必须点击 SAVE。需用真实访客的正常访问观察兼容性和填充率；本地验收不点击广告、不制造广告收入。若广告服务拒绝隔离 iframe，应向平台确认受支持的隔离方式，不直接取消登录数据保护。
 
 ## 接入广告脚本前
 
@@ -47,7 +46,7 @@ NEXT_PUBLIC_PARTNER_AD_DESCRIPTION=对应产品的简短说明
 
 ## 后续所需
 
-选定平台后，需要站主自己的已获批联盟链接（适用于当前卡片），或专属广告代码和平台同意管理要求（需要进一步接入）。不需要在聊天里提供密码、收款账号或私钥。
+广告代码已经收到。后续如平台提供 ads.txt 内容，按其原文核对后添加；广告单元 ID 不等于 ads.txt 的发布商 ID，不能据此自行编写。收益和收款请在 Adsterra 后台查看，不需要在聊天里提供密码、收款账号或私钥。
 
 ## Adsterra 注册操作
 
