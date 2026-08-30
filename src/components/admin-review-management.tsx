@@ -53,6 +53,7 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
   const { session } = useAuth();
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [query, setQuery] = useState("");
+  const [sourceFilter, setSourceFilter] = useState<ReviewSource | "all">("all");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -96,13 +97,12 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
 
   const filteredReviews = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("fr-FR");
-    if (!normalizedQuery) return reviews;
-
     return reviews.filter((review) =>
+      (sourceFilter === "all" || review.source === sourceFilter) &&
       [review.locationLabel, review.authorName, review.userEmail, review.content, formatReviewDate(review.createdAt)]
         .some((value) => value.toLocaleLowerCase("fr-FR").includes(normalizedQuery)),
     );
-  }, [query, reviews]);
+  }, [query, reviews, sourceFilter]);
 
   const toggleVisibility = async (review: AdminReview) => {
     if (!session?.access_token) return;
@@ -131,7 +131,7 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
           ? { ...item, visible: !item.visible }
           : item,
       ));
-      setMessage(review.visible ? "评价已隐藏。" : "评价已重新显示。");
+      setMessage(review.visible ? "内容已隐藏。" : "内容已重新显示。");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Modification impossible.");
     } finally {
@@ -143,10 +143,19 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
     <div className="section-block admin-review-section">
       <div className="split-line admin-review-heading">
         <div>
-          <h2>🔎 所有用户评价 Toutes les évaluations</h2>
-          <p className="muted">主页、图书页和工具商品页的评价统一按最新时间排列。</p>
+          <h2>公开留言与商品评价</h2>
+          <p className="muted">首页 Livre d’or 是访客留言；图书和工具页是商品评价。可按来源分别查看，最新内容排在前面。</p>
         </div>
         <span className="admin-review-total">总数 Total : <strong>{reviews.length}</strong></span>
+      </div>
+
+      <div className="actions-row" role="group" aria-label="筛选公开反馈来源">
+        {([
+          ["all", "全部"],
+          ["home", "首页留言 · Livre d’or"],
+          ["book", "图书评价"],
+          ["resource", "工具评价"],
+        ] as const).map(([source, label]) => <button key={source} className="pill-button admin-review-source-filter" type="button" aria-pressed={sourceFilter === source} onClick={() => setSourceFilter(source)}>{label}</button>)}
       </div>
 
       <div className="actions-row admin-review-search">
@@ -163,7 +172,7 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
 
       {!homeSupportsVisibility ? (
         <p className="admin-review-migration-note" role="status">
-          主页评论已读取；执行 Supabase migration 后即可使用隐藏/恢复功能。
+          首页留言已读取；执行 Supabase migration 后即可使用隐藏/恢复功能。
         </p>
       ) : null}
       {warnings.map((warning) => (
@@ -187,7 +196,7 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
           <thead>
             <tr>
               <th>位置 Emplacement</th>
-              <th>评价内容 Avis</th>
+              <th>留言 / 评价</th>
               <th>星级 Note</th>
               <th>用户名</th>
               <th>邮箱 E-mail</th>
@@ -199,7 +208,7 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
             {loading ? (
               <tr><td className="admin-table-empty" colSpan={7}>Chargement...</td></tr>
             ) : filteredReviews.length === 0 ? (
-              <tr><td className="admin-table-empty" colSpan={7}>暂无评价 · Aucune évaluation.</td></tr>
+              <tr><td className="admin-table-empty" colSpan={7}>当前筛选下没有留言或评价。</td></tr>
             ) : filteredReviews.map((review) => {
               const key = `${review.source}:${review.id}`;
               const homeToggleUnavailable = review.source === "home" && !homeSupportsVisibility;
@@ -207,7 +216,7 @@ export function AdminReviewManagement({ onCountChange }: AdminReviewManagementPr
                 <tr className={review.visible ? "" : "admin-review-row-hidden"} key={key}>
                   <td>
                     <a className="admin-review-location" href={review.locationHref} target="_blank" rel="noreferrer">
-                      {review.locationLabel}
+                      {review.source === "home" ? "首页留言 · Livre d’or" : review.locationLabel}
                     </a>
                     <span className={`admin-review-visibility ${review.visible ? "visible" : "hidden"}`}>
                       {review.visible ? "显示中 Visible" : "已隐藏 Masqué"}

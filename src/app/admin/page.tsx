@@ -149,7 +149,7 @@ const adminSections = [
   { key: "donations", label: "赞助记录", subtitle: "Dons", group: "交易与交付", description: "查看历史赞助与退款。首页赞助入口隐藏，历史记录仍保留。" },
   { key: "testing", label: "免费测试申请", subtitle: "Tests Google Play", group: "用户与反馈", description: "核对测试申请及 Google Play 邮箱，再人工确认入群与发码。" },
   { key: "messages", label: "联系留言", subtitle: "Messages privés", group: "用户与反馈", description: "查看发给管理员的联系留言及测试申请。" },
-  { key: "reviews", label: "商品评价", subtitle: "Avis des utilisateurs", group: "用户与反馈", description: "统一查看、隐藏或恢复各个商品页的用户评价。" },
+  { key: "reviews", label: "留言与评价", subtitle: "Livre d’or & avis", group: "用户与反馈", description: "分别筛选首页公开留言、图书评价与工具评价，管理内容是否显示。" },
   { key: "partners", label: "友情链接", subtitle: "Liens partenaires", group: "推广与合作", description: "管理推荐链接、图标和显示顺序，与 Ads 展示广告分开。" },
   { key: "advertising", label: "展示广告", subtitle: "Ads · Adsterra", group: "推广与合作", description: "查看本站广告配置，进入 Adsterra 管理广告内容与收益。" },
 ] as const;

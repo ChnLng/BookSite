@@ -52,7 +52,7 @@ export function AdminInbox({ testingOnly = false, onCountChange }: { testingOnly
       <p>核对申请人的 Google Play 邮箱 → 确认加入测试群 → 提醒参加对应 App 测试 → 单独分配一枚未使用的兑换码。</p>
       <p className="tiny muted">这里显示的是用户申请，不代表邮箱已验证、已经入群或已经发码。自动库存与发码尚未启用。</p>
       <a className="pill-button" href={playTestingGroupUrl} target="_blank" rel="noopener noreferrer">打开 Google Groups</a>
-    </div> : <p className="muted">网站发给管理员的联系留言，包含测试申请。商品评价请到“用户评价”管理。</p>}
+    </div> : <p className="muted">网站发给管理员的私信，包含测试申请。首页公开留言及商品评价请到“留言与评价”管理。</p>}
     <div className="admin-inbox-toolbar">
       <label className="input-group"><span className="tiny">筛选当前页 · 邮箱 / 昵称 / 内容</span><input className="input" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入关键词" /></label>
       <button className="pill-button" type="button" disabled={loading} onClick={() => setRevision((value) => value + 1)}>刷新收件箱</button>
