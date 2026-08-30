@@ -4,6 +4,7 @@ import { isUuid } from "@/lib/database-identifiers";
 import { hasPurchasedResource } from "@/lib/purchase-access";
 import { applyDiscount } from "@/lib/promo";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
+import { getPlayTestingApp, playTestingApplicationUrl } from "@/lib/play-testing";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -38,6 +39,8 @@ export async function POST(request: Request, context: RouteContext) {
   if (!resource || resource.visible === false) {
     return NextResponse.json({ ok: false, message: "Ressource introuvable." }, { status: 404 });
   }
+  const testingApp = getPlayTestingApp(resource.id) || getPlayTestingApp(resource.slug);
+  if (testingApp) return NextResponse.json({ ok: false, message: "Demandez votre accès gratuit au test Google Play.", applicationUrl: playTestingApplicationUrl(testingApp) }, { status: 409 });
 
   const basePrice = Number(resource.price_eur || 0);
   const promoCode = String(payload?.promoCode || "").trim().toUpperCase();

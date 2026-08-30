@@ -7,6 +7,7 @@ import { isUuid } from "@/lib/database-identifiers";
 import { applyDiscount } from "@/lib/promo";
 import { hasPurchasedBook, hasPurchasedResource } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
+import { getPlayTestingApp, playTestingApplicationUrl } from "@/lib/play-testing";
 
 type CheckoutProduct = {
   kind: "book" | "resource";
@@ -182,6 +183,8 @@ export async function POST(request: Request) {
   if (!product) {
     return NextResponse.json({ ok: false, message: "Produit introuvable." }, { status: 404 });
   }
+  const testingApp = product.kind === "resource" ? getPlayTestingApp(product.id) || getPlayTestingApp(product.slug) : null;
+  if (testingApp) return NextResponse.json({ ok: false, message: "Cette application est proposée gratuitement pendant son test fermé.", applicationUrl: playTestingApplicationUrl(testingApp) }, { status: 409 });
 
   const supabase = getSupabaseServiceClient();
   if (!supabase) {

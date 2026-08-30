@@ -15,14 +15,16 @@ import {
 import { PartnerLinksSection } from "@/components/partner-links-section";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import {
-  loadExpandedHomeData,
+  loadExpandedHomeMetadata,
   type CategoryEntry,
   type CategoryFieldRule,
   type HomeCategory,
   type PartnerLink,
   type ResourceItem,
 } from "@/lib/home-sections";
-import { loadDisplayResources } from "@/lib/resources-service";
+import { loadHomepageResources } from "@/lib/homepage-resources";
+import { getPlayTestingApp } from "@/lib/play-testing";
+import { PlayTestingPrice } from "@/components/play-testing-price";
 
 const iconMap = {
   sparkles: Sparkles,
@@ -85,31 +87,6 @@ function getHeaderOffset() {
   return Math.ceil(utilityHeight + topbarHeight + 20);
 }
 
-async function loadFallbackPartnerLinks() {
-  const supabase = getSupabaseBrowserClient();
-
-  if (!supabase) {
-    return [] as PartnerLink[];
-  }
-
-  const { data } = await supabase
-    .from("partner_links")
-    .select("id, title_fr, icon_url, target_url, tooltip_text, sort_order, visible")
-    .eq("visible", true)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
-
-  return (data || []).map((item) => ({
-    id: String(item.id),
-    titleFr: String(item.title_fr || "Lien"),
-    iconUrl: String(item.icon_url || "/images/logo.png"),
-    targetUrl: String(item.target_url || "https://visdar.fr"),
-    tooltipText: String(item.tooltip_text || item.title_fr || "Lien partenaire"),
-    sortOrder: Number(item.sort_order || 0),
-    visible: item.visible !== false,
-  }));
-}
-
 function resolveCategoryIcon(iconName?: string) {
   if (!iconName) {
     return Sparkles;
@@ -155,11 +132,12 @@ function renderEntryField(rule: CategoryFieldRule, entry: CategoryEntry) {
   );
 }
 
-export function HomeExpandedSections() {
+export function HomeExpandedSections({ initialResources }: { initialResources: ResourceItem[] | null }) {
   const [categories, setCategories] = useState<HomeCategory[]>([]);
   const [fieldRules, setFieldRules] = useState<CategoryFieldRule[]>([]);
   const [entries, setEntries] = useState<CategoryEntry[]>([]);
-  const [resources, setResources] = useState<ResourceItem[]>([]);
+  const [resources, setResources] = useState<ResourceItem[]>(initialResources || []);
+  const [resourceLoadFailed, setResourceLoadFailed] = useState(initialResources === null);
   const [partnerLinks, setPartnerLinks] = useState<PartnerLink[]>([]);
   const [activeSectionId, setActiveSectionId] = useState<string>("scene");
   const [sectionSettings, setSectionSettings] = useState<Record<string, { title: string; order: number; type: string }>>({});
@@ -171,43 +149,24 @@ export function HomeExpandedSections() {
 
   useEffect(() => {
     let cancelled = false;
-
-    const mapFallbackResources = (fallbackResources: Awaited<ReturnType<typeof loadDisplayResources>>) =>
-      fallbackResources.map((resource) => ({
-        id: resource.id,
-        slug: resource.slug,
-        categoryId: null,
-        titleFr: resource.titleFr,
-        homepageSummaryFr: resource.homepageSummaryFr,
-        summaryFr: resource.summaryFr,
-        coverImageUrl: resource.coverImageUrl || resource.qrImageUrl || "/images/logo.png",
-        qrImageUrl: resource.qrImageUrl || resource.coverImageUrl,
-        externalUrl: resource.externalUrl,
-        priceEur: resource.priceEur,
-        visible: resource.visible,
-        sortOrder: resource.sortOrder,
-        downloads: resource.downloads.map((download) => ({
-          id: download.id,
-          resourceId: resource.id,
-          platform: download.platform,
-          labelFr: download.labelFr,
-          filePath: download.filePath,
-          externalUrl: download.externalUrl,
-          sortOrder: download.sortOrder,
-        })),
-      }));
+    if (initialResources !== null) {
+      setResources(initialResources);
+      setResourceLoadFailed(false);
+    }
 
     const loadSections = async () => {
-      // Load Coin ludique independently so unrelated category/link queries cannot
-      // hold its carousel in an empty state.
-      void loadDisplayResources().then((fallbackResources) => {
-        if (!cancelled) setResources((current) => current.length > 0 ? current : mapFallbackResources(fallbackResources));
-      });
-      void loadFallbackPartnerLinks().then((links) => {
-        if (!cancelled) setPartnerLinks((current) => current.length > 0 ? current : links);
-      });
+      // Cards already arrive in the HTML. Retry a single public query only if
+      // the server could not reach the catalogue; never wait for download data.
+      if (initialResources === null) {
+        const supabase = getSupabaseBrowserClient();
+        if (supabase) void loadHomepageResources(supabase).then((items) => {
+          if (cancelled) return;
+          setResourceLoadFailed(items === null);
+          if (items) setResources(items);
+        });
+      }
 
-      const expandedData = await loadExpandedHomeData();
+      const expandedData = await loadExpandedHomeMetadata();
 
       if (cancelled) {
         return;
@@ -216,16 +175,17 @@ export function HomeExpandedSections() {
       setCategories(expandedData.categories);
       setFieldRules(expandedData.fieldRules);
       setEntries(expandedData.entries);
-      if (expandedData.resources.length > 0) setResources(expandedData.resources);
-      if (expandedData.partnerLinks.length > 0) setPartnerLinks(expandedData.partnerLinks);
+      setPartnerLinks(expandedData.partnerLinks);
     };
 
-    void loadSections();
+    void loadSections().catch(() => {
+      // Optional categories and partner links must not remove rendered tools.
+    });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialResources]);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -270,7 +230,7 @@ export function HomeExpandedSections() {
       });
     });
 
-    if (resourceCategories.length === 0 && uncategorizedResources.length > 0) {
+    if (resourceCategories.length === 0) {
       sections.push({
         id: "coin-ludique-outils",
         label: sectionSettings["coin-ludique"]?.title || "Coin ludique",
@@ -498,7 +458,9 @@ export function HomeExpandedSections() {
               </p>
 
               {section.resources.length === 0 ? (
-                <p className="tiny">Cette catégorie est prête. Ajoutez maintenant ses premiers outils dans l&apos;administration.</p>
+                <p className="tiny">{resourceLoadFailed
+                  ? "Les outils sont momentanément indisponibles. Actualisez la page pour réessayer."
+                  : "De nouveaux outils seront bientôt disponibles."}</p>
               ) : (
                 <div className="marquee-shell home-resource-marquee-shell" role="list">
                   <div className="marquee-inner home-resource-marquee-inner">
@@ -528,11 +490,13 @@ export function HomeExpandedSections() {
                             <div className="home-resource-carousel-copy">
                               <div className="home-resource-carousel-title-row">
                                 <strong>{resource.titleFr}</strong>
-                                <span>{resource.priceEur.toFixed(2)} EUR</span>
+                                <span>{getPlayTestingApp(resource.id)
+                                  ? <PlayTestingPrice priceEur={resource.priceEur} />
+                                  : `${resource.priceEur.toFixed(2)} EUR`}</span>
                               </div>
                               <p className="tiny">{homepageExcerpt(resource.homepageSummaryFr || resource.summaryFr) || "Ouvrez la fiche pour voir les détails et les options de téléchargement."}</p>
                               <span className="home-resource-carousel-meta">
-                                {resource.downloads.length > 0 ? `${resource.downloads.length} version(s)` : "Voir la fiche"}
+                                {getPlayTestingApp(resource.id) ? "Demander à tester gratuitement →" : "Voir la fiche"}
                               </span>
                             </div>
                           </Link>
@@ -620,7 +584,7 @@ export function HomeExpandedSections() {
           );
         }
 
-        return <div key={section.id} style={{ order: section.order }}><PartnerLinksSection sectionId={section.id} title={section.label} /></div>;
+        return <div key={section.id} style={{ order: section.order }}><PartnerLinksSection links={partnerLinks} sectionId={section.id} title={section.label} /></div>;
       })}
     </>
   );

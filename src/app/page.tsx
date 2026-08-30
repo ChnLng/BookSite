@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { HomePageClient } from "@/components/home-page-client";
 import { loadLatestProducts } from "@/lib/latest-products-server";
+import { loadInitialHomepageResources } from "@/lib/resources-public-server";
 
 export const metadata: Metadata = {
   title: "Livres bilingues et outils pour apprendre le chinois",
@@ -16,7 +17,10 @@ export default async function HomePage() {
   const headerStore = await headers();
   const userAgent = headerStore.get("user-agent") || "";
 
-  const latestProducts = await loadLatestProducts();
+  const [latestProducts, homepageResources] = await Promise.all([
+    loadLatestProducts(),
+    loadInitialHomepageResources(),
+  ]);
 
-  return <HomePageClient initialMobile={isMobileUserAgent(userAgent)} latestProducts={latestProducts} />;
+  return <HomePageClient initialMobile={isMobileUserAgent(userAgent)} latestProducts={latestProducts} homepageResources={homepageResources} />;
 }

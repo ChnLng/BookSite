@@ -2,11 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  LoaderCircle,
-  Mail,
-  ShieldCheck,
   BookOpenText,
   Ticket,
   X,
@@ -14,7 +11,7 @@ import {
 import { HomeExpandedSections } from "@/components/home-expanded-sections";
 import { PromoBanner } from "@/components/promo-banner";
 import { TopNav } from "@/components/top-nav";
-import { useAuth } from "@/components/auth-provider";
+import { AuthModal } from "@/components/auth-modal";
 import { HomeDesktopSidebar } from "@/components/home-desktop-sidebar";
 import { books as staticBooks, defaultRelatedBookIds } from "@/data/books";
 import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-assets";
@@ -22,6 +19,7 @@ import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
 import { siteConfig } from "@/lib/site-config";
 import { infoLinks } from "@/lib/legal-info";
 import type { LatestProduct } from "@/lib/latest-products";
+import type { ResourceItem } from "@/lib/home-sections";
 import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib/promo";
 
 const defaultCarouselBooks: DisplayBook[] = staticBooks.map((book) => {
@@ -39,23 +37,16 @@ const defaultCarouselBooks: DisplayBook[] = staticBooks.map((book) => {
 type HomePageClientProps = {
   initialMobile: boolean;
   latestProducts: LatestProduct[];
+  homepageResources: ResourceItem[] | null;
 };
 
-export function HomePageClient({ initialMobile: _initialMobile, latestProducts }: HomePageClientProps) {
+export function HomePageClient({ initialMobile: _initialMobile, latestProducts, homepageResources }: HomePageClientProps) {
   const [authOpen, setAuthOpen] = useState(false);
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const [authMessage, setAuthMessage] = useState("");
-  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
-  const [isOAuthLoading, setIsOAuthLoading] = useState<"google" | "github" | null>(null);
   const [displayBooks, setDisplayBooks] = useState<DisplayBook[]>(defaultCarouselBooks);
   const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
   const [albumsSectionOrder, setAlbumsSectionOrder] = useState(10);
-  const { signInWithPassword, signUpWithPassword } = useAuth();
 
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
 
@@ -99,99 +90,6 @@ export function HomePageClient({ initialMobile: _initialMobile, latestProducts }
 
     void loadPromo();
   }, []);
-
-  const handleOAuth = async (provider: "google" | "github") => {
-    const { getSupabaseBrowserClient } = await import("@/lib/supabase-browser");
-    const supabase = getSupabaseBrowserClient();
-
-    if (!supabase) {
-      setAuthMessage("Configuration Supabase manquante pour lancer l'authentification.");
-      return;
-    }
-
-    setAuthMessage("");
-    setIsOAuthLoading(provider);
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-
-    if (error) {
-      setAuthMessage(error.message);
-      setIsOAuthLoading(null);
-    }
-  };
-
-  const handlePasswordReset = async () => {
-    const normalizedEmail = email.trim();
-    if (!normalizedEmail) {
-      setAuthMessage("Indiquez votre e-mail, puis cliquez sur « Mot de passe oublié ? ».");
-      return;
-    }
-
-    const { getSupabaseBrowserClient } = await import("@/lib/supabase-browser");
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) {
-      setAuthMessage("Configuration Supabase manquante pour réinitialiser le mot de passe.");
-      return;
-    }
-
-    setIsSubmittingPassword(true);
-    setAuthMessage("");
-    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: `${window.location.origin}/reinitialiser-mot-de-passe`,
-    });
-    setIsSubmittingPassword(false);
-    setAuthMessage(error
-      ? error.message
-      : "E-mail envoyé. Ouvrez le lien reçu pour choisir un nouveau mot de passe.");
-  };
-
-  const handlePasswordAuth = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!email.trim()) {
-      setAuthMessage("Renseignez votre adresse email.");
-      return;
-    }
-
-    if (authMode === "signup" && password !== confirmPassword) {
-      setAuthMessage("Les mots de passe ne correspondent pas.");
-      return;
-    }
-
-    if (password.length < 6) {
-      setAuthMessage("Le mot de passe doit contenir au moins 6 caractères.");
-      return;
-    }
-
-    setIsSubmittingPassword(true);
-    setAuthMessage("");
-
-    const result =
-      authMode === "signup"
-        ? await signUpWithPassword(email.trim(), password)
-        : await signInWithPassword(email.trim(), password);
-
-    setIsSubmittingPassword(false);
-
-    if (result.error) {
-      setAuthMessage(result.error.message);
-      return;
-    }
-
-    setPassword("");
-    setConfirmPassword("");
-    setAuthMessage(
-      authMode === "signup"
-        ? "Inscription réussie. Vérifiez votre boîte mail si une confirmation est demandée."
-        : "Connexion réussie.",
-    );
-    setAuthOpen(false);
-  };
 
   return (
     <main className="page-shell luxury-shell homepage-shell w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -283,7 +181,7 @@ export function HomePageClient({ initialMobile: _initialMobile, latestProducts }
             </div>
           </section>
 
-          <HomeExpandedSections />
+          <HomeExpandedSections initialResources={homepageResources} />
         </div>
       </section>
 
@@ -314,88 +212,7 @@ export function HomePageClient({ initialMobile: _initialMobile, latestProducts }
         <PromoBanner promo={activePromo} onDismiss={() => setPromoDismissed(true)} />
       ) : null}
 
-      {authOpen ? (
-        <div className="overlay-backdrop" role="presentation" onClick={() => setAuthOpen(false)}>
-          <div
-            className="overlay-card glass"
-            role="dialog"
-            aria-modal="true"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button className="overlay-close" type="button" onClick={() => setAuthOpen(false)}>
-              <X size={18} />
-            </button>
-            <div className="actions-row" style={{ marginTop: 0, marginBottom: 12, justifyContent: "flex-start" }}>
-              <button className="pill-button" type="button" onClick={() => { setAuthMode("signin"); setAuthMessage(""); }}>
-                Connexion
-              </button>
-              <button className="pill-button" type="button" onClick={() => { setAuthMode("signup"); setAuthMessage(""); }}>
-                Inscription
-              </button>
-            </div>
-            <h2 className="section-title" style={{ fontFamily: "var(--font-heading), serif" }}>
-              Entrer dans l&apos;univers Visd AR
-            </h2>
-            <div className="auth-provider-grid">
-              <button className="cta-button auth-provider" type="button" onClick={() => void handleOAuth("google")}>
-                {isOAuthLoading === "google" ? <LoaderCircle size={16} className="spin" /> : null}
-                Continuer avec Google
-              </button>
-              <button className="cta-button secondary auth-provider" type="button" onClick={() => void handleOAuth("github")}>
-                {isOAuthLoading === "github" ? <LoaderCircle size={16} className="spin" /> : null}
-                Continuer avec GitHub
-              </button>
-            </div>
-            <form className="input-group auth-email-form" onSubmit={handlePasswordAuth}>
-              <label className="tiny" htmlFor="password-auth">
-                {authMode === "signup" ? "Créer un compte par email" : "Se connecter par email"}
-              </label>
-              <div className="email-inline">
-                <Mail size={18} />
-                <input
-                  id="email-auth"
-                  className="input email-input"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="Votre email"
-                  required
-                />
-              </div>
-              <div className="email-inline">
-                <ShieldCheck size={18} />
-                <input
-                  id="password-auth"
-                  className="input email-input"
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Votre mot de passe"
-                  required
-                />
-              </div>
-              {authMode === "signup" ? (
-                <div className="email-inline">
-                  <ShieldCheck size={18} />
-                  <input
-                    className="input email-input"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    placeholder="Confirmer le mot de passe"
-                    required
-                  />
-                </div>
-              ) : null}
-              <button className="cta-button" type="submit" disabled={isSubmittingPassword}>
-                {isSubmittingPassword ? "Chargement..." : authMode === "signup" ? "Créer mon compte" : "Se connecter"}
-              </button>
-              {authMode === "signin" ? <button className="text-button tiny" type="button" onClick={() => void handlePasswordReset()} disabled={isSubmittingPassword}>Mot de passe oublié ?</button> : null}
-            </form>
-            {authMessage ? <p className="tiny">{authMessage}</p> : null}
-          </div>
-        </div>
-      ) : null}
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
 
       {activeInfo ? (
         <div className="overlay-backdrop" role="presentation" onClick={() => setActiveInfoId(null)}>

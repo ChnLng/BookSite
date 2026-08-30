@@ -32,7 +32,7 @@ NEXT_PUBLIC_PARTNER_AD_TITLE=读者看到的广告标题
 NEXT_PUBLIC_PARTNER_AD_DESCRIPTION=对应产品的简短说明
 ```
 
-代码仅接受 HTTPS 链接，不接受脚本或含用户名密码的 URL。卡片会显示“Publicité”和佣金说明，链接标记 `rel="sponsored noopener noreferrer"`。不要把 Awin API 密钥、账号密码或收款资料放入这些变量。
+代码仅接受 HTTPS 链接，不接受脚本或含用户名密码的 URL。卡片标题统一显示“Ads”，已配置联盟链接时附佣金说明，链接标记 `rel="sponsored noopener noreferrer"`。不要把 Awin API 密钥、账号密码或收款资料放入这些变量。
 
 只有商家明确允许直链归因时才使用此入口；需要脚本、展示像素或特殊素材时，按商家要求另行集成。当前入口不支持把 Adsterra/Monetag 的 JavaScript 粘贴进 URL，也不应把会随机跳向不相关广告的 SmartLink 伪装为产品推荐。
 
@@ -48,3 +48,7 @@ NEXT_PUBLIC_PARTNER_AD_DESCRIPTION=对应产品的简短说明
 ## 后续所需
 
 选定平台后，需要站主自己的已获批联盟链接（适用于当前卡片），或专属广告代码和平台同意管理要求（需要进一步接入）。不需要在聊天里提供密码、收款账号或私钥。
+
+## Adsterra 注册操作
+
+[官方发布者注册入口](https://profit.adsterra.com/sign-up)：选择 Publisher / Webmaster，使用自己的邮箱和真实账户信息注册、验证邮箱，再添加 https://www.visdar.fr。优先申请 Native Banner 或尺寸适合左栏的普通 Banner。不要启用弹出窗口、强制跳转和通知订阅。获批后提供本站广告单元代码及 ads.txt 指示，不能将脚本填进联盟 URL 环境变量。收款及身份核验在平台直接完成，无需向开发者提供密码或证件。

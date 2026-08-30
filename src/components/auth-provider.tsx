@@ -19,7 +19,7 @@ type AuthContextValue = {
   loading: boolean;
   isAdmin: boolean;
   signInWithPassword: (email: string, password: string) => Promise<{ error?: { message: string } | null }>;
-  signUpWithPassword: (email: string, password: string) => Promise<{ error?: { message: string } | null }>;
+  signUpWithPassword: (email: string, password: string) => Promise<{ error?: { message: string } | null; confirmationRequired?: boolean }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -147,10 +147,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: { message: "Configuration Supabase manquante." } };
     }
 
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password, options: {
+      emailRedirectTo: typeof window === "undefined" ? undefined : `${window.location.origin}${window.location.pathname}${window.location.search}`,
+    } });
 
     if (!error && data.user && !data.session) {
-      return { error: { message: "Vérifiez votre boîte mail pour confirmer l'inscription." } };
+      return { error: null, confirmationRequired: true };
     }
 
     return { error };

@@ -117,31 +117,6 @@ type CategoryEntryRow = {
   visible: boolean | null;
 };
 
-type ResourceItemRow = {
-  id: string;
-  slug: string | null;
-  category_id: string | null;
-  title_fr: string | null;
-  homepage_summary_fr?: string | null;
-  summary_fr: string | null;
-  cover_image_url: string | null;
-  qr_image_url: string | null;
-  external_url: string | null;
-  price_eur: number | string | null;
-  visible: boolean | null;
-  sort_order: number | null;
-};
-
-type ResourceFileRow = {
-  id: string;
-  resource_id: string;
-  platform: string | null;
-  label_fr: string | null;
-  file_path: string | null;
-  external_url: string | null;
-  sort_order: number | null;
-};
-
 type PartnerLinkRow = {
   id: string;
   title_fr: string | null;
@@ -210,36 +185,6 @@ function mapEntry(row: CategoryEntryRow): CategoryEntry {
   };
 }
 
-function mapVariant(row: ResourceFileRow): ResourceDownloadVariant {
-  return {
-    id: row.id,
-    resourceId: row.resource_id,
-    platform: row.platform || "通用",
-    labelFr: row.label_fr || "Version",
-    filePath: row.file_path || "",
-    externalUrl: row.external_url || "",
-    sortOrder: row.sort_order ?? 0,
-  };
-}
-
-function mapResource(row: ResourceItemRow, variants: ResourceDownloadVariant[]): ResourceItem {
-  return {
-    id: row.id,
-    slug: row.slug || row.id,
-    categoryId: row.category_id || null,
-    titleFr: row.title_fr || "Ressource",
-    homepageSummaryFr: row.homepage_summary_fr || row.summary_fr || "",
-    summaryFr: row.summary_fr || "",
-    coverImageUrl: row.cover_image_url || row.qr_image_url || "/images/logo.png",
-    qrImageUrl: row.qr_image_url || "",
-    externalUrl: row.external_url || "",
-    priceEur: Number(row.price_eur || 0),
-    visible: row.visible !== false,
-    sortOrder: row.sort_order ?? 0,
-    downloads: variants.sort((left, right) => left.sortOrder - right.sortOrder),
-  };
-}
-
 function mapPartnerLink(row: PartnerLinkRow): PartnerLink {
   return {
     id: row.id,
@@ -252,7 +197,7 @@ function mapPartnerLink(row: PartnerLinkRow): PartnerLink {
   };
 }
 
-export async function loadExpandedHomeData() {
+export async function loadExpandedHomeMetadata() {
   const supabase = getSupabaseBrowserClient();
 
   if (!hasSupabaseConfig || !supabase) {
@@ -260,12 +205,11 @@ export async function loadExpandedHomeData() {
       categories: [] as HomeCategory[],
       fieldRules: [] as CategoryFieldRule[],
       entries: [] as CategoryEntry[],
-      resources: [] as ResourceItem[],
       partnerLinks: [] as PartnerLink[],
     };
   }
 
-  const [categoriesResult, rulesResult, entriesResult, resourcesResult, variantsResult, partnerLinksResult] =
+  const [categoriesResult, rulesResult, entriesResult, partnerLinksResult] =
     await Promise.all([
       supabase
         .from("categories")
@@ -284,17 +228,6 @@ export async function loadExpandedHomeData() {
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true }),
       supabase
-        .from("resource_items")
-        .select("id, slug, category_id, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, price_eur, visible, sort_order")
-        .eq("visible", true)
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("resource_item_files")
-        .select("id, resource_id, platform, label_fr, file_path, external_url, sort_order")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: true }),
-      supabase
         .from("partner_links")
         .select("id, title_fr, icon_url, target_url, tooltip_text, sort_order, visible")
         .eq("visible", true)
@@ -305,20 +238,12 @@ export async function loadExpandedHomeData() {
   const categories = ((categoriesResult.data || []) as CategoryRow[]).map(mapCategory);
   const fieldRules = ((rulesResult.data || []) as CategoryFieldRuleRow[]).map(mapRule);
   const entries = ((entriesResult.data || []) as CategoryEntryRow[]).map(mapEntry);
-  const variants = ((variantsResult.data || []) as ResourceFileRow[]).map(mapVariant);
-  const resources = ((resourcesResult.data || []) as ResourceItemRow[]).map((row) =>
-    mapResource(
-      row,
-      variants.filter((variant) => variant.resourceId === row.id),
-    ),
-  );
   const partnerLinks = ((partnerLinksResult.data || []) as PartnerLinkRow[]).map(mapPartnerLink);
 
   return {
     categories,
     fieldRules,
     entries,
-    resources,
     partnerLinks,
   };
 }

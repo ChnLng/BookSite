@@ -6,6 +6,8 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, LayoutGrid } from "lucide-react";
 import { PartnerAdSlot } from "@/components/partner-ad-slot";
+import { PlayTestingNotice, PlayTestingPrice } from "@/components/play-testing-price";
+import { getPlayTestingApp } from "@/lib/play-testing";
 import { FormattedInlineText, FormattedText } from "@/components/formatted-text";
 import { ProductDocumentsPanel } from "@/components/product-documents-panel";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
@@ -158,6 +160,7 @@ export default function ResourceDetailPage() {
   const processedOrderRef = useRef<string | null>(null);
   const processedStripeSessionRef = useRef<string | null>(null);
   const basePrice = resource?.priceEur ?? 0;
+  const testingApp = getPlayTestingApp(resource?.id) || getPlayTestingApp(resource?.slug);
   const finalPrice = appliedPromo?.discountedPrice ?? resource?.priceEur ?? 0;
   const hasAppliedPromo = Boolean(appliedPromo);
   const promoUnlocksFreeAccess = hasAppliedPromo && finalPrice <= 0;
@@ -404,7 +407,7 @@ export default function ResourceDetailPage() {
 
   const startPayPalCheckout = useCallback(
     async () => {
-      if (!resource) {
+      if (!resource || getPlayTestingApp(resource.id) || getPlayTestingApp(resource.slug)) {
         return;
       }
 
@@ -449,7 +452,7 @@ export default function ResourceDetailPage() {
   );
 
   const startStripeCheckout = useCallback(async () => {
-    if (!resource || !session?.access_token || actionBusy) return;
+    if (!resource || getPlayTestingApp(resource.id) || getPlayTestingApp(resource.slug) || !session?.access_token || actionBusy) return;
 
     setActionBusy(true);
     setPaymentError("");
@@ -488,10 +491,10 @@ export default function ResourceDetailPage() {
   }, [actionBusy, appliedPromo?.code, resource, session?.access_token]);
 
   useEffect(() => {
-    if (!resource || !openBuyImmediately || autoStartedCheckout || !session?.access_token) return;
+    if (!resource || testingApp || !openBuyImmediately || autoStartedCheckout || !session?.access_token) return;
     setAutoStartedCheckout(true);
     if (finalPrice > 0) void startStripeCheckout();
-  }, [autoStartedCheckout, finalPrice, openBuyImmediately, resource, session?.access_token, startStripeCheckout]);
+  }, [autoStartedCheckout, finalPrice, openBuyImmediately, resource, session?.access_token, startStripeCheckout, testingApp]);
 
   useEffect(() => {
     if (!purchaseSucceeded || !stripeSessionId || !resource || !session?.access_token) return;
@@ -813,7 +816,7 @@ export default function ResourceDetailPage() {
                     </div>
                     <div className="book-detail-related-copy">
                       <strong>{item.titleFr}</strong>
-                      <span className="tiny">{item.priceEur.toFixed(2)} EUR</span>
+                      <span className="tiny">{getPlayTestingApp(item.id) || getPlayTestingApp(item.slug) ? <PlayTestingPrice priceEur={item.priceEur} /> : `${item.priceEur.toFixed(2)} EUR`}</span>
                     </div>
                   </Link>
                 ))
@@ -953,7 +956,8 @@ export default function ResourceDetailPage() {
             <div className="resource-detail-content">
           <span className="badge">Coin ludique & Outils</span>
           <h1 className="book-detail-title" style={{ marginTop: 18 }}><FormattedInlineText text={resource.titleRichFr || resource.titleFr} /></h1>
-          {!effectiveHasAccess ? <div className="resource-action-stack">
+          {testingApp ? <PlayTestingNotice app={testingApp} priceEur={basePrice} /> : null}
+          {!effectiveHasAccess && !testingApp ? <div className="resource-action-stack">
             <div className="resource-inline-price">
               <div className="promo-price-tag-wrap">
                 {hasAppliedPromo ? <span className="promo-original-price">{basePrice.toFixed(2)} EUR</span> : null}
@@ -1041,7 +1045,7 @@ export default function ResourceDetailPage() {
 
               {!effectiveHasAccess && promoError ? <p className="text-sm text-red-500">{promoError}</p> : null}
             </div>
-          </div> : (
+          </div> : effectiveHasAccess ? (
             <div className="product-owned-section">
               <p className="product-owned-notice">Vous possédez déjà ce produit.</p>
               <ProductDocumentsPanel
@@ -1051,7 +1055,7 @@ export default function ResourceDetailPage() {
                 accessToken={session?.access_token}
               />
             </div>
-          )}
+          ) : null}
 
           <div className="section-caption" style={{ marginTop: 18 }}><FormattedText text={resource.summaryRichFr || resource.summaryFr} /></div>
 

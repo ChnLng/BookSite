@@ -17,7 +17,7 @@ export function PartnerAdSlot() {
     <aside className="panel glass ad-slot-panel partner-ad-panel" aria-labelledby="partner-ad-title">
       <div className="section-heading">
         <span className="section-heading-icon" aria-hidden="true"><Handshake size={17} /></span>
-        <h2 className="section-heading-text" id="partner-ad-title">{partnerUrl ? "Publicité" : "Partenariats"}</h2>
+        <h2 className="section-heading-text" id="partner-ad-title">Ads</h2>
       </div>
       <div className="partner-ad-content">
         <strong>{partnerUrl ? process.env.NEXT_PUBLIC_PARTNER_AD_TITLE || "À découvrir" : "Votre marque ici"}</strong>

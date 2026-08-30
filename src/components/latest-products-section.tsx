@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import type { LatestProduct } from "@/lib/latest-products";
+import { getPlayTestingApp } from "@/lib/play-testing";
+import { PlayTestingPrice } from "@/components/play-testing-price";
 
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 
@@ -22,7 +24,9 @@ export function LatestProductsSection({ products }: { products: LatestProduct[] 
             <span className="latest-product-details">
               <span className="latest-product-kind">{product.kind === "book" ? "Livre bilingue" : "Outil numérique"}</span>
               <strong className="latest-product-title">{product.title}</strong>
-              <span className="latest-product-price">{product.priceEur === 0 ? "Gratuit" : euro.format(product.priceEur)}</span>
+              <span className="latest-product-price">{getPlayTestingApp(product.id)
+                ? <PlayTestingPrice priceEur={product.priceEur} />
+                : product.priceEur === 0 ? "Gratuit" : euro.format(product.priceEur)}</span>
             </span>
             <ArrowUpRight className="latest-product-arrow" size={15} aria-hidden="true" />
           </Link>

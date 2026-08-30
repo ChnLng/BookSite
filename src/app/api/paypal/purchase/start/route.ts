@@ -6,6 +6,7 @@ import { applyDiscount } from "@/lib/promo";
 import { paypalAccessToken, paypalBaseUrl } from "@/lib/paypal-server";
 import { hasPurchasedBook, hasPurchasedResource } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
+import { getPlayTestingApp, playTestingApplicationUrl } from "@/lib/play-testing";
 
 type ResolvedBook = {
   kind: "book";
@@ -162,6 +163,8 @@ export async function POST(request: Request) {
   if (!purchase) {
     return NextResponse.json({ ok: false, message: "Produit introuvable." }, { status: 404 });
   }
+  const testingApp = purchase.kind === "resource" ? getPlayTestingApp(purchase.id) || getPlayTestingApp(purchase.slug) : null;
+  if (testingApp) return NextResponse.json({ ok: false, message: "Cette application est proposée gratuitement pendant son test fermé.", applicationUrl: playTestingApplicationUrl(testingApp) }, { status: 409 });
 
   const alreadyOwned = purchase.kind === "book"
     ? await hasPurchasedBook(supabase, {

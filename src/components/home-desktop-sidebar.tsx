@@ -464,8 +464,9 @@ export function HomeDesktopSidebar({ latestProducts }: { latestProducts: LatestP
             <span className="section-heading-icon" aria-hidden="true">
               <MessageCircleHeart size={17} />
             </span>
-            <h2 className="section-heading-text">Commentaire</h2>
+            <h2 className="section-heading-text">Livre d’or</h2>
           </div>
+          <p className="tiny muted">Laissez une impression de votre visite.</p>
           <div className="comment-list">
             {comments.map((item) => (
               <article className="comment-card" key={item.id}>
@@ -502,7 +503,7 @@ export function HomeDesktopSidebar({ latestProducts }: { latestProducts: LatestP
             <textarea
               className="textarea comment-textarea compact-textarea"
               name="content"
-              placeholder="Votre commentaire"
+              placeholder="Votre impression, une pensée à partager…"
               value={commentContent}
               onChange={(event) => setCommentContent(event.target.value)}
             />
@@ -522,7 +523,7 @@ export function HomeDesktopSidebar({ latestProducts }: { latestProducts: LatestP
                 disabled={isSubmittingComment}
                 onClick={() => void submitComment("site")}
               >
-                {isSubmittingComment && commentDeliveryMode === "site" ? "Publication..." : "Publier le commentaire"}
+                {isSubmittingComment && commentDeliveryMode === "site" ? "Publication..." : "Signer le livre d’or"}
               </button>
             </div>
             {commentMessage === emailLoginHintText ? (

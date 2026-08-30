@@ -36,10 +36,10 @@ export function PartnerLinksSection({
   sectionId = "liens-partenaires",
   title = "Liens partenaires",
 }: PartnerLinksSectionProps) {
-  const [links, setLinks] = useState<PartnerLinkItem[]>(providedLinks && providedLinks.length > 0 ? providedLinks : fallbackLinks);
+  const [links, setLinks] = useState<PartnerLinkItem[]>(providedLinks ?? fallbackLinks);
 
   useEffect(() => {
-    if (providedLinks && providedLinks.length > 0) {
+    if (providedLinks !== undefined) {
       setLinks(providedLinks);
       return;
     }

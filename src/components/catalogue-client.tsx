@@ -9,6 +9,8 @@ import { TopNav } from "@/components/top-nav";
 import { infoLinks } from "@/lib/legal-info";
 import type { DisplayBook } from "@/lib/books-service";
 import { loadDisplayResources } from "@/lib/resources-service";
+import { getPlayTestingApp, playTestingApplicationUrl } from "@/lib/play-testing";
+import { PlayTestingPrice } from "@/components/play-testing-price";
 
 type CatalogueProduct = {
   id: string;
@@ -60,6 +62,11 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
   }, [products, searchTerm]);
 
   const handleBookCheckout = async (product: CatalogueProduct) => {
+    const testingApp = product.kind === "resource" ? getPlayTestingApp(product.id) : null;
+    if (testingApp) {
+      window.location.href = playTestingApplicationUrl(testingApp);
+      return;
+    }
     setPayingBookId(product.id);
     window.location.href = `${product.href}?buy=1`;
     setPayingBookId(null);
@@ -125,13 +132,15 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
                   {book.titleZh ? <div className="tiny">{book.titleZh}</div> : null}
                   <div className="split-line">
                     <span>Prix</span>
-                    <strong>{book.priceEur.toFixed(2)} EUR</strong>
+                    {book.kind === "resource" && getPlayTestingApp(book.id)
+                      ? <PlayTestingPrice priceEur={book.priceEur} />
+                      : <strong>{book.priceEur.toFixed(2)} EUR</strong>}
                   </div>
                   <div className="catalogue-card-actions">
                     <button className="cta-button catalogue-compact-button" type="button" onClick={() => void handleBookCheckout(book)}>
-                      {payingBookId === book.id ? "Paiement..." : "Acheter"}
+                      {book.kind === "resource" && getPlayTestingApp(book.id) ? "Tester gratuitement" : payingBookId === book.id ? "Paiement..." : "Acheter"}
                     </button>
-                    {book.externalUrl ? <a className="pill-button catalogue-compact-button" href={book.externalUrl} target="_blank" rel="noreferrer">{book.kind === "book" ? "Amazon" : "Lien externe"}</a> : null}
+                    {book.externalUrl && !(book.kind === "resource" && getPlayTestingApp(book.id)) ? <a className="pill-button catalogue-compact-button" href={book.externalUrl} target="_blank" rel="noreferrer">{book.kind === "book" ? "Amazon" : "Lien externe"}</a> : null}
                   </div>
                 </div>
               </article>

@@ -2,6 +2,19 @@ import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 import { siteConfig } from "@/lib/site-config";
+import { loadHomepageResources } from "@/lib/homepage-resources";
+
+export async function loadInitialHomepageResources() {
+  if (!siteConfig.supabaseUrl || !siteConfig.supabaseAnonKey) return null;
+
+  const supabase = createClient(siteConfig.supabaseUrl, siteConfig.supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, next: { revalidate: 30 } }),
+    },
+  });
+  return loadHomepageResources(supabase);
+}
 
 export type PublicResourceSeo = {
   id: string;
