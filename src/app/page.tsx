@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { HomePageClient } from "@/components/home-page-client";
+import { loadLatestProducts } from "@/lib/latest-products-server";
 
 export const metadata: Metadata = {
   title: "Livres bilingues et outils pour apprendre le chinois",
@@ -15,5 +16,7 @@ export default async function HomePage() {
   const headerStore = await headers();
   const userAgent = headerStore.get("user-agent") || "";
 
-  return <HomePageClient initialMobile={isMobileUserAgent(userAgent)} />;
+  const latestProducts = await loadLatestProducts();
+
+  return <HomePageClient initialMobile={isMobileUserAgent(userAgent)} latestProducts={latestProducts} />;
 }

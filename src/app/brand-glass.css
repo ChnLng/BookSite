@@ -1,0 +1,250 @@
+/* Visd AR family: the sky / violet / mint palette used by AppsCNplay.
+   This layer only changes surfaces and visual hierarchy. Responsive layout,
+   the phone view switch, and the phone desktop scale stay in globals.css. */
+:root {
+  --bg: #edf6ff;
+  --bg-gradient: linear-gradient(165deg, #edf6ff 0%, #f7f4ff 48%, #fff8fc 100%);
+  --text-main: #172039;
+  --text-muted: #596780;
+  --accent-primary: #6351ce;
+  --accent-gradient: linear-gradient(135deg, #5266d0 0%, #7457d5 100%);
+  --brand-mint: #208570;
+  --surface-glass: rgba(255, 255, 255, 0.62);
+  --surface-border: rgba(255, 255, 255, 0.88);
+  --backdrop-blur: blur(18px) saturate(125%);
+  --shadow-glass: 0 10px 30px rgba(56, 70, 116, 0.075),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    inset 0 -1px 0 rgba(111, 126, 171, 0.06);
+  --glass-control: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(240, 243, 255, 0.55));
+  --shadow-control: 0 4px 12px rgba(64, 78, 131, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+body {
+  background:
+    radial-gradient(1000px 700px at -8% 0%, rgba(110, 208, 255, 0.34), transparent 68%),
+    radial-gradient(900px 640px at 108% 12%, rgba(210, 174, 255, 0.32), transparent 68%),
+    radial-gradient(800px 600px at 40% 100%, rgba(119, 226, 199, 0.20), transparent 72%),
+    var(--bg-gradient);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #ded8ff;
+  color: #283458;
+}
+
+.glass {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.74), var(--surface-glass));
+  border-color: var(--surface-border);
+  box-shadow: var(--shadow-glass);
+}
+
+.topbar,
+.topbar-luxury {
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.78), rgba(245, 244, 255, 0.64));
+  border-color: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 36px rgba(61, 74, 129, 0.10), inset 0 1px 0 #fff;
+  backdrop-filter: blur(22px) saturate(135%);
+  -webkit-backdrop-filter: blur(22px) saturate(135%);
+}
+
+.brand-mark {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.68), rgba(230, 237, 255, 0.38));
+  box-shadow: inset 0 1px 0 #fff, 0 5px 16px rgba(68, 84, 141, 0.055);
+}
+
+.brand-copy strong { color: #243454; }
+.brand-copy .tiny { color: #546485; }
+
+.nav-links,
+.share-strip {
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+.share-strip-label { color: #5d6a83; }
+
+.nav-links a,
+.nav-button,
+.pill-button,
+.topbar-utility-button,
+.share-icon-button {
+  color: #334565;
+  border-color: rgba(255, 255, 255, 0.94);
+  background: var(--glass-control);
+  box-shadow: var(--shadow-control);
+}
+
+.nav-links a:hover,
+.nav-button:hover:not(:disabled),
+.pill-button:hover:not(:disabled),
+.topbar-utility-button:hover,
+.share-icon-button:hover {
+  color: #5040ae;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(226, 222, 255, 0.76));
+  border-color: rgba(136, 117, 215, 0.28);
+  box-shadow: 0 6px 16px rgba(93, 79, 163, 0.12), inset 0 1px 0 #fff;
+}
+
+.nav-links a:active,
+.nav-button:active:not(:disabled),
+.pill-button:active:not(:disabled),
+.topbar-utility-button:active,
+.share-icon-button:active {
+  color: #5040ae;
+  background: rgba(228, 223, 253, 0.82);
+  box-shadow: inset 0 2px 5px rgba(85, 74, 151, 0.10);
+}
+
+.section-heading {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.83), rgba(246, 246, 255, 0.48));
+  box-shadow: 0 4px 14px rgba(76, 78, 145, 0.055), inset 0 1px 0 #fff;
+  border-color: rgba(255, 255, 255, 0.96);
+}
+
+.section-heading-icon {
+  flex-shrink: 0;
+  color: #6351ce;
+  background: linear-gradient(145deg, #eeeaff, #e6edff);
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+.section-heading-text { letter-spacing: -0.015em; }
+
+.collection-intro {
+  margin: 2px 14px 10px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.carousel-card,
+.home-resource-carousel-card,
+.catalogue-product-card {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.48));
+  border-color: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 22px rgba(59, 75, 124, 0.07), inset 0 1px 0 #fff;
+}
+
+.carousel-card-link:hover,
+.home-resource-carousel-card:hover,
+.catalogue-product-card:hover {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.94), rgba(244, 244, 255, 0.70));
+  border-color: rgba(172, 161, 236, 0.56);
+  box-shadow: 0 14px 28px rgba(87, 73, 148, 0.13), inset 0 1px 0 #fff;
+}
+
+.carousel-image,
+.home-resource-carousel-image,
+.book-cover-wrap {
+  background: linear-gradient(160deg, rgba(235, 241, 255, 0.72), rgba(253, 251, 255, 0.72));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
+}
+
+.carousel-image .carousel-cover-image {
+  object-fit: contain;
+  padding: 8px;
+}
+
+.carousel-caption strong,
+.home-resource-carousel-title-row strong {
+  color: #25324f;
+  line-height: 1.45;
+}
+
+.carousel-caption span,
+.home-resource-carousel-title-row span {
+  color: #5946b8;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-resource-carousel-meta { color: #5946b8; }
+
+.marquee-shell { background: rgba(255, 255, 255, 0.18); }
+.marquee-shell::before { background: linear-gradient(90deg, rgba(242, 246, 255, 0.86), transparent); }
+.marquee-shell::after { background: linear-gradient(270deg, rgba(246, 243, 255, 0.86), transparent); }
+.marquee-inner { animation-duration: 34s; }
+.home-resource-marquee-inner { animation-duration: 40s; }
+.marquee-shell:hover .marquee-inner,
+.marquee-shell:focus-within .marquee-inner { animation-play-state: paused; }
+
+.latest-product-card {
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.72), rgba(241, 245, 255, 0.42));
+  border-color: rgba(152, 160, 204, 0.16);
+  box-shadow: inset 0 1px 0 #fff, 0 4px 12px rgba(65, 76, 126, 0.04);
+}
+
+.latest-product-card:hover {
+  border-color: rgba(133, 114, 211, 0.38);
+  background: rgba(250, 249, 255, 0.86);
+}
+
+.latest-product-image { background: rgba(237, 242, 255, 0.66); }
+.latest-product-kind { color: #506486; }
+.latest-product-title { color: #25324f; }
+.latest-product-price,
+.latest-product-arrow,
+.latest-products-catalogue,
+.partner-ad-link { color: #5946b8; }
+
+.partner-ad-content {
+  background: linear-gradient(145deg, rgba(244, 247, 255, 0.45), rgba(241, 250, 248, 0.42));
+  border-color: rgba(110, 140, 158, 0.28);
+}
+.partner-ad-disclosure { color: #596780; }
+.partner-ad-panel .section-heading-icon { color: #208570; background: rgba(209, 241, 231, 0.64); }
+
+.cta-button {
+  background: var(--accent-gradient);
+  border-color: rgba(255, 255, 255, 0.46);
+  box-shadow: 0 7px 18px rgba(91, 79, 184, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  font-weight: 700;
+}
+.cta-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #465abe, #6548c6);
+  box-shadow: 0 10px 22px rgba(91, 79, 184, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.60);
+}
+.cta-button:active:not(:disabled) { background: linear-gradient(135deg, #3f51ae, #5b3fb5); }
+.cta-button.secondary {
+  color: #43577d;
+  background: var(--glass-control);
+  border-color: rgba(155, 168, 202, 0.20);
+  box-shadow: var(--shadow-control);
+}
+.cta-button.secondary:hover:not(:disabled),
+.cta-button.secondary:active:not(:disabled) {
+  color: #5040ae;
+  background: linear-gradient(145deg, #f5f3ff, #e8e3ff);
+  border-color: rgba(136, 117, 215, 0.28);
+  box-shadow: var(--shadow-control);
+}
+
+.comment-card,
+.input,
+.textarea {
+  border-color: rgba(125, 143, 181, 0.20);
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+:is(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(99, 81, 206, 0.64);
+  outline-offset: 3px;
+}
+
+/* Keep clear content and keyboard focus usable if the device disables blur. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass, .topbar, .carousel-card, .home-resource-carousel-card { background: rgba(250, 251, 255, 0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .marquee-inner { animation: none; transform: none; }
+  .marquee-shell { overflow-x: auto; }
+  .marquee-shell::before, .marquee-shell::after { content: none; }
+  .marquee-track[aria-hidden="true"] { display: none; }
+  .carousel-card-link, .home-resource-carousel-card, .latest-product-card,
+  .cta-button, .pill-button, .nav-button, .nav-links a { transition: none; }
+}

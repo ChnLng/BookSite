@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, LayoutGrid } from "lucide-react";
-import { GoogleAdsSlot } from "@/components/google-ads-slot";
+import { PartnerAdSlot } from "@/components/partner-ad-slot";
 import { FormattedInlineText, FormattedText } from "@/components/formatted-text";
 import { ProductDocumentsPanel } from "@/components/product-documents-panel";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
@@ -823,12 +823,7 @@ export default function ResourceDetailPage() {
             </div>
           </div>
 
-          <GoogleAdsSlot
-            client="ca-pub-6796254088003500"
-            className="panel glass ad-slot-panel"
-            label="Ads"
-            slot="8355506858"
-          />
+          <PartnerAdSlot />
         </aside>
 
         <section className="panel glass resource-detail-main">

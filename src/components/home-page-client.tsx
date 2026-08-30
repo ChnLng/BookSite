@@ -21,6 +21,7 @@ import { bookAssetExtensions, bookCoverPath, bookPdfPath } from "@/lib/book-asse
 import { loadDisplayBooks, type DisplayBook } from "@/lib/books-service";
 import { siteConfig } from "@/lib/site-config";
 import { infoLinks } from "@/lib/legal-info";
+import type { LatestProduct } from "@/lib/latest-products";
 import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib/promo";
 
 const defaultCarouselBooks: DisplayBook[] = staticBooks.map((book) => {
@@ -37,9 +38,10 @@ const defaultCarouselBooks: DisplayBook[] = staticBooks.map((book) => {
 
 type HomePageClientProps = {
   initialMobile: boolean;
+  latestProducts: LatestProduct[];
 };
 
-export function HomePageClient({ initialMobile: _initialMobile }: HomePageClientProps) {
+export function HomePageClient({ initialMobile: _initialMobile, latestProducts }: HomePageClientProps) {
   const [authOpen, setAuthOpen] = useState(false);
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -205,7 +207,7 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
 
       <section className="homepage-responsive-grid homepage-main-grid">
         <div className="home-desktop-sidebar-wrapper">
-          <HomeDesktopSidebar />
+          <HomeDesktopSidebar latestProducts={latestProducts} />
         </div>
 
         <div className="home-main-flow">
@@ -216,6 +218,7 @@ export function HomePageClient({ initialMobile: _initialMobile }: HomePageClient
               </span>
               <h2 className="section-heading-text">Albums illustrés bilingues 🇨🇳 chinois-français 🇫🇷</h2>
             </div>
+            <p className="collection-intro">Des histoires à lire, deux langues à explorer.</p>
 
             <div className="marquee-shell">
               <div className="marquee-inner">

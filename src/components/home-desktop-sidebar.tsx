@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Heart, Mail, MessageCircleHeart, Sparkles, X } from "lucide-react";
-import { GoogleAdsSlot } from "@/components/google-ads-slot";
+import { LatestProductsSection } from "@/components/latest-products-section";
+import { PartnerAdSlot } from "@/components/partner-ad-slot";
+import type { LatestProduct } from "@/lib/latest-products";
 import { PayPalHostedButtonScript } from "@/components/shared/paypal-sdk-script";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
 import { useAuth } from "@/components/auth-provider";
@@ -43,7 +45,10 @@ const donationThankYouMessages = [
   "Merci pour votre don ! C'est un véritable encouragement. 🌸",
 ];
 
-export function HomeDesktopSidebar() {
+// Donation is retained for reactivation, without loading PayPal while hidden.
+const SHOW_HOMEPAGE_DONATION = false;
+
+export function HomeDesktopSidebar({ latestProducts }: { latestProducts: LatestProduct[] }) {
   const emailLoginHintText = "Veuillez vous connecter pour envoyer un email à l'administrateur.";
   const siteCommentSuccessText = "Message bien enregistré ! Il est bien au chaud dans votre espace « Ma page ».";
   const commentLikeLoginHintText = "Connectez-vous pour ajouter un petit coeur à ce commentaire.";
@@ -118,6 +123,7 @@ export function HomeDesktopSidebar() {
   }, [loadComments]);
 
   useEffect(() => {
+    if (!SHOW_HOMEPAGE_DONATION) return;
     const containerId = "paypal-container-D3LVZA49QZ4VE";
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -426,9 +432,9 @@ export function HomeDesktopSidebar() {
 
   return (
     <>
-      <PayPalHostedButtonScript />
+      {SHOW_HOMEPAGE_DONATION ? <PayPalHostedButtonScript /> : null}
       <aside className="left-column-stack">
-        <aside className="panel glass donation-column donation-column-compact" id="donation">
+        {SHOW_HOMEPAGE_DONATION ? <aside className="panel glass donation-column donation-column-compact" id="donation">
           <div className="section-heading">
             <span className="section-heading-icon" aria-hidden="true">
               <Sparkles size={17} />
@@ -449,14 +455,9 @@ export function HomeDesktopSidebar() {
             </div>
             <SecurePaymentNote compact />
           </div>
-        </aside>
+        </aside> : <LatestProductsSection products={latestProducts} />}
 
-        <GoogleAdsSlot
-          client="ca-pub-6796254088003500"
-          className="panel glass ad-slot-panel"
-          label="Ads"
-          slot="8355506858"
-        />
+        <PartnerAdSlot />
 
         <aside className="panel glass comment-column" id="commentaires">
           <div className="section-heading">

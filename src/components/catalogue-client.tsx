@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Search, Ticket, X } from "lucide-react";
-import { GoogleAdsSlot } from "@/components/google-ads-slot";
+import { PartnerAdSlot } from "@/components/partner-ad-slot";
 import { TopNav } from "@/components/top-nav";
 import { infoLinks } from "@/lib/legal-info";
 import type { DisplayBook } from "@/lib/books-service";
@@ -98,12 +98,7 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
               </p>
             </div>
           </div>
-          <GoogleAdsSlot
-            client="ca-pub-6796254088003500"
-            className="panel glass ad-slot-panel"
-            label="Ads"
-            slot="8355506858"
-          />
+          <PartnerAdSlot />
         </aside>
 
         <section className="panel glass">
