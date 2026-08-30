@@ -3,7 +3,7 @@ import { PlayTestingApplication } from "@/components/play-testing-application";
 
 export const metadata: Metadata = {
   title: "Tester gratuitement nos applications Android",
-  description: "Demandez un accès gratuit aux tests fermés Google Play de Visd AR.",
+  description: "Testez gratuitement les applications Android de Visd AR avant leur lancement officiel sur Google Play.",
 };
 
 export default async function PlayTestingPage({ searchParams }: { searchParams: Promise<{ app?: string }> }) {

@@ -38,6 +38,6 @@ export const infoLinks: InfoLink[] = [
     id: "confidentialite",
     label: "Confidentialité",
     title: "Protection des données",
-    body: "Vos informations servent à gérer votre compte, vos commandes, vos messages et vos demandes de test. Les prestataires techniques et de paiement peuvent traiter les données nécessaires à ces services. Les publicités Adsterra sont désactivées tant que vous ne les avez pas acceptées dans le bloc Ads. Vous pouvez refuser ou retirer cet accord dans ce même bloc ; le site reste accessible. Le choix publicitaire est conservé pendant 180 jours dans votre navigateur. Cette option ne règle pas les autres services du site.",
+    body: "Vos informations servent à gérer votre compte, vos commandes, vos messages et vos demandes de test. Les prestataires techniques et de paiement peuvent traiter les données nécessaires à ces services. Les publicités Adsterra sont actuellement suspendues sur le site : aucun chargement n’est autorisé, même si vous aviez donné votre accord. Un choix publicitaire enregistré auparavant dans votre navigateur n’est plus utilisé. Toute reprise nécessitera un nouveau consentement. Cette suspension ne règle pas les autres services du site.",
   },
 ];

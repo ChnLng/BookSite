@@ -3,6 +3,10 @@ export const advertisingConsentEvent = "visdar-adsterra-consent-change";
 export const advertisingConsentLifetime = 180 * 24 * 60 * 60 * 1000;
 export type AdvertisingChoice = "accepted" | "rejected";
 
+// Paused after unsuitable dating and warning-style creatives appeared.
+// Do not resume until the ad feed has been reviewed; request fresh consent then.
+export const adsterraEnabled = false;
+
 export function readAdvertisingChoice(raw: string | null, now = Date.now()): AdvertisingChoice | null {
   try {
     const value = JSON.parse(raw || "null");

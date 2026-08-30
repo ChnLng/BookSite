@@ -21,7 +21,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { bookIdFromDownload } from "@/lib/purchase-access";
 import { isPromoActive, mapPromoRow, type PromoCode, type PromoRow } from "@/lib/promo";
 import { loadDisplayResources, type DisplayResource } from "@/lib/resources-service";
-import { adsterraUnitId } from "@/lib/advertising";
+import { adsterraEnabled, adsterraUnitId } from "@/lib/advertising";
 
 type BookRow = {
   id: string;
@@ -1396,9 +1396,9 @@ function AdminPageContent() {
           {activeSection === "messages" ? <AdminInbox key="messages" onCountChange={setMessageCount} /> : null}
           {activeSection === "testing" ? <AdminInbox key="testing" testingOnly onCountChange={setTestingCount} /> : null}
           {activeSection === "advertising" ? <div className="admin-ad-settings">
-            <div className="admin-help-card"><strong>Native Banner · 代码已配置</strong><dl className="admin-config-list"><div><dt>网站</dt><dd>visdar.fr</dd></div><div><dt>广告单元 ID</dt><dd>{adsterraUnitId}</dd></div><div><dt>推荐布局</dt><dd>1:1 · 字体和颜色 Inherit</dd></div><div><dt>展示位置</dt><dd>首页、目录和商品页原有 Ads 区域</dd></div></dl></div>
-            <p className="muted">广告仅在正式域名、广告位可见且访客同意后加载。本地预览不请求真实广告。访客可以在 Ads 中拒绝或撤回同意。</p>
-            <p className="muted">成人广告保持关闭。广告内容、平台审核状态、展示统计和收益以 Adsterra 后台为准；本站不显示未经核实的收入。</p>
+            <div className="admin-help-card"><strong>Native Banner · {adsterraEnabled ? "代码已配置" : "已暂停展示，代码保留"}</strong><dl className="admin-config-list"><div><dt>网站</dt><dd>visdar.fr</dd></div><div><dt>广告单元 ID</dt><dd>{adsterraUnitId}</dd></div><div><dt>推荐布局</dt><dd>1:1 · 字体和颜色 Inherit</dd></div><div><dt>原展示位置</dt><dd>首页、目录和商品页的 Ads 区域</dd></div></dl></div>
+            <p className="muted">{adsterraEnabled ? "广告仅在正式域名、广告位可见且访客同意后加载。本地预览不请求真实广告。" : "由于出现交友引流和仿系统警告素材，本站已暂停所有 Adsterra 广告。即使访客之前同意过，也不会加载。原代码和广告位组件保留，未删除平台账号或单元。"}</p>
+            <p className="muted">关闭成人广告不等于排除交友、VPN、清理工具等广告。恢复前需向平台确认类别屏蔽与素材审核能力，并重新取得访客同意。广告内容、平台审核状态、展示统计和收益以 Adsterra 后台为准。</p>
             <a className="cta-button" href="https://beta.publishers.adsterra.com/" target="_blank" rel="noopener noreferrer">打开 Adsterra 后台</a>
           </div> : null}
 

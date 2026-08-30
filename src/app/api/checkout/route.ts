@@ -184,7 +184,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Produit introuvable." }, { status: 404 });
   }
   const testingApp = product.kind === "resource" ? getPlayTestingApp(product.id) || getPlayTestingApp(product.slug) : null;
-  if (testingApp) return NextResponse.json({ ok: false, message: "Cette application est proposée gratuitement pendant son test fermé.", applicationUrl: playTestingApplicationUrl(testingApp) }, { status: 409 });
+  if (testingApp) return NextResponse.json({ ok: false, message: "Cette application est proposée gratuitement pendant sa phase de test avant lancement.", applicationUrl: playTestingApplicationUrl(testingApp) }, { status: 409 });
 
   const supabase = getSupabaseServiceClient();
   if (!supabase) {

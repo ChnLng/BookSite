@@ -69,7 +69,7 @@ GitHub 私有大文件下载继续走现有鉴权交付流程。兑换码不放�
 
 ## 给买家的法语步骤草案
 
-> Cette application est actuellement en test fermé sur Google Play. Utilisez le même compte Google à chaque étape, y compris dans l’application Play Store de votre téléphone.
+> Cette application est actuellement en phase de test avant son lancement officiel sur Google Play. Utilisez le même compte Google à chaque étape, y compris dans l’application Play Store de votre téléphone.
 >
 > 1. Rejoignez le groupe de test Visd AR avec l’adresse Google indiquée dans votre commande. Si une invitation est nécessaire, attendez la confirmation d’adhésion.
 > 2. Ouvrez le lien de test de cette application, puis choisissez de devenir testeur.

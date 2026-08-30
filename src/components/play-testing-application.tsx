@@ -41,9 +41,9 @@ export function PlayTestingApplication({ initialPackageName }: { initialPackageN
     <main className="page-shell play-testing-page">
       <TopNav className="topbar-luxury" showAdmin showLogout onLoginClick={() => setAuthOpen(true)} />
       <section className="panel glass play-testing-main">
-        <span className="badge">Visd AR · Android · Test fermé</span>
+        <span className="badge">En phase de test avant lancement</span>
         <h1>Testez nos applications gratuitement</h1>
-        <p className="muted">Demandez un accès pendant la phase de test. Aucun paiement n’est demandé ; l’accès reste soumis aux places et aux codes disponibles.</p>
+        <p className="muted">Découvrez nos applications avant leur lancement officiel. L’accès est gratuit sur demande, dans la limite des places et des codes disponibles.</p>
         <form className="input-group" onSubmit={submit}>
           <label htmlFor="testing-app">Application</label>
           <select id="testing-app" className="input" value={selectedPackage} disabled={busy} onChange={(event) => { setSelectedPackage(event.target.value); setSubmitted(false); setMessage(""); }}>

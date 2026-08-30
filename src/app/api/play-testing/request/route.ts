@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     id, user_id: user.id, user_email: user.email, email: user.email,
     pseudo: "Demande de test Google Play",
     visitor_token: `play-testing:${app.packageName}`,
-    content: ["DEMANDE GRATUITE — TEST FERMÉ GOOGLE PLAY", `Application : ${app.title}`, `Package : ${app.packageName}`, `Compte Google Play déclaré : ${playEmail}`, `Groupe : ${playTestingGroupEmail}`, "Consentement : autorisation explicite reçue pour traiter la demande et l’accès au groupe.", "À vérifier : cette adresse est déclarée par le demandeur ; l’adhésion au groupe et l’opt-in ne sont pas confirmés.", "Aucun paiement, aucun code attribué automatiquement. Ne distribuer qu’un code unique après vérification."].join("\n"),
+    content: ["DEMANDE GRATUITE — TEST AVANT LANCEMENT GOOGLE PLAY", `Application : ${app.title}`, `Package : ${app.packageName}`, `Compte Google Play déclaré : ${playEmail}`, `Groupe : ${playTestingGroupEmail}`, "Consentement : autorisation explicite reçue pour traiter la demande et l’accès au groupe.", "À vérifier : cette adresse est déclarée par le demandeur ; l’adhésion au groupe et l’opt-in ne sont pas confirmés.", "Aucun paiement, aucun code attribué automatiquement. Ne distribuer qu’un code unique après vérification."].join("\n"),
   });
   if (error && error.code !== "23505") return NextResponse.json({ ok: false, message: "Impossible d’enregistrer la demande pour le moment. Réessayez plus tard." }, { status: 503 });
   return NextResponse.json({ ok: true, message: error?.code === "23505"

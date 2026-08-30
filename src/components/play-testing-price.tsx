@@ -10,9 +10,9 @@ export function PlayTestingPrice({ priceEur }: { priceEur: number }) {
 export function PlayTestingNotice({ app, priceEur }: { app: PlayTestingApp; priceEur: number }) {
   return (
     <div className="play-testing-notice">
-      <span className="badge">Test fermé · Android</span>
+      <span className="badge">En phase de test avant lancement</span>
       <PlayTestingPrice priceEur={priceEur} />
-      <p className="tiny">Accès gratuit sur demande pendant le test, dans la limite des codes disponibles. Aucun paiement sur ce site.</p>
+      <p className="tiny">Accès gratuit sur demande avant le lancement officiel, dans la limite des codes disponibles. Aucun paiement sur ce site.</p>
       <Link className="cta-button" href={playTestingApplicationUrl(app)}>Demander à tester gratuitement</Link>
       <p className="tiny muted">Un compte Google, l’adhésion au groupe de test et l’inscription au test de cette application sont nécessaires.</p>
     </div>

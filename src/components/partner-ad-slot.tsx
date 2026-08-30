@@ -4,11 +4,18 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Megaphone } from "lucide-react";
 import {
   advertisingConsentEvent, advertisingConsentKey, adsterraFrameChannel,
-  adsterraFrameDocument, adsterraUnitId, isAdvertisingHost, readAdvertisingChoice,
+  adsterraEnabled, adsterraFrameDocument, adsterraUnitId, isAdvertisingHost, readAdvertisingChoice,
   type AdvertisingChoice,
 } from "@/lib/advertising";
 
 export function PartnerAdSlot() {
+  // The publisher pause overrides every saved visitor consent choice and
+  // prevents the loader, observers and iframe from mounting on every route.
+  if (!adsterraEnabled) return null;
+  return <AdsterraNativeSlot />;
+}
+
+function AdsterraNativeSlot() {
   const titleId = useId();
   const slotRef = useRef<HTMLElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
