@@ -348,6 +348,7 @@ html[data-preferred-view="desktop"] .footer-link-button { white-space: nowrap; f
 .play-testing-test-row small { display: block; margin-top: 3px; color: #65708e; line-height: 1.45; }
 .play-testing-app-choice > a,
 .play-testing-test-row > a { flex: 0 0 auto; color: #6447a3; font-size: .84rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.play-testing-app-link-hint { flex: 0 0 auto; color: #78829c; font-size: .78rem; font-style: italic; text-align: right; }
 .play-testing-test-row { align-items: flex-start; margin: 8px 0; }
 .play-testing-test-row > span { flex: 1; }
 .play-code-card { display: grid; gap: 12px; }

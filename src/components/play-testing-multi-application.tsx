@@ -191,11 +191,23 @@ export function PlayTestingMultiApplication({ initialPackageName }: { initialPac
 
         <form onSubmit={submit} className="play-testing-flow">
           <section className="play-testing-step">
+            <h2><span>1</span> Rejoignez d’abord le groupe Visd AR</h2>
+            <p className="tiny muted">C’est indispensable : Google Play n’affiche les pages de test qu’aux membres du groupe. Attendez la confirmation du groupe avant de continuer.</p>
+            <div className="play-testing-links">
+              <a className="pill-button" href={playTestingGroupUrl} target="_blank" rel="noopener noreferrer">Rejoindre le groupe Visd AR</a>
+            </div>
+            {user ? <label className="play-testing-consent">
+              <input type="checkbox" checked={groupConfirmed} onChange={(event) => setGroupConfirmed(event.target.checked)} disabled={busy} />
+              <span>Le groupe a confirmé mon adhésion avec le même compte Google que mon Play Store.</span>
+            </label> : <p className="tiny muted">Après avoir rejoint le groupe, connectez-vous à Visd AR avec ce même compte Google pour confirmer cette étape.</p>}
+          </section>
+
+          <section className="play-testing-step">
             <div className="play-testing-step-heading">
-              <h2><span>1</span> Choisissez les applications à tester</h2>
+              <h2><span>2</span> Choisissez les applications à tester</h2>
               <p className="play-testing-selection-count">{selectedApps.length} sélectionnée{selectedApps.length > 1 ? "s" : ""}</p>
             </div>
-            <p className="tiny muted">Vous pouvez demander un code pour plusieurs applications en une seule fois. Chaque application garde son propre code et son propre lien de test.</p>
+            <p className="tiny muted">Vous pouvez demander un code pour plusieurs applications en une seule fois. Les pages de test sont déverrouillées après l’étape 1.</p>
             <div className="play-testing-selection-actions">
               <button className="pill-button" type="button" onClick={selectAll} disabled={busy || selectedApps.length === playTestingApps.length}>Tout sélectionner</button>
               <button className="pill-button" type="button" onClick={clearAll} disabled={busy || selectedApps.length === 0}>Tout désélectionner</button>
@@ -210,7 +222,7 @@ export function PlayTestingMultiApplication({ initialPackageName }: { initialPac
                       <input type="checkbox" checked={selected} disabled={busy} onChange={() => toggleApp(app.packageName)} />
                       <span><strong>{app.title}</strong><small>{status ? playCodeMessage(status) : "Sélectionnez cette application pour préparer sa demande."}</small></span>
                     </label>
-                    <a href={playTestingOptInUrl(app)} target="_blank" rel="noopener noreferrer">Page de test</a>
+                    {groupConfirmed ? <a href={playTestingOptInUrl(app)} target="_blank" rel="noopener noreferrer">Page de test</a> : <span className="play-testing-app-link-hint">Après l’étape 1</span>}
                   </article>
                 );
               })}
@@ -218,29 +230,19 @@ export function PlayTestingMultiApplication({ initialPackageName }: { initialPac
           </section>
 
           <section className="play-testing-step">
-            <h2><span>2</span> Utilisez le même compte Google</h2>
+            <h2><span>3</span> Utilisez le même compte, puis confirmez chaque test</h2>
             {user ? <>
               <label htmlFor="play-email">Compte connecté à Visd AR</label>
               <input id="play-email" className="input" type="email" value={user.email || ""} readOnly />
-              <p className="tiny muted">Pour la distribution automatique, cette adresse confirmée doit être celle de votre Play Store. Elle reste privée et sert uniquement à éviter qu’un même accès reçoive plusieurs codes.</p>
+              <p className="tiny muted">Cette adresse confirmée doit être celle de votre Play Store. Elle reste privée et évite qu’un même accès reçoive plusieurs codes.</p>
             </> : <>
               <p className="muted">Connectez-vous ou créez un compte Visd AR avec l’adresse utilisée dans le Play Store de votre téléphone, puis confirmez-la par e-mail.</p>
               <button className="pill-button" type="button" onClick={() => setAuthOpen(true)}>Me connecter</button>
             </>}
-          </section>
-
-          <section className="play-testing-step">
-            <h2><span>3</span> Rejoignez le groupe et confirmez chaque test</h2>
-            <p className="tiny muted">Le groupe Visd AR est commun à toutes les applications. La participation doit être confirmée dans Google Play pour chaque application choisie.</p>
-            <div className="play-testing-links">
-              <a className="pill-button" href={playTestingGroupUrl} target="_blank" rel="noopener noreferrer">A. Rejoindre le groupe Visd AR</a>
-            </div>
-            {requestableApps.length ? <>
+            {groupConfirmed && requestableApps.length ? <>
               <label className="play-testing-consent">
-                <input type="checkbox" required checked={groupConfirmed} onChange={(event) => setGroupConfirmed(event.target.checked)} disabled={busy} />
-                <span>Je suis membre du groupe Visd AR ; mon adhésion n’est plus en attente.</span>
-              </label>
-              <div className="play-testing-test-list">
+                <span className="tiny">Ouvrez chaque page de test ci-dessous, inscrivez-vous avec le même compte Google, puis cochez la confirmation correspondante.</span>
+              </label><div className="play-testing-test-list">
                 {requestableApps.map((app) => (
                   <label key={app.packageName} className="play-testing-test-row">
                     <input type="checkbox" required checked={Boolean(testConfirmed[app.packageName])} onChange={(event) => setTestConfirmed((current) => ({ ...current, [app.packageName]: event.target.checked }))} disabled={busy} />
@@ -253,7 +255,7 @@ export function PlayTestingMultiApplication({ initialPackageName }: { initialPac
                 <input type="checkbox" required checked={consent} onChange={(event) => setConsent(event.target.checked)} disabled={busy} />
                 <span className="tiny">J’autorise Visd AR à associer mon compte à un code personnel pour les applications choisies et à conserver ces attributions afin d’éviter les doublons.</span>
               </label>
-            </> : selectedApps.length && user && !checking ? <p className="tiny muted">Aucune nouvelle demande n’est nécessaire pour cette sélection. Les codes déjà attribués apparaissent dans l’étape suivante.</p> : null}
+            </> : !groupConfirmed ? <p className="tiny muted">Terminez l’étape 1 pour ouvrir et confirmer les pages de test.</p> : selectedApps.length && user && !checking ? <p className="tiny muted">Aucune nouvelle demande n’est nécessaire pour cette sélection. Les codes déjà attribués apparaissent dans l’étape suivante.</p> : null}
             <p className="tiny muted">Ces confirmations sont vos déclarations. Le site ne peut pas vérifier automatiquement votre adhésion ni confirmer les tests à votre place.</p>
           </section>
 
