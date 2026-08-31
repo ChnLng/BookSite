@@ -13,7 +13,7 @@ function AppArt({ app }: { app: CatalogueApp }) {
     {type === "couleurs" ? <div className="art-wheel"><span>色<small>sè</small></span></div> :
       type === "heures" ? <div className="art-clock"><span>时<small>shí</small></span></div> :
       type === "famille" ? <div className="art-family"><span>祖</span><i /><div><span>父</span><span>母</span></div><i /><span>我</span></div> :
-      type === "calendrier" ? <div className="art-calendar"><span>日 月 火 水 木 金 土</span><strong>月</strong><small>Le temps se découvre</small></div> :
+      type === "calendrier" ? <div className="art-calendar"><span>子 丑 寅 卯 辰 巳 午 未 申 酉 戌 亥</span><strong>月</strong><small>Le temps se découvre</small></div> :
       <div className="art-character"><span>汉</span></div>}
     <span className="art-signature">{app.chinese}<small>{app.pinyin}</small></span>
   </div>;
