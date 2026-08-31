@@ -1,0 +1,3 @@
+
+# Keep rendered installation guides as binary artifacts.
+public/guides/*.pdf binary
