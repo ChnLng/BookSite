@@ -88,13 +88,13 @@ begin
   select email into verified_email from auth.users where id=uid and email_confirmed_at is not null
     and coalesce(is_anonymous,false)=false and (banned_until is null or banned_until<now()) for update;
   if not found then raise exception using errcode='42501',message='VERIFIED_EMAIL_REQUIRED'; end if;
-  if p_play_email is null or length(p_play_email)>254 or
-    play_private.email_key(p_play_email)<>play_private.email_key(verified_email) then
-    raise exception using errcode='42501',message='PLAY_EMAIL_MUST_MATCH';
+  if p_play_email is null or length(trim(p_play_email))>254 or
+    trim(p_play_email)!~'^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$' then
+    raise exception using errcode='22023',message='PLAY_EMAIL_REQUIRED';
   end if;
   status:=play_private.own_status(p_package);
   if (status->>'hasClaim')::boolean then return status || jsonb_build_object('repeated',true); end if;
-  if exists(select 1 from play_private.codes where package_name=p_package and email_key=play_private.email_key(verified_email)) then
+  if exists(select 1 from play_private.codes where package_name=p_package and email_key=play_private.email_key(p_play_email)) then
     raise exception using errcode='42501',message='EMAIL_ALREADY_ASSIGNED';
   end if;
   select c.code into chosen from play_private.codes c join play_private.batches b on b.id=c.batch_id
@@ -102,7 +102,7 @@ begin
       and b.enabled and b.valid_from<=now() and b.valid_until>now()
     order by b.valid_until,b.created_at,c.code limit 1 for update of c skip locked;
   if chosen is null then return jsonb_build_object('status','unavailable','hasClaim',false); end if;
-  update play_private.codes set assigned_user=uid,email_key=play_private.email_key(verified_email),assigned_at=now() where code=chosen;
+  update play_private.codes set assigned_user=uid,email_key=play_private.email_key(p_play_email),assigned_at=now() where code=chosen;
   return play_private.own_status(p_package) || jsonb_build_object('repeated',false);
 exception when unique_violation then
   -- A competing verified alias/account cannot read the other account's code.

@@ -35,6 +35,7 @@ export function PlayTestingMultiApplication({ initialPackageName }: { initialPac
   const { user, session } = useAuth();
   const initialApp = getPlayTestingApp(initialPackageName) || playTestingApps[0];
   const [selectedPackages, setSelectedPackages] = useState<string[]>([initialApp.packageName]);
+  const [playEmail, setPlayEmail] = useState("");
   const [groupConfirmed, setGroupConfirmed] = useState(false);
   const [testConfirmed, setTestConfirmed] = useState<Record<string, boolean>>({});
   const [consent, setConsent] = useState(false);
@@ -54,6 +55,10 @@ export function PlayTestingMultiApplication({ initialPackageName }: { initialPac
   const statuses = saved && saved.userId === user?.id ? saved.values : {};
   const requestableApps = selectedApps.filter((app) => isRequestable(statuses[app.packageName]));
   const confirmationsComplete = groupConfirmed && consent && requestableApps.every((app) => testConfirmed[app.packageName]);
+
+  useEffect(() => {
+    setPlayEmail(user?.email || "");
+  }, [user?.id, user?.email]);
 
   useEffect(() => {
     setSaved(null);
@@ -148,7 +153,7 @@ export function PlayTestingMultiApplication({ initialPackageName }: { initialPac
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
           body: JSON.stringify({
             packageName: app.packageName,
-            playEmail: user.email,
+            playEmail: playEmail.trim(),
             consent: true,
             groupConfirmed: true,
             testConfirmed: true,
@@ -230,11 +235,11 @@ export function PlayTestingMultiApplication({ initialPackageName }: { initialPac
           </section>
 
           <section className="play-testing-step">
-            <h2><span>3</span> Utilisez le même compte, puis confirmez chaque test</h2>
+            <h2><span>3</span> Indiquez votre compte Google Play, puis confirmez chaque test</h2>
             {user ? <>
-              <label htmlFor="play-email">Compte connecté à Visd AR</label>
-              <input id="play-email" className="input" type="email" value={user.email || ""} readOnly />
-              <p className="tiny muted">Cette adresse confirmée doit être celle de votre Play Store. Elle reste privée et évite qu’un même accès reçoive plusieurs codes.</p>
+              <label htmlFor="play-email">Adresse e-mail utilisée dans le Play Store</label>
+              <input id="play-email" className="input" type="email" value={playEmail} onChange={(event) => setPlayEmail(event.target.value)} required disabled={busy} autoComplete="email" />
+              <p className="tiny muted">Elle peut être différente de votre adresse de connexion à Visd AR. Saisissez le compte Google actif dans le Play Store de votre téléphone ; il reste privé et sert à empêcher les doublons.</p>
             </> : <>
               <p className="muted">Connectez-vous ou créez un compte Visd AR avec l’adresse utilisée dans le Play Store de votre téléphone, puis confirmez-la par e-mail.</p>
               <button className="pill-button" type="button" onClick={() => setAuthOpen(true)}>Me connecter</button>

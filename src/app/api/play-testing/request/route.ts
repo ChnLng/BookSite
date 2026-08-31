@@ -9,7 +9,7 @@ const json = (data: unknown, status = 200) => NextResponse.json(data, { status, 
 
 async function handle(request: Request, claim: boolean) {
   const user = await getUserFromRequest(request);
-  if (!user?.id || !user.email) return json({ ok: false, message: "Connectez-vous pour retrouver votre code personnel." }, 401);
+  if (!user?.id) return json({ ok: false, message: "Connectez-vous pour retrouver votre code personnel." }, 401);
   const payload = claim ? await request.json().catch(() => null) : { packageName: new URL(request.url).searchParams.get("app") };
   const app = getPlayTestingApp(typeof payload?.packageName === "string" ? payload.packageName : "");
   if (!app || payload.packageName !== app.packageName) return json({ ok: false, message: "Choisissez une application de test." }, 400);

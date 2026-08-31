@@ -34,7 +34,7 @@ export function playCodeError(error: { code?: string; message?: string }): { sta
     AUTH_REQUIRED: "Connectez-vous pour obtenir votre code.",
     ADMIN_REQUIRED: "Accès réservé à l’administrateur.",
     VERIFIED_EMAIL_REQUIRED: "Confirmez d’abord l’adresse e-mail de votre compte Visd AR.",
-    PLAY_EMAIL_MUST_MATCH: "Pour recevoir un code automatiquement, connectez-vous à Visd AR avec l’adresse de votre compte Google Play, après l’avoir confirmée.",
+    PLAY_EMAIL_REQUIRED: "Saisissez l’adresse e-mail du compte Google utilisé dans le Play Store.",
     EMAIL_ALREADY_ASSIGNED: "Un accès a déjà été attribué à cette adresse pour cette application. Reconnectez-vous au compte Visd AR d’origine ou contactez l’administrateur.",
     CONFIRMATIONS_REQUIRED: "Confirmez votre adhésion au groupe, votre inscription au test et votre autorisation.",
     INVALID_IMPORT: "Vérifiez le CSV, les dates, le nom du lot et la confirmation des codes non utilisés.",
