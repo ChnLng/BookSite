@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PlayTestingApplication } from "@/components/play-testing-application";
+import { PlayTestingMultiApplication } from "@/components/play-testing-multi-application";
 
 export const metadata: Metadata = {
   title: "Tester gratuitement nos applications Android",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 
 export default async function PlayTestingPage({ searchParams }: { searchParams: Promise<{ app?: string }> }) {
   const { app } = await searchParams;
-  return <PlayTestingApplication initialPackageName={app} />;
+  return <PlayTestingMultiApplication initialPackageName={app} />;
 }

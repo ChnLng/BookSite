@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { LockKeyhole } from "lucide-react";
 import { PasswordSettingsCard } from "@/components/password-settings-card";
+import { AccountPlayTestingCodes } from "@/components/account-play-testing-codes";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import {
@@ -82,7 +83,7 @@ export default function AccountPage() {
   const [likedComments, setLikedComments] = useState<LikedCommentRecord[]>([]);
   const [evaluations, setEvaluations] = useState<EvaluationRecord[]>([]);
   const [fetching, setFetching] = useState(true);
-  const [activeTab, setActiveTab] = useState<"comments" | "purchases" | "downloads" | "donations" | "likes" | "evaluations">("comments");
+  const [activeTab, setActiveTab] = useState<"comments" | "purchases" | "downloads" | "donations" | "likes" | "evaluations" | "playCodes">("comments");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [editingAuthorName, setEditingAuthorName] = useState("");
@@ -543,6 +544,7 @@ export default function AccountPage() {
     { key: "evaluations", label: "Évaluations", count: evaluations.length },
     { key: "purchases", label: "Achats", count: downloads.length },
     { key: "downloads", label: "Téléchargements", count: downloadedRecords.length },
+    { key: "playCodes", label: "Codes Google Play", count: null },
     { key: "donations", label: "Donations", count: donations.length },
   ] as const;
 
@@ -601,7 +603,7 @@ export default function AccountPage() {
                   onClick={() => setActiveTab(tab.key)}
                 >
                   <span>{tab.label}</span>
-                  <strong>{tab.count}</strong>
+                  {typeof tab.count === "number" ? <strong>{tab.count}</strong> : null}
                 </button>
               ))}
             </div>
@@ -796,6 +798,8 @@ export default function AccountPage() {
                   {documentActionMessage ? <p className="tiny">{documentActionMessage}</p> : null}
                 </div>
               ) : null}
+
+              {activeTab === "playCodes" ? <AccountPlayTestingCodes /> : null}
 
               {activeTab === "purchases" ? (
                 <div className="account-card">

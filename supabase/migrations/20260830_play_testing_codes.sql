@@ -181,6 +181,31 @@ begin
 end;
 $$;
 
+-- This returns only the current account's assignments.  It deliberately hides
+-- the redeemable text for expired, paused, or blocked campaigns.
+create or replace function play_private.account_codes()
+returns jsonb language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then raise exception using errcode='42501',message='AUTH_REQUIRED'; end if;
+  return coalesce((
+    select jsonb_agg(
+      jsonb_build_object(
+        'packageName',c.package_name,
+        'status',case when c.blocked then 'blocked'
+          when b.valid_until<=now() then 'expired'
+          when not b.enabled or b.valid_from>now() then 'paused' else 'assigned' end,
+        'code',case when not c.blocked and b.enabled and b.valid_from<=now() and b.valid_until>now() then c.code else null end,
+        'validUntil',b.valid_until,
+        'assignedAt',c.assigned_at
+      ) order by c.assigned_at desc
+    )
+    from play_private.codes c
+    join play_private.batches b on b.id=c.batch_id
+    where c.assigned_user=auth.uid()
+  ),'[]'::jsonb);
+end;
+$$;
+
 -- Only invoker wrappers live in the PostgREST-exposed schema. Each private entry
 -- point derives identity from auth.uid(), never from a caller-supplied user id.
 create or replace function public.play_testing_status(p_package text) returns jsonb
@@ -195,10 +220,12 @@ create or replace function public.play_testing_batch(p_batch uuid,p_enabled bool
 language sql security invoker set search_path='' as $$ select play_private.set_batch_enabled(p_batch,p_enabled,p_google_active_confirmed); $$;
 create or replace function public.play_testing_block(p_codes text[]) returns jsonb
 language sql security invoker set search_path='' as $$ select play_private.block_codes(p_codes); $$;
+create or replace function public.play_testing_account_codes() returns jsonb
+language sql security invoker set search_path='' as $$ select play_private.account_codes(); $$;
 
 revoke all on all functions in schema play_private from public,anon,authenticated;
-grant execute on function play_private.own_status(text),play_private.claim_code(text,text,boolean,boolean,boolean),play_private.admin_inventory(),play_private.import_codes(text,text,timestamptz,timestamptz,text[],boolean),play_private.set_batch_enabled(uuid,boolean,boolean),play_private.block_codes(text[]) to authenticated;
-revoke all on function public.play_testing_status(text),public.play_testing_claim(text,text,boolean,boolean,boolean),public.play_testing_inventory(),public.play_testing_import(text,text,timestamptz,timestamptz,text[],boolean),public.play_testing_batch(uuid,boolean,boolean),public.play_testing_block(text[]) from public,anon;
-grant execute on function public.play_testing_status(text),public.play_testing_claim(text,text,boolean,boolean,boolean),public.play_testing_inventory(),public.play_testing_import(text,text,timestamptz,timestamptz,text[],boolean),public.play_testing_batch(uuid,boolean,boolean),public.play_testing_block(text[]) to authenticated;
+grant execute on function play_private.own_status(text),play_private.claim_code(text,text,boolean,boolean,boolean),play_private.admin_inventory(),play_private.import_codes(text,text,timestamptz,timestamptz,text[],boolean),play_private.set_batch_enabled(uuid,boolean,boolean),play_private.block_codes(text[]),play_private.account_codes() to authenticated;
+revoke all on function public.play_testing_status(text),public.play_testing_claim(text,text,boolean,boolean,boolean),public.play_testing_inventory(),public.play_testing_import(text,text,timestamptz,timestamptz,text[],boolean),public.play_testing_batch(uuid,boolean,boolean),public.play_testing_block(text[]),public.play_testing_account_codes() from public,anon;
+grant execute on function public.play_testing_status(text),public.play_testing_claim(text,text,boolean,boolean,boolean),public.play_testing_inventory(),public.play_testing_import(text,text,timestamptz,timestamptz,text[],boolean),public.play_testing_batch(uuid,boolean,boolean),public.play_testing_block(text[]),public.play_testing_account_codes() to authenticated;
 notify pgrst,'reload schema';
 commit;
