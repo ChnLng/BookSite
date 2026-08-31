@@ -8,6 +8,8 @@ import { AdminDownloadReport } from "@/components/admin-download-report";
 import { AdminPurchaseSearch } from "@/components/admin-purchase-search";
 import { AdminGuard } from "@/components/admin-guard";
 import { AdminInbox } from "@/components/admin-inbox";
+import { AdminPlayCodeInventory } from "@/components/admin-play-code-inventory";
+import { AdminAndroidCatalogues } from "@/components/admin-android-catalogues";
 import { AdminPartnerLinksPanel } from "@/components/admin-partner-links-panel";
 import { AdminProductDocumentsPanel } from "@/components/admin-product-documents-panel";
 import { AdminReviewManagement } from "@/components/admin-review-management";
@@ -142,12 +144,13 @@ const adminSections = [
   { key: "overview", label: "工作台", subtitle: "Vue d’ensemble", group: "日常管理", description: "从常用操作开始，快速进入商品、交易和用户管理。" },
   { key: "books", label: "图书商品", subtitle: "Livres", group: "商品与内容", description: "编辑图书、价格、封面、介绍及关联的付费文件。" },
   { key: "resources", label: "工具与应用", subtitle: "Outils & applications", group: "商品与内容", description: "管理工具、Android 应用、商品图片与下载文件。" },
+  { key: "androidCatalogues", label: "Android 翻页目录", subtitle: "Catalogues découverte & B2B", group: "商品与内容", description: "管理仅通过链接分享的个人版与机构版目录、应用介绍、定制报价和交付条款。" },
   { key: "categories", label: "类目与首页板块", subtitle: "Catégories & sections", group: "商品与内容", description: "整理首页内容板块、商品类目及允许上传的文件格式。" },
   { key: "purchases", label: "购买记录", subtitle: "Achats", group: "交易与交付", description: "查找用户订单与购买记录，核对支付与商品访问权限。" },
   { key: "downloads", label: "下载记录", subtitle: "Téléchargements", group: "交易与交付", description: "查看下载报告，核对数字商品交付情况。" },
   { key: "promo", label: "网站优惠码", subtitle: "Codes promo du site", group: "交易与交付", description: "管理网站结账优惠与促销横幅；这里不是 Google Play 兑换码库存。" },
   { key: "donations", label: "赞助记录", subtitle: "Dons", group: "交易与交付", description: "查看历史赞助与退款。首页赞助入口隐藏，历史记录仍保留。" },
-  { key: "testing", label: "免费测试申请", subtitle: "Tests Google Play", group: "用户与反馈", description: "核对测试申请及 Google Play 邮箱，再人工确认入群与发码。" },
+  { key: "testing", label: "测试与兑换码", subtitle: "Tests Google Play", group: "用户与反馈", description: "管理 Google Play 代码库存、有效期、自动分配和历史测试申请。" },
   { key: "messages", label: "联系留言", subtitle: "Messages privés", group: "用户与反馈", description: "查看发给管理员的联系留言及测试申请。" },
   { key: "reviews", label: "留言与评价", subtitle: "Livre d’or & avis", group: "用户与反馈", description: "分别筛选首页公开留言、图书评价与工具评价，管理内容是否显示。" },
   { key: "partners", label: "友情链接", subtitle: "Liens partenaires", group: "推广与合作", description: "管理推荐链接、图标和显示顺序，与 Ads 展示广告分开。" },
@@ -590,6 +593,7 @@ function AdminPageContent() {
     () => ({
       overview: "",
       advertising: "",
+      androidCatalogues: "2",
       messages: messageCount ?? "—",
       testing: testingCount ?? "—",
       books: books.length,
@@ -1394,7 +1398,7 @@ function AdminPageContent() {
           </div> : null}
 
           {activeSection === "messages" ? <AdminInbox key="messages" onCountChange={setMessageCount} /> : null}
-          {activeSection === "testing" ? <AdminInbox key="testing" testingOnly onCountChange={setTestingCount} /> : null}
+          {activeSection === "testing" ? <><AdminPlayCodeInventory /><details className="admin-inbox-item"><summary>历史人工测试申请（保留记录）</summary><AdminInbox key="testing" testingOnly onCountChange={setTestingCount} /></details></> : null}
           {activeSection === "advertising" ? <div className="admin-ad-settings">
             <div className="admin-help-card"><strong>Native Banner · {adsterraEnabled ? "代码已配置" : "已暂停展示，代码保留"}</strong><dl className="admin-config-list"><div><dt>网站</dt><dd>visdar.fr</dd></div><div><dt>广告单元 ID</dt><dd>{adsterraUnitId}</dd></div><div><dt>推荐布局</dt><dd>1:1 · 字体和颜色 Inherit</dd></div><div><dt>原展示位置</dt><dd>首页、目录和商品页的 Ads 区域</dd></div></dl></div>
             <p className="muted">{adsterraEnabled ? "广告仅在正式域名、广告位可见且访客同意后加载。本地预览不请求真实广告。" : "由于出现交友引流和仿系统警告素材，本站已暂停所有 Adsterra 广告。即使访客之前同意过，也不会加载。原代码和广告位组件保留，未删除平台账号或单元。"}</p>
@@ -1414,6 +1418,7 @@ function AdminPageContent() {
           ) : null}
 
           {activeSection === "resources" ? <AdminResourcesPanel /> : null}
+          {activeSection === "androidCatalogues" ? <AdminAndroidCatalogues /> : null}
 
           {activeSection === "partners" ? <AdminPartnerLinksPanel /> : null}
 

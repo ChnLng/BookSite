@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   images: {
     remotePatterns: [
       {
@@ -35,6 +36,13 @@ const nextConfig: NextConfig = {
             value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
           },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+        ],
+      },
+      {
+        source: "/collections/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive, noimageindex" },
+          { key: "Referrer-Policy", value: "no-referrer" },
         ],
       },
     ];

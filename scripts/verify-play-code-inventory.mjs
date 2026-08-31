@@ -1,0 +1,98 @@
+// In-memory PostgreSQL only. Never connects to Supabase or consumes real codes.
+import { readFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const { PGlite } = await import(process.env.PLAY_CODE_PGLITE_MODULE || '@electric-sql/pglite');
+const db = new PGlite();
+const ids=Array.from({length:6},(_,i)=>`00000000-0000-4000-8000-00000000000${i+1}`);
+const [admin,alice,bob,alias,unverified,replacement]=ids;
+const pkg='com.visdar.couleurs';
+await db.exec(`create role anon; create role authenticated; create schema auth;
+create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,is_anonymous boolean default false,banned_until timestamptz);
+create table public.profiles(id uuid primary key,role text);
+create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+grant usage on schema auth to authenticated,anon;
+grant execute on function auth.uid() to authenticated,anon;`);
+for(const [id,email] of [[admin,'owner@example.test'],[alice,'alice.test@gmail.com'],[bob,'bob@example.test'],[alias,'alicetest+second@googlemail.com'],[unverified,'pending@example.test']]) {
+  await db.query('insert into auth.users(id,email,email_confirmed_at) values($1,$2,$3)',[id,email,id===unverified?null:new Date().toISOString()]);
+  await db.query('insert into public.profiles values($1,$2)',[id,id===admin?'admin':'reader']);
+}
+const migration=await readFile(new URL('../supabase/migrations/20260830_play_testing_codes.sql',import.meta.url),'utf8');
+await db.exec(migration); await db.exec(migration);
+let checks=0;
+async function asUser(uid,operation,role='authenticated') {
+  return db.transaction(async tx=>{
+    await tx.exec(`set local role ${role}`);
+    await tx.query("select set_config('request.jwt.claim.sub',$1,true)",[uid||'']);
+    return operation(tx);
+  });
+}
+async function rpc(uid,fn,params=[],role='authenticated') {
+  const slots=params.map((_,i)=>`$${i+1}`).join(',');
+  return asUser(uid,async tx=>(await tx.query(`select public.${fn}(${slots}) as result`,params)).rows[0].result,role);
+}
+const claim=(uid,email)=>rpc(uid,'play_testing_claim',[pkg,email,true,true,true]);
+function pass(name){checks++;console.log(`PASS ${name}`);}
+await assert.rejects(()=>asUser(alice,tx=>tx.query('select code from play_private.codes')), /permission denied/);
+await assert.rejects(()=>rpc(null,'play_testing_status',[pkg],'anon'),/permission denied/);
+await assert.rejects(()=>rpc(alice,'play_testing_inventory'),/ADMIN_REQUIRED/);
+pass('inventory/admin RPCs reject ordinary and anonymous readers');
+const until=new Date(Date.now()+86400000).toISOString(),from=new Date(Date.now()-86400000).toISOString();
+const codes=['SYNTHETIC0001','SYNTHETIC0002','SYNTHETIC0003'];
+assert.equal((await rpc(admin,'play_testing_import',[pkg,'Synthetic test only',from,until,codes,true])).inserted,3);
+assert.equal((await claim(alice,'alice.test@gmail.com')).status,'unavailable');
+const batch=(await rpc(admin,'play_testing_inventory')).batches[0].id;
+await assert.rejects(()=>rpc(admin,'play_testing_batch',[batch,true,false]),/GOOGLE_ACTIVE_CONFIRMATION_REQUIRED/);
+await rpc(admin,'play_testing_batch',[batch,true,true]);
+pass('imports start disabled and activation requires Google confirmation');
+await assert.rejects(()=>claim(unverified,'pending@example.test'),/VERIFIED_EMAIL_REQUIRED/);
+await assert.rejects(()=>claim(alice,'bob@example.test'),/PLAY_EMAIL_MUST_MATCH/);
+await assert.rejects(()=>rpc(alice,'play_testing_claim',[pkg,'alice.test@gmail.com',true,false,true]),/CONFIRMATIONS_REQUIRED/);
+pass('unverified email, impersonation and missing confirmations cannot claim');
+const a=await claim(alice,'alice.test@gmail.com'),again=await claim(alice,'alice.test@gmail.com');
+assert.equal(a.code,again.code);assert.equal(again.repeated,true);
+const b=await claim(bob,'bob@example.test');assert.notEqual(a.code,b.code);
+assert.equal((await rpc(admin,'play_testing_inventory')).batches[0].assigned,2);
+await assert.rejects(()=>claim(alias,'alicetest+second@googlemail.com'),/EMAIL_ALREADY_ASSIGNED/);
+pass('retries recover one code; different users get different codes; Gmail aliases cannot drain stock');
+assert.equal((await rpc(admin,'play_testing_import',[pkg,'Reimport',from,until,codes,true])).inserted,0);
+assert.equal((await rpc(admin,'play_testing_inventory')).batches.length,1);
+await assert.rejects(()=>rpc(admin,'play_testing_import',['com.visdar.famille','Wrong app',from,until,[codes[0]],true]),/CODE_APP_CONFLICT/);
+pass('reimport cannot reset or move assigned codes');
+await rpc(admin,'play_testing_batch',[batch,false,false]);
+assert.equal((await rpc(alice,'play_testing_status',[pkg])).status,'paused');
+assert.equal((await rpc(alice,'play_testing_status',[pkg])).code,null);
+await rpc(admin,'play_testing_batch',[batch,true,true]);
+await rpc(admin,'play_testing_block',[[codes[2]]]);
+assert.equal((await rpc(admin,'play_testing_inventory')).batches[0].remaining,0);
+await rpc(admin,'play_testing_block',[[a.code]]);
+assert.equal((await rpc(alice,'play_testing_status',[pkg])).status,'blocked');
+assert.equal((await rpc(alice,'play_testing_status',[pkg])).code,null);
+pass('paused and blocked codes are not presented as valid or available');
+await db.query("update play_private.batches set valid_from=now()-interval '2 days',valid_until=now()-interval '1 day' where id=$1",[batch]);
+assert.equal((await rpc(bob,'play_testing_status',[pkg])).status,'expired');
+assert.equal((await rpc(bob,'play_testing_status',[pkg])).code,null);
+pass('expired campaigns cannot return a redeemable-looking code');
+await db.query('delete from auth.users where id=$1',[bob]);
+await db.query('insert into auth.users(id,email,email_confirmed_at) values($1,$2,now())',[replacement,'bob@example.test']);
+await assert.rejects(()=>claim(replacement,'bob@example.test'),/EMAIL_ALREADY_ASSIGNED/);
+assert.equal((await db.query('select count(*)::int as n from play_private.codes where assigned_user is not null')).rows[0].n,2);
+assert.match((await db.query('select email_key from play_private.codes where assigned_user=$1',[bob])).rows[0].email_key,/^[a-f0-9]{64}$/);
+pass('account deletion retains an assignment/email hash and never recycles the code');
+console.log(`${checks} PostgreSQL scenarios passed. PGlite uses one connection; this is not a multi-connection load test.`);
+const catalogueMigration=await readFile(new URL('../supabase/migrations/20260830_android_catalogues.sql',import.meta.url),'utf8');
+await db.exec(catalogueMigration);await db.exec(catalogueMigration);
+await assert.rejects(()=>asUser(alice,tx=>tx.query('select * from catalogue_private.editions')),/permission denied/);
+await assert.rejects(()=>rpc(alice,'android_catalogue_read',['android',true]),/ADMIN_REQUIRED/);
+await assert.rejects(()=>rpc(alice,'android_catalogue_save',['android',{enabled:true},0]),/ADMIN_REQUIRED/);
+assert.equal((await rpc(null,'android_catalogue_read',['android',false],'anon')).configured,false);
+assert.equal(await rpc(admin,'android_catalogue_save',['android',{enabled:true,title:'Synthetic catalogue'},0]),1);
+await assert.rejects(()=>rpc(admin,'android_catalogue_save',['android',{enabled:true},0]),/REVISION_CONFLICT/);
+assert.equal((await rpc(null,'android_catalogue_read',['android',false],'anon')).config.title,'Synthetic catalogue');
+await rpc(admin,'android_catalogue_save',['android',{enabled:false,title:'Private disabled draft'},1]);
+const hidden=await rpc(null,'android_catalogue_read',['android',false],'anon');
+assert.equal(hidden.disabled,true);assert.equal(hidden.config,undefined);
+assert.equal((await rpc(null,'android_catalogue_read',['android',null],'anon')).config,undefined);
+assert.equal((await rpc(admin,'android_catalogue_read',['android',true])).config.title,'Private disabled draft');
+assert.equal((await rpc(null,'android_catalogue_read',['android-professionnels',false],'anon')).configured,false);
+pass('catalogue edit is admin-only; optimistic locking, disabled content and edition isolation hold');
+await db.close();
