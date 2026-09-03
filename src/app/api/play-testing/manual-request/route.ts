@@ -29,7 +29,10 @@ function escapeHtml(value: string) {
 }
 
 function createMailTransporter() {
-  const host = process.env.SMTP_HOST || "smtp.office365.com";
+  // visdar@outlook.fr is an Outlook.com mailbox. Microsoft documents
+  // smtp-mail.outlook.com:587 (STARTTLS) for Outlook.com; smtp.office365.com
+  // is for Microsoft 365 business mailboxes.
+  const host = process.env.SMTP_HOST || "smtp-mail.outlook.com";
   const port = Number(process.env.SMTP_PORT || "587");
   // EMAIL_* is the existing Vercel naming used by this project. SMTP_* is
   // retained so a future provider can be configured without a code change.
