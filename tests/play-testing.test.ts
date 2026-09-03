@@ -11,8 +11,8 @@ describe("closed testing selection", () => {
     expect(getPlayTestingApp("lumi")).toBeNull();
     expect(getPlayTestingApp("other-android-app")).toBeNull();
   });
-  it("keeps testing opt-in separate from the store link for each of the five apps", () => {
-    expect(playTestingApps).toHaveLength(5);
+  it("keeps testing opt-in separate from the store link for every listed test app", () => {
+    expect(playTestingApps).toHaveLength(11);
     for (const app of playTestingApps) {
       expect(new URL(playTestingOptInUrl(app)).pathname).toBe(`/apps/testing/${app.packageName}`);
       expect(new URL(playTestingStoreUrl(app)).searchParams.get("id")).toBe(app.packageName);

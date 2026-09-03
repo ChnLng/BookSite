@@ -48,9 +48,9 @@ export function AdminInbox({ testingOnly = false, onCountChange }: { testingOnly
 
   return <section className="admin-inbox" aria-label={testingOnly ? "Google Play 测试申请" : "联系留言收件箱"}>
     {testingOnly ? <div className="admin-help-card">
-      <strong>历史人工审核流程</strong>
-      <p>核对申请人的 Google Play 邮箱 → 确认加入测试群 → 提醒参加对应 App 测试 → 单独分配一枚未使用的兑换码。</p>
-      <p className="tiny muted">这里仅保留旧的申请记录，不代表邮箱已验证、已经入群或已经发码。新的自动分配记录请查看上方“Google Play 自动发码”库存面板。</p>
+      <strong>Demandes de test à traiter sous 48 h</strong>
+      <p>Vérifiez l’adresse Google Play → confirmez l’accès au groupe de test → envoyez un code personnel non utilisé pour chaque application demandée.</p>
+      <p className="tiny muted">Ces demandes sont enregistrées ici et envoyées à l’adresse administrateur. Elles ne confirment ni l’adhésion au groupe ni l’envoi d’un code.</p>
       <a className="pill-button" href={playTestingGroupUrl} target="_blank" rel="noopener noreferrer">打开 Google Groups</a>
     </div> : <p className="muted">网站发给管理员的私信，包含测试申请。首页公开留言及商品评价请到“留言与评价”管理。</p>}
     <div className="admin-inbox-toolbar">
