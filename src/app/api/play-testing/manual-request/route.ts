@@ -162,8 +162,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Impossible d’enregistrer votre demande. Contactez visdar@outlook.fr." }, { status: 500, headers });
   }
 
+  let emailDelivery: "smtp" | "resend" | null = null;
   try {
-    await notifyAdmin({ accountEmail: user.email, playEmail, appTitles });
+    emailDelivery = await notifyAdmin({ accountEmail: user.email, playEmail, appTitles });
   } catch (error) {
     console.error("play_testing_manual_notification_failed", error);
   }
@@ -171,5 +172,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     message: "Votre demande gratuite est enregistrée. Visd AR la traitera sous 48 heures maximum ; aucun achat n’est nécessaire.",
+    emailDelivery,
   }, { headers });
 }

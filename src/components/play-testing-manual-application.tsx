@@ -24,15 +24,31 @@ export function PlayTestingManualApplication({ initialPackageName }: { initialPa
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [manualEmailCopyNeeded, setManualEmailCopyNeeded] = useState(false);
 
   const selectedApps = useMemo(
     () => playTestingApps.filter((app) => selectedPackages.includes(app.packageName)),
     [selectedPackages],
   );
+  const manualEmailHref = useMemo(() => {
+    const subject = "Demande gratuite de test Google Play — Visd AR";
+    const body = [
+      "Bonjour Visd AR,",
+      "",
+      "Je confirme ma demande gratuite de test Google Play.",
+      `Compte Google Play : ${playEmail.trim()}`,
+      "Applications demandées :",
+      ...selectedApps.map((app) => `- ${app.title}`),
+      "",
+      "Je ne réaliserai aucun achat pour ce test.",
+    ].join("\n");
+    return `mailto:${adminEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }, [playEmail, selectedApps]);
 
   useEffect(() => {
     setPlayEmail(user?.email || "");
     setSubmitted(false);
+    setManualEmailCopyNeeded(false);
     setMessage("");
   }, [user?.id, user?.email]);
 
@@ -70,12 +86,13 @@ export function PlayTestingManualApplication({ initialPackageName }: { initialPa
           consent: true,
         }),
       });
-      const result = await response.json().catch(() => null) as { ok?: boolean; message?: string } | null;
+      const result = await response.json().catch(() => null) as { ok?: boolean; message?: string; emailDelivery?: string | null } | null;
       if (!response.ok || !result?.ok) {
         setMessage(result?.message || "Impossible d’envoyer votre demande pour le moment. Réessayez plus tard ou contactez Visd AR.");
         return;
       }
       setSubmitted(true);
+      setManualEmailCopyNeeded(!result.emailDelivery);
       setMessage(result.message || "Votre demande gratuite a bien été envoyée à Visd AR.");
     } catch {
       setMessage("Connexion interrompue. Réessayez dans un instant ou contactez Visd AR.");
@@ -149,7 +166,10 @@ export function PlayTestingManualApplication({ initialPackageName }: { initialPa
             <p>Visd AR traite votre demande manuellement. Après l’envoi, l’accès au test et les codes personnels seront préparés sous <strong>48 heures maximum</strong>.</p>
             <p className="play-testing-warning"><strong>Gratuit pour les testeurs :</strong> ne confirmez aucun achat, même si Google Play affiche momentanément un prix. N’ajoutez pas de carte bancaire pour ce test.</p>
             {message ? <p role="status" aria-live="polite">{message}</p> : null}
-            {submitted ? <p className="tiny muted">Votre demande est enregistrée. Sans réponse après 48 heures, ou pour toute question, contactez <a href={`mailto:${adminEmail}`}>{adminEmail}</a>.</p> : user ? <button className="cta-button" type="submit" disabled={busy || !selectedApps.length || !playEmail.trim() || !consent}>{busy ? "Envoi de la demande…" : "Envoyer ma demande gratuite"}</button> : <button className="cta-button" type="button" onClick={() => setAuthOpen(true)}>Me connecter pour envoyer la demande</button>}
+            {submitted ? <>
+              <p className="tiny muted">Votre demande est enregistrée. Sans réponse après 48 heures, ou pour toute question, contactez <a href={`mailto:${adminEmail}`}>{adminEmail}</a>.</p>
+              {manualEmailCopyNeeded ? <div className="play-testing-email-backup"><strong>Copie e-mail recommandée</strong><p>Votre demande est bien dans le suivi Visd AR, mais le serveur ne peut pas encore confirmer l’envoi de sa notification e-mail.</p><a className="pill-button" href={manualEmailHref}>Envoyer une copie à {adminEmail}</a></div> : null}
+            </> : user ? <button className="cta-button" type="submit" disabled={busy || !selectedApps.length || !playEmail.trim() || !consent}>{busy ? "Envoi de la demande…" : "Envoyer ma demande gratuite"}</button> : <button className="cta-button" type="button" onClick={() => setAuthOpen(true)}>Me connecter pour envoyer la demande</button>}
             {!selectedApps.length ? <p className="play-testing-warning">Choisissez au moins une application avant d’envoyer votre demande.</p> : null}
             <p className="tiny muted">Vous n’avez rien reçu après 48 heures ou vous avez une question ? <a href={`mailto:${adminEmail}`}>{adminEmail}</a></p>
           </section>

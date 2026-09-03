@@ -365,6 +365,10 @@ html[data-preferred-view="desktop"] .footer-link-button { white-space: nowrap; f
 .play-code-card-actions { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
 .play-code-card-actions .cta-button { flex: 0 0 auto; }
 .play-testing-warning { padding: 13px 16px; border: 1px solid #ead6b2; border-radius: 16px; color: #79541e; background: rgba(255,247,229,.75); }
+.play-testing-email-backup { display: grid; gap: 9px; margin-top: 16px; padding: 16px; border: 1px solid rgba(117,83,190,.38); border-radius: 16px; background: rgba(239,233,255,.58); }
+.play-testing-email-backup strong { color: #513385; }
+.play-testing-email-backup p { margin: 0; font-size: .9rem; line-height: 1.55; }
+.play-testing-email-backup .pill-button { justify-self: start; }
 .account-play-code-card { display: grid; gap: 14px; }
 .account-play-code-card .account-card-stat { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .account-play-code-list { display: grid; gap: 12px; }
