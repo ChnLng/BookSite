@@ -31,9 +31,11 @@ function escapeHtml(value: string) {
 function createMailTransporter() {
   const host = process.env.SMTP_HOST || "smtp.office365.com";
   const port = Number(process.env.SMTP_PORT || "587");
-  const user = process.env.SMTP_USER || "";
-  const pass = process.env.SMTP_PASS || "";
-  const from = process.env.SMTP_FROM || user;
+  // EMAIL_* is the existing Vercel naming used by this project. SMTP_* is
+  // retained so a future provider can be configured without a code change.
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER || "";
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS || "";
+  const from = process.env.SMTP_FROM || process.env.EMAIL_FROM || user;
 
   if (!user || !pass || !from) return null;
 
