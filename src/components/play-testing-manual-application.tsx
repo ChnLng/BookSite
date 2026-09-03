@@ -131,10 +131,13 @@ export function PlayTestingManualApplication({ initialPackageName }: { initialPa
               <label htmlFor="play-email">Adresse e-mail utilisée dans le Play Store</label>
               <input id="play-email" className="input" type="email" value={playEmail} onChange={(event) => setPlayEmail(event.target.value)} required disabled={busy || submitted} autoComplete="email" />
               <p className="tiny muted">Cette adresse peut être différente de votre adresse de connexion à Visd AR. Saisissez le compte Google actif dans le Play Store de votre téléphone : il permet à Visd AR de traiter votre accès, sans être publié.</p>
-              <label className="play-testing-consent">
-                <input type="checkbox" required checked={consent} onChange={(event) => setConsent(event.target.checked)} disabled={busy || submitted} />
-                <span className="tiny">J’autorise Visd AR à traiter cette adresse et ma sélection uniquement pour cette demande de test gratuite.</span>
-              </label>
+              <fieldset className="play-testing-required-consent">
+                <legend>Autorisation requise avant l’envoi</legend>
+                <label>
+                  <input type="checkbox" required checked={consent} onChange={(event) => setConsent(event.target.checked)} disabled={busy || submitted} />
+                  <span><strong>J’autorise Visd AR à traiter mon adresse Google Play et ma sélection.</strong><small>Uniquement pour cette demande de test gratuite. Sans cette autorisation, la demande ne peut pas être envoyée.</small></span>
+                </label>
+              </fieldset>
             </> : <>
               <p className="muted">Connectez-vous d’abord à Visd AR pour envoyer votre demande et recevoir son suivi.</p>
               <button className="pill-button" type="button" onClick={() => setAuthOpen(true)}>Me connecter</button>

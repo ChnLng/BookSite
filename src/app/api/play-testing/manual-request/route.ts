@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 import { getUserFromRequest } from "@/lib/auth-request";
 import { playTestingApps } from "@/lib/play-testing";
 import { siteConfig } from "@/lib/site-config";
@@ -48,40 +49,52 @@ function createMailTransporter() {
 }
 
 async function notifyAdmin(args: { accountEmail: string; playEmail: string; appTitles: string[] }) {
-  const mailer = createMailTransporter();
-  if (!mailer) return false;
-
   const { accountEmail, playEmail, appTitles } = args;
   const appsText = appTitles.map((title) => `• ${title}`).join("\n");
-  await mailer.transporter.sendMail({
-    from: `"Visd AR — demandes de test" <${mailer.from}>`,
-    sender: mailer.from,
-    to: siteConfig.adminInbox,
+  const subject = `Demande gratuite Google Play — ${appTitles.length} application${appTitles.length > 1 ? "s" : ""}`;
+  const text = [
+    "Nouvelle demande de test Google Play depuis visdar.fr",
+    "",
+    `Compte Visd AR : ${accountEmail}`,
+    `Compte Google Play déclaré : ${playEmail}`,
+    "",
+    "Applications demandées :",
+    appsText,
+    "",
+    "Rappel : ce test est gratuit. Le demandeur a été informé de ne réaliser aucun achat.",
+    "Traiter sous 48 heures ou répondre à cette demande.",
+  ].join("\n");
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937">
+      <h2 style="margin:0 0 16px;color:#4c357a">Nouvelle demande de test Google Play</h2>
+      <p><strong>Compte Visd AR :</strong> ${escapeHtml(accountEmail)}</p>
+      <p><strong>Compte Google Play déclaré :</strong> ${escapeHtml(playEmail)}</p>
+      <p><strong>Applications demandées :</strong></p>
+      <ul>${appTitles.map((title) => `<li>${escapeHtml(title)}</li>`).join("")}</ul>
+      <p style="padding:12px 14px;border-radius:12px;background:#fff6df"><strong>Test gratuit :</strong> le demandeur a été informé de ne réaliser aucun achat. Traiter sous 48 heures.</p>
+    </div>`;
+  const mailer = createMailTransporter();
+  if (mailer) {
+    try {
+      await mailer.transporter.sendMail({ from: `"Visd AR — demandes de test" <${mailer.from}>`, sender: mailer.from, to: siteConfig.adminInbox, replyTo: playEmail, subject, text, html });
+      return "smtp";
+    } catch (error) {
+      console.error("play_testing_smtp_notification_failed", error);
+    }
+  }
+
+  if (!process.env.RESEND_API_KEY) return null;
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const result = await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL || "Visd AR <onboarding@resend.dev>",
+    to: [siteConfig.adminInbox],
     replyTo: playEmail,
-    subject: `Demande gratuite Google Play — ${appTitles.length} application${appTitles.length > 1 ? "s" : ""}`,
-    text: [
-      "Nouvelle demande de test Google Play depuis visdar.fr",
-      "",
-      `Compte Visd AR : ${accountEmail}`,
-      `Compte Google Play déclaré : ${playEmail}`,
-      "",
-      "Applications demandées :",
-      appsText,
-      "",
-      "Rappel : ce test est gratuit. Le demandeur a été informé de ne réaliser aucun achat.",
-      "Traiter sous 48 heures ou répondre à cette demande.",
-    ].join("\n"),
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937">
-        <h2 style="margin:0 0 16px;color:#4c357a">Nouvelle demande de test Google Play</h2>
-        <p><strong>Compte Visd AR :</strong> ${escapeHtml(accountEmail)}</p>
-        <p><strong>Compte Google Play déclaré :</strong> ${escapeHtml(playEmail)}</p>
-        <p><strong>Applications demandées :</strong></p>
-        <ul>${appTitles.map((title) => `<li>${escapeHtml(title)}</li>`).join("")}</ul>
-        <p style="padding:12px 14px;border-radius:12px;background:#fff6df"><strong>Test gratuit :</strong> le demandeur a été informé de ne réaliser aucun achat. Traiter sous 48 heures.</p>
-      </div>`,
+    subject,
+    text,
+    html,
   });
-  return true;
+  if (result.error) throw new Error(result.error.message);
+  return "resend";
 }
 
 export async function POST(request: Request) {
@@ -157,6 +170,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ok: true,
-    message: "Votre demande gratuite a bien été envoyée à Visd AR. Elle sera traitée sous 48 heures maximum ; aucun achat n’est nécessaire.",
+    message: "Votre demande gratuite est enregistrée. Visd AR la traitera sous 48 heures maximum ; aucun achat n’est nécessaire.",
   }, { headers });
 }
