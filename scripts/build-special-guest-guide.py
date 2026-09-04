@@ -129,13 +129,13 @@ def image_block(path, top, width, caption, maximum=390):
 def end_page():
     C.showPage()
 
-header('Avant le téléchargement', 'Connectez votre compte Gmail, puis cliquez sur le prix', 'Sur ordinateur ou téléphone Android, utilisez votre compte Google personnel dans le Play Store. Ouvrez la fiche de l’application et cliquez sur son prix ou sur « Buy ».')
-note('Accès à la phase de test', 'Si vous n’avez pas encore communiqué l’adresse Gmail de votre compte Play Store à Visd AR, l’application de test ne pourra pas être téléchargée. Écrivez à visdar@outlook.fr avec les applications souhaitées. Cette adresse reste confidentielle.', 252, height=116)
+header('Avant le téléchargement', 'Bienvenue : votre invitation de test est gratuite', 'Pendant la phase de test, toute application Android Visd AR proposée au test est gratuite pour les testeurs invités, même si Google Play affiche un prix.')
+note('Accès à la phase de test', 'Le prix affiché sert uniquement à ouvrir le parcours Google Play : aucun montant ne sera débité. Si vous n’avez pas encore communiqué l’adresse Gmail de votre compte Play Store à Visd AR, écrivez à visdar@outlook.fr. Votre adresse reste confidentielle.', 252, height=116)
 box(M, 402, CW, 162, white, LINE)
 para('1. Compte Google', M + 20, 422, CW - 40, size=13, bold=True)
 para('Vérifiez que le bon compte Gmail est actif dans le Play Store. Sur ordinateur, vérifiez l’avatar Google en haut de la page ; sur téléphone, ouvrez le Play Store avec ce même compte.', M + 20, 450, CW - 40, size=10.7)
 para('2. Prix de l’application', M + 20, 506, CW - 40, size=13, bold=True)
-para('Cliquez sur le bouton de prix de l’application. Google Play ouvrira alors le choix de l’appareil à installer.', M + 20, 534, CW - 40, size=10.7)
+para('Cliquez sur le prix ou sur « Buy » : il sert seulement à ouvrir Google Play. Pour les testeurs invités, ce prix n’est pas débité.', M + 20, 534, CW - 40, size=10.7)
 note('Confidentialité', 'Votre adresse Gmail sert uniquement à gérer votre accès au test. Pour quitter le test, demandez son retrait à visdar@outlook.fr. Ne transmettez jamais un mot de passe, un code de sécurité ou des données bancaires.', 604, height=105)
 end_page()
 

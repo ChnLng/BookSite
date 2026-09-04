@@ -31,7 +31,8 @@ export default function GuideTesterPage() {
         <div className="guide-tester-hero">
           <span className="badge">Tester spécial invité</span>
           <h1>Guide d’installation Android</h1>
-          <p className="lead">Depuis un ordinateur ou un téléphone Android, installez gratuitement une application Visd AR en phase de test. La commande Google Play est une commande de test : aucun montant ne sera débité.</p>
+          <p className="lead">Bienvenue dans le programme Tester spécial invité. Pendant la phase de test, vous pouvez obtenir gratuitement toute application Android Visd AR proposée au test, même si sa fiche Google Play affiche un prix.</p>
+          <p>Le prix affiché sert uniquement à ouvrir le parcours Google Play : avec la carte de test, aucun montant ne sera débité.</p>
           <a className="pill-button" href="/guides/guide-tester-special-invite.pdf" target="_blank" rel="noopener noreferrer">Télécharger le PDF illustré</a>
         </div>
 
@@ -45,7 +46,7 @@ export default function GuideTesterPage() {
         <section className="guide-tester-steps" aria-labelledby="steps-title">
           <h2 id="steps-title">Le parcours complet</h2>
           <div className="guide-tester-step-grid">
-            <div><span>1</span><h3>Compte Gmail et prix</h3><p>Connectez votre compte Google personnel au Play Store, puis cliquez sur le prix de l’application.</p></div>
+            <div><span>1</span><h3>Compte Gmail et prix</h3><p>Connectez votre compte Google personnel au Play Store, puis cliquez sur le prix de l’application : pour les testeurs invités, ce prix n’est pas facturé.</p></div>
             <div><span>2</span><h3>Appareil et conditions</h3><p>Choisissez le téléphone à installer, cliquez sur « Install », puis acceptez les conditions Google Play si elles apparaissent.</p></div>
             <div><span>3</span><h3>Carte de test et sécurité</h3><p>Choisissez « Test card, always approves », cliquez sur « Buy », puis terminez une éventuelle double authentification.</p></div>
           </div>
