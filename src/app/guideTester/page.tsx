@@ -46,8 +46,8 @@ export default function GuideTesterPage() {
           <h2 id="steps-title">Le parcours en trois étapes</h2>
           <div className="guide-tester-step-grid">
             <div><span>1</span><h3>Signalez votre compte</h3><p>Envoyez votre adresse Google Play à Visd AR et dites quelles applications vous souhaitez tester.</p></div>
-            <div><span>2</span><h3>Choisissez la carte de test</h3><p>Dans « Payment methods », choisissez « Test card, always approves ». N’ajoutez pas de carte bancaire réelle.</p></div>
-            <div><span>3</span><h3>Choisissez l’appareil</h3><p>Depuis un téléphone ou un ordinateur, sélectionnez le mobile cible puis appuyez sur « Install ».</p></div>
+            <div><span>2</span><h3>Choisissez l’appareil</h3><p>Depuis un téléphone ou un ordinateur, sélectionnez le mobile cible puis appuyez sur « Install ».</p></div>
+            <div><span>3</span><h3>Utilisez la carte de test</h3><p>Après l’écran de confirmation, dans « Payment methods », choisissez « Test card, always approves ». N’ajoutez pas de carte bancaire réelle.</p></div>
           </div>
         </section>
 
@@ -55,16 +55,16 @@ export default function GuideTesterPage() {
           <h2 id="illustrations-title">Les écrans à reconnaître</h2>
           <div className="guide-tester-illustration-grid">
             <figure>
+              <Image src="/guides/tester-install-device.png" alt="Sélection d’un appareil Android à installer" width={1647} height={714} />
+              <figcaption><strong>1. Appareil cible.</strong> Sélectionnez le téléphone souhaité, puis appuyez sur « Install ».</figcaption>
+            </figure>
+            <figure>
               <Image src="/guides/tester-checkout.png" alt="Fenêtre Google Play indiquant qu’il s’agit d’une commande de test sans débit" width={799} height={616} />
-              <figcaption><strong>1. Commande de test.</strong> Vérifiez le message « This is a test order, you will not be charged » avant de continuer.</figcaption>
+              <figcaption><strong>2. Commande de test.</strong> Vérifiez le message « This is a test order, you will not be charged » avant de continuer.</figcaption>
             </figure>
             <figure>
               <Image src="/guides/tester-payment-methods.png" alt="Modes de paiement Google Play avec carte de test approuvée" width={736} height={383} />
-              <figcaption><strong>2. Moyen de paiement.</strong> Choisissez « Test card, always approves ». L’image est anonymisée.</figcaption>
-            </figure>
-            <figure>
-              <Image src="/guides/tester-install-device.png" alt="Sélection d’un appareil Android à installer" width={1647} height={714} />
-              <figcaption><strong>3. Appareil cible.</strong> Sélectionnez le téléphone souhaité, puis appuyez sur « Install ».</figcaption>
+              <figcaption><strong>3. Moyen de paiement.</strong> Choisissez « Test card, always approves ». L’image est anonymisée.</figcaption>
             </figure>
           </div>
           <p className="guide-tester-warning"><strong>Si un prix reste dû, arrêtez-vous.</strong> Ne confirmez aucun achat et contactez <a href="mailto:visdar@outlook.fr">visdar@outlook.fr</a>.</p>

@@ -153,24 +153,24 @@ note('Aucun code promo nécessaire', 'Ce guide utilise la carte de test Google P
 end_page()
 
 # 3. Payment method screenshot.
-header('Étape 2 / carte de test', 'Sélectionnez la carte de test', 'Dans les modes de paiement Google Play, choisissez « Test card, always approves », la carte qui approuve toujours les commandes de test.')
+header('Étape 3 / carte de test', 'Sélectionnez la carte de test', 'Dans les modes de paiement Google Play, choisissez « Test card, always approves », la carte qui approuve toujours les commandes de test.')
 bottom = image_block(payment_image, 235, 455, 'Capture anonymisée : l’adresse du compte est masquée. Les moyens de paiement visibles sont ceux de l’environnement de test Google Play.')
-para('<b>2.</b> Dans « Payment methods », choisissez <b>Test card, always approves</b>. Ne sélectionnez pas une carte bancaire réelle, PayPal ou un autre moyen de paiement.', M, bottom + 22, CW, size=11.5)
+para('<b>3.</b> Dans « Payment methods », choisissez <b>Test card, always approves</b>. Ne sélectionnez pas une carte bancaire réelle, PayPal ou un autre moyen de paiement.', M, bottom + 22, CW, size=11.5)
 note('Ce n’est pas une carte bancaire', 'La carte de test sert uniquement à simuler une commande Google Play. Elle est conçue pour approuver le test sans débit réel.', 683, warning=True, height=93)
 end_page()
 
 # 4. Checkout.
-header('Étape 1 / confirmation', 'Vérifiez le message « test order »', 'Google Play peut d’abord afficher cette fenêtre de confirmation avant de vous laisser choisir le moyen de paiement de test.')
+header('Étape 2 / confirmation', 'Vérifiez le message « test order »', 'Après le choix de l’appareil, Google Play peut afficher cette fenêtre de confirmation avant de vous laisser choisir le moyen de paiement de test.')
 bottom = image_block(source_checkout, 245, 445, 'Capture fournie par Visd AR : Google Play précise « This is a test order, you will not be charged ».')
-para('<b>1.</b> Vérifiez que le moyen de paiement est bien la carte de test et que le message indique que vous ne serez pas débité. Cliquez ensuite sur <b>Buy</b> pour terminer la simulation.', M, bottom + 23, CW, size=11.5)
+para('<b>2.</b> Vérifiez que le moyen de paiement est bien la carte de test et que le message indique que vous ne serez pas débité. Cliquez ensuite sur <b>Buy</b> pour terminer la simulation.', M, bottom + 23, CW, size=11.5)
 note('Si Google affiche encore un montant', 'Arrêtez-vous et ne confirmez pas. Revenez aux modes de paiement, sélectionnez la carte de test, ou contactez visdar@outlook.fr.', 704, warning=True, height=91)
 end_page()
 
 # 5. Device selection/install.
-header('Étape 3 / installation', 'Choisissez le téléphone à installer', 'Depuis un téléphone ou un ordinateur, Google Play peut proposer plusieurs appareils associés à votre compte.')
+header('Étape 1 / installation', 'Choisissez le téléphone à installer', 'Depuis un téléphone ou un ordinateur, Google Play peut proposer plusieurs appareils associés à votre compte.')
 bottom = image_block(source_install, 230, 545, 'Capture fournie par Visd AR : choisissez l’appareil cible, puis appuyez sur « Install ».')
-para('<b>3.</b> Sélectionnez le téléphone ou la tablette souhaité(e). Vous pouvez effectuer cette étape sur ordinateur pour lancer l’installation sur votre mobile.', M, bottom + 18, CW, size=11.4)
-para('<b>4.</b> Appuyez sur <b>Install</b>. Sur le téléphone, ouvrez ensuite le Play Store et attendez la fin du téléchargement. Appuyez sur <b>Open</b> pour lancer l’application.', M, bottom + 70, CW, size=11.4)
+para('<b>1.</b> Sélectionnez le téléphone ou la tablette souhaité(e). Vous pouvez effectuer cette étape sur ordinateur pour lancer l’installation sur votre mobile.', M, bottom + 18, CW, size=11.4)
+para('<b>2.</b> Appuyez sur <b>Install</b>. Sur le téléphone, ouvrez ensuite le Play Store et attendez la fin du téléchargement. Appuyez sur <b>Open</b> pour lancer l’application.', M, bottom + 70, CW, size=11.4)
 note('Téléphone absent de la liste ?', 'Ouvrez le Play Store sur ce téléphone avec le même compte Google, vérifiez la connexion Internet et réessayez.', 689, height=83)
 end_page()
 
@@ -219,16 +219,12 @@ end_page()
 
 assert PAGE == TOTAL
 C.save()
-# The requested reading order is checkout confirmation first, then payment-method selection.
+# The intended reading order mirrors the earlier installation guide: device first,
+# then the test-order confirmation, then the virtual test card in payment methods.
 reader = PdfReader(str(OUT))
 writer = PdfWriter()
-for index, page in enumerate(reader.pages):
-    if index == 2:
-        writer.add_page(reader.pages[3])
-    elif index == 3:
-        writer.add_page(reader.pages[2])
-    else:
-        writer.add_page(page)
+for index in (0, 1, 4, 3, 2, 5, 6):
+    writer.add_page(reader.pages[index])
 for key, value in reader.metadata.items():
     if key and value:
         writer.add_metadata({str(key): str(value)})
@@ -238,7 +234,7 @@ with OUT.open('wb') as handle:
 reader = PdfReader(str(OUT))
 writer = PdfWriter()
 for index, page in enumerate(reader.pages):
-    if index in (2, 3):
+    if index in (2, 3, 4):
         overlay_buffer = BytesIO()
         overlay = canvas.Canvas(overlay_buffer, pagesize=(W, H))
         overlay.setFillColor(HexColor('#fdfcfe')); overlay.rect(W - M - 48, 15, 48, 20, fill=1, stroke=0)

@@ -176,8 +176,8 @@ export function PlayTestingManualApplication({ initialPackageName }: { initialPa
 
           <section className="play-testing-step">
             <h2><span>5</span> Installez sans payer</h2>
-            <p>Lorsque Visd AR vous envoie votre code, ouvrez Google Play, choisissez <strong>Utiliser un code / Redeem code</strong>, puis collez le code de l’application concernée. Vérifiez toujours que Google confirme l’obtention gratuite avant de terminer.</p>
-            <p className="play-testing-warning">Si un montant reste à payer, ne confirmez pas l’achat. Contactez <a href={`mailto:${adminEmail}`}>{adminEmail}</a>.</p>
+            <p>Dans Google Play, choisissez d’abord le téléphone à installer. Dans les modes de paiement, sélectionnez ensuite <strong>Test card, always approves</strong>. Cette carte virtuelle de test ne débite aucun montant et ne demande ni carte bancaire réelle ni code à utiliser.</p>
+            <p className="play-testing-warning">Si Google Play affiche encore un montant à payer, ne confirmez pas l’achat. Contactez <a href={`mailto:${adminEmail}`}>{adminEmail}</a>.</p>
             <div className="play-testing-links"><a className="pill-button" href={guideUrl} target="_blank" rel="noopener noreferrer">Voir le guide Tester spécial invité (PDF)</a></div>
           </section>
         </form>
