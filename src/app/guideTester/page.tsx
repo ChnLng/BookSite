@@ -31,7 +31,7 @@ export default function GuideTesterPage() {
         <div className="guide-tester-hero">
           <span className="badge">Tester spécial invité</span>
           <h1>Guide d’installation Android</h1>
-          <p className="lead">Installez gratuitement une application Visd AR en phase de test. La commande Google Play est une commande de test : aucun montant ne sera débité.</p>
+          <p className="lead">Depuis un ordinateur ou un téléphone Android, installez gratuitement une application Visd AR en phase de test. La commande Google Play est une commande de test : aucun montant ne sera débité.</p>
           <a className="pill-button" href="/guides/guide-tester-special-invite.pdf" target="_blank" rel="noopener noreferrer">Télécharger le PDF illustré</a>
         </div>
 
@@ -43,31 +43,24 @@ export default function GuideTesterPage() {
         </section>
 
         <section className="guide-tester-steps" aria-labelledby="steps-title">
-          <h2 id="steps-title">Le parcours en trois étapes</h2>
+          <h2 id="steps-title">Le parcours complet</h2>
           <div className="guide-tester-step-grid">
-            <div><span>1</span><h3>Signalez votre compte</h3><p>Envoyez votre adresse Google Play à Visd AR et dites quelles applications vous souhaitez tester.</p></div>
-            <div><span>2</span><h3>Choisissez l’appareil</h3><p>Depuis un téléphone ou un ordinateur, sélectionnez le mobile cible puis appuyez sur « Install ».</p></div>
-            <div><span>3</span><h3>Utilisez la carte de test</h3><p>Après l’écran de confirmation, dans « Payment methods », choisissez « Test card, always approves ». N’ajoutez pas de carte bancaire réelle.</p></div>
+            <div><span>1</span><h3>Compte Gmail et prix</h3><p>Connectez votre compte Google personnel au Play Store, puis cliquez sur le prix de l’application.</p></div>
+            <div><span>2</span><h3>Appareil et conditions</h3><p>Choisissez le téléphone à installer, cliquez sur « Install », puis acceptez les conditions Google Play si elles apparaissent.</p></div>
+            <div><span>3</span><h3>Carte de test et sécurité</h3><p>Choisissez « Test card, always approves », cliquez sur « Buy », puis terminez une éventuelle double authentification.</p></div>
           </div>
         </section>
 
         <section className="guide-tester-illustrations" aria-labelledby="illustrations-title">
           <h2 id="illustrations-title">Les écrans à reconnaître</h2>
           <div className="guide-tester-illustration-grid">
-            <figure>
-              <Image src="/guides/tester-install-device.png" alt="Sélection d’un appareil Android à installer" width={1647} height={714} />
-              <figcaption><strong>1. Appareil cible.</strong> Sélectionnez le téléphone souhaité, puis appuyez sur « Install ».</figcaption>
-            </figure>
-            <figure>
-              <Image src="/guides/tester-checkout.png" alt="Fenêtre Google Play indiquant qu’il s’agit d’une commande de test sans débit" width={799} height={616} />
-              <figcaption><strong>2. Commande de test.</strong> Vérifiez le message « This is a test order, you will not be charged » avant de continuer.</figcaption>
-            </figure>
-            <figure>
-              <Image src="/guides/tester-payment-methods.png" alt="Modes de paiement Google Play avec carte de test approuvée" width={736} height={383} />
-              <figcaption><strong>3. Moyen de paiement.</strong> Choisissez « Test card, always approves ». L’image est anonymisée.</figcaption>
-            </figure>
+            <figure><Image src="/guides/tester-device-choice.png" alt="Choix anonymisé du téléphone Android à installer" width={1650} height={791} /><figcaption><strong>1. Choisissez l’appareil.</strong> Les modèles et dates ont été masqués.</figcaption></figure>
+            <figure><Image src="/guides/tester-device-alternative.png" alt="Second exemple anonymisé de choix d’appareil Android" width={963} height={713} /><figcaption><strong>2. S’il y en a plusieurs.</strong> Sélectionnez le téléphone voulu, puis cliquez sur « Install ».</figcaption></figure>
+            <figure><Image src="/guides/tester-agree.png" alt="Fenêtre Google Play Review and agree" width={1128} height={542} /><figcaption><strong>3. Conditions.</strong> Cliquez sur « Agree » lorsque cet écran apparaît.</figcaption></figure>
+            <figure><Image src="/guides/tester-test-card-buy.png" alt="Commande de test Google Play avec Test card, always approves et bouton Buy" width={913} height={635} /><figcaption><strong>4 et 5. Paiement.</strong> La seule carte acceptée ici est « Test card, always approves », puis cliquez sur « Buy ».</figcaption></figure>
+            <figure><Image src="/guides/tester-two-factor.png" alt="Exemple de double authentification Google" width={598} height={487} /><figcaption><strong>6. Vérification Google.</strong> Une double authentification peut être demandée avant le téléchargement.</figcaption></figure>
           </div>
-          <p className="guide-tester-warning"><strong>Si un prix reste dû, arrêtez-vous.</strong> Ne confirmez aucun achat et contactez <a href="mailto:visdar@outlook.fr">visdar@outlook.fr</a>.</p>
+          <p className="guide-tester-warning"><strong>Ne choisissez jamais une carte bancaire personnelle.</strong> Si le moyen de paiement n’est pas « Test card, always approves », ou si Google demande un montant réel, annulez et contactez <a href="mailto:visdar@outlook.fr">visdar@outlook.fr</a>.</p>
         </section>
 
         <section className="guide-tester-directory" aria-labelledby="directory-title">

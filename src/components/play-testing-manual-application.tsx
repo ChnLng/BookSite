@@ -176,7 +176,7 @@ export function PlayTestingManualApplication({ initialPackageName }: { initialPa
 
           <section className="play-testing-step">
             <h2><span>5</span> Installez sans payer</h2>
-            <p>Dans Google Play, choisissez d’abord le téléphone à installer. Dans les modes de paiement, sélectionnez ensuite <strong>Test card, always approves</strong>. Cette carte virtuelle de test ne débite aucun montant et ne demande ni carte bancaire réelle ni code à utiliser.</p>
+            <p>Dans Google Play, cliquez sur le prix, choisissez le téléphone à installer, puis acceptez les conditions si Google les affiche. Dans les modes de paiement, sélectionnez <strong>Test card, always approves</strong>, cliquez sur <strong>Buy</strong> et terminez une éventuelle double authentification. Cette carte virtuelle de test ne débite aucun montant et ne demande ni carte bancaire réelle ni code à utiliser.</p>
             <p className="play-testing-warning">Si Google Play affiche encore un montant à payer, ne confirmez pas l’achat. Contactez <a href={`mailto:${adminEmail}`}>{adminEmail}</a>.</p>
             <div className="play-testing-links"><a className="pill-button" href={guideUrl} target="_blank" rel="noopener noreferrer">Voir le guide Tester spécial invité (PDF)</a></div>
           </section>
