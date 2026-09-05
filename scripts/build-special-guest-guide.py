@@ -157,9 +157,24 @@ note('Ne choisissez jamais votre carte', 'Si le moyen affiché est une carte ban
 end_page()
 
 header('Après la carte de test · offre facultative', 'Google Play Pass : refusez l’offre', 'Ce panneau propose un abonnement Google distinct de l’application Visd AR. Il n’est pas nécessaire pour installer votre application de test.')
-image_block(PUBLIC / 'tester-play-pass.jpg', 220, 205, 'Bouton en bas à gauche : « Non merci » (encadré en vert).', 456)
-C.setStrokeColor(GREEN); C.setLineWidth(2.5)
-C.roundRect((W - 205) / 2 + 205 * .063, H - 220 - (205 * 2400 / 1080) * .985, 205 * .42, (205 * 2400 / 1080) * .052, 5, fill=0, stroke=1)
+pass_width, pass_top = 430, 225
+pass_height = pass_width * 2400 / 1080
+panel_height = pass_height * .445
+pass_x = (W - pass_width) / 2
+panel_bottom = H - pass_top - panel_height
+# Magnify the original popup with a vector clipping path, preserving the screenshot.
+C.saveState()
+clip = C.beginPath(); clip.rect(pass_x, panel_bottom, pass_width, panel_height)
+C.clipPath(clip, stroke=0, fill=0)
+C.drawImage(str(PUBLIC / 'tester-play-pass.jpg'), pass_x, panel_bottom, pass_width, pass_height)
+C.restoreState()
+C.setStrokeColor(GREEN); C.setLineWidth(3)
+C.ellipse(pass_x + pass_width * .045, panel_bottom + pass_height * .009, pass_x + pass_width * .495, panel_bottom + pass_height * .069, fill=0, stroke=1)
+arrow_x = pass_x + pass_width * .27
+C.line(arrow_x, panel_bottom - 23, arrow_x, panel_bottom + 5)
+C.line(arrow_x, panel_bottom + 5, arrow_x - 5, panel_bottom - 3)
+C.line(arrow_x, panel_bottom + 5, arrow_x + 5, panel_bottom - 3)
+para('Cliquez ici pour refuser', pass_x, pass_top + panel_height + 26, pass_width, size=16, bold=True, color=GREEN)
 note('Refuser, puis continuer l’installation', 'Cliquez sur « Non merci », en bas à gauche du panneau Google Play Pass. Ne choisissez pas le bouton bleu de droite. Revenez à la fiche Visd AR et cliquez sur « Installer » si nécessaire. Ne cliquez pas sur « Rembourser » dans la fiche de l’application.', 716, warning=True, height=87)
 end_page()
 
