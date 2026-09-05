@@ -164,11 +164,6 @@ bottom = image_block(output_image('test-card-buy'), 300, 435, '4. Le moyen de pa
 note('Ne choisissez jamais votre carte', 'Si le moyen affiché est une carte bancaire, PayPal ou tout autre paiement personnel, annulez et revenez au choix de paiement. Aucune carte réelle n’est nécessaire.', bottom + 16, warning=True, height=92)
 end_page()
 
-header('Après le paiement · confirmation', 'La commande de test gratuite est validée', 'Après une commande avec la carte de test, Google Play peut envoyer cet e-mail de confirmation. Il indique que le test a été accepté : aucun paiement réel ni débit bancaire n’a été effectué.')
-bottom = image_block(output_image('test-receipt'), 220, 520, 'La ligne « Test card, always approves » est entourée en rouge. Les informations personnelles ont été masquées.', 390)
-note('Ce message signifie : test gratuit réussi', 'La ligne « Test card, always approves » confirme l’utilisation de la carte de test. Le montant affiché dans cet e-mail correspond à une commande de test et ne constitue pas un paiement réel. Si vous voyez une carte bancaire personnelle ou un montant réel à confirmer, arrêtez-vous et contactez visdar@outlook.fr.', bottom + 22, warning=True, height=96)
-end_page()
-
 header('Après la carte de test · offre facultative', 'Google Play Pass : refusez l’offre', 'Ce panneau propose un abonnement Google distinct de l’application Visd AR. Il n’est pas nécessaire pour installer votre application de test.')
 pass_width, pass_top = 380, 225
 pass_height = pass_width * 2400 / 1080
@@ -190,6 +185,11 @@ C.line(arrow_tip, arrow_y, arrow_tip - 6, arrow_y + 4)
 C.line(arrow_tip, arrow_y, arrow_tip - 6, arrow_y - 4)
 para('Cliquez pour refuser.<br/>Cela n’empêche pas le téléchargement.', M, H - arrow_y - 35, 88, size=10.5, bold=True, color=HexColor('#d92332'))
 note('Refuser, puis continuer l’installation', 'Cliquez sur « Non merci », en bas à gauche du panneau Google Play Pass. Ne choisissez pas le bouton bleu de droite. Revenez à la fiche Visd AR et cliquez sur « Installer » si nécessaire. Ne cliquez pas sur « Rembourser » dans la fiche de l’application.', 716, warning=True, height=87)
+end_page()
+
+header('Après le paiement · confirmation', 'La commande de test gratuite est validée', 'Après une commande avec la carte de test, Google Play peut envoyer cet e-mail de confirmation. Il indique que le test a été accepté : aucun paiement réel ni débit bancaire n’a été effectué.')
+bottom = image_block(output_image('test-receipt'), 220, 520, 'La ligne « Test card, always approves » est entourée en rouge. Les informations personnelles ont été masquées.', 390)
+note('Ce message signifie : test gratuit réussi', 'La ligne « Test card, always approves » confirme l’utilisation de la carte de test. Le montant affiché dans cet e-mail correspond à une commande de test et ne constitue pas un paiement réel. Si vous voyez une carte bancaire personnelle ou un montant réel à confirmer, arrêtez-vous et contactez visdar@outlook.fr.', bottom + 22, warning=True, height=96)
 end_page()
 
 header('Étape 4 · sécurité Google', 'Validez la double authentification si elle apparaît', 'Selon la sécurité de votre compte Google, une vérification supplémentaire peut être demandée avant que le téléchargement démarre.')
