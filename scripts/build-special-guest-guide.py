@@ -168,14 +168,14 @@ clip = C.beginPath(); clip.rect(pass_x, panel_bottom, pass_width, panel_height)
 C.clipPath(clip, stroke=0, fill=0)
 C.drawImage(str(PUBLIC / 'tester-play-pass.jpg'), pass_x, panel_bottom, pass_width, pass_height)
 C.restoreState()
-C.setStrokeColor(PURPLE); C.setLineWidth(3.5)
+C.setStrokeColor(HexColor('#d92332')); C.setLineWidth(3.5)
 C.ellipse(pass_x + pass_width * .008, panel_bottom - pass_height * .006, pass_x + pass_width * .505, panel_bottom + pass_height * .087, fill=0, stroke=1)
 arrow_y = panel_bottom + pass_height * .0405
 arrow_tip = pass_x + pass_width * .008 - 4
 C.line(135, arrow_y, arrow_tip, arrow_y)
 C.line(arrow_tip, arrow_y, arrow_tip - 6, arrow_y + 4)
 C.line(arrow_tip, arrow_y, arrow_tip - 6, arrow_y - 4)
-para('Cliquez pour refuser.<br/>Cela n’empêche pas le téléchargement.', M, H - arrow_y - 35, 88, size=10.5, bold=True, color=PURPLE)
+para('Cliquez pour refuser.<br/>Cela n’empêche pas le téléchargement.', M, H - arrow_y - 35, 88, size=10.5, bold=True, color=HexColor('#d92332'))
 note('Refuser, puis continuer l’installation', 'Cliquez sur « Non merci », en bas à gauche du panneau Google Play Pass. Ne choisissez pas le bouton bleu de droite. Revenez à la fiche Visd AR et cliquez sur « Installer » si nécessaire. Ne cliquez pas sur « Rembourser » dans la fiche de l’application.', 716, warning=True, height=87)
 end_page()
 
