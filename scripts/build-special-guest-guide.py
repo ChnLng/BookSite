@@ -157,10 +157,10 @@ note('Ne choisissez jamais votre carte', 'Si le moyen affiché est une carte ban
 end_page()
 
 header('Après la carte de test · offre facultative', 'Google Play Pass : refusez l’offre', 'Ce panneau propose un abonnement Google distinct de l’application Visd AR. Il n’est pas nécessaire pour installer votre application de test.')
-pass_width, pass_top = 430, 225
+pass_width, pass_top = 380, 225
 pass_height = pass_width * 2400 / 1080
 panel_height = pass_height * .445
-pass_x = (W - pass_width) / 2
+pass_x = 160
 panel_bottom = H - pass_top - panel_height
 # Magnify the original popup with a vector clipping path, preserving the screenshot.
 C.saveState()
@@ -170,11 +170,12 @@ C.drawImage(str(PUBLIC / 'tester-play-pass.jpg'), pass_x, panel_bottom, pass_wid
 C.restoreState()
 C.setStrokeColor(HexColor('#d92332')); C.setLineWidth(3.5)
 C.ellipse(pass_x + pass_width * .008, panel_bottom - pass_height * .006, pass_x + pass_width * .505, panel_bottom + pass_height * .087, fill=0, stroke=1)
-arrow_x = pass_x + pass_width * .27
-C.line(arrow_x, panel_bottom - 23, arrow_x, panel_bottom - 9)
-C.line(arrow_x, panel_bottom - 9, arrow_x - 5, panel_bottom - 17)
-C.line(arrow_x, panel_bottom - 9, arrow_x + 5, panel_bottom - 17)
-para('Cliquez ici pour refuser', pass_x, pass_top + panel_height + 26, pass_width, size=16, bold=True, color=HexColor('#d92332'))
+arrow_y = panel_bottom + pass_height * .0405
+arrow_tip = pass_x + pass_width * .008 - 4
+C.line(135, arrow_y, arrow_tip, arrow_y)
+C.line(arrow_tip, arrow_y, arrow_tip - 6, arrow_y + 4)
+C.line(arrow_tip, arrow_y, arrow_tip - 6, arrow_y - 4)
+para('Cliquez pour refuser.<br/>Cela n’empêche pas le téléchargement.', M, H - arrow_y - 35, 88, size=10.5, bold=True, color=HexColor('#d92332'))
 note('Refuser, puis continuer l’installation', 'Cliquez sur « Non merci », en bas à gauche du panneau Google Play Pass. Ne choisissez pas le bouton bleu de droite. Revenez à la fiche Visd AR et cliquez sur « Installer » si nécessaire. Ne cliquez pas sur « Rembourser » dans la fiche de l’application.', 716, warning=True, height=87)
 end_page()
 
