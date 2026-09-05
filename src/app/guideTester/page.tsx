@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import NextImage, { type ImageProps } from "next/image";
 import { TopNav } from "@/components/top-nav";
+
+function Image(props: ImageProps) {
+  return <a className="guide-tester-original" href={String(props.src)} target="_blank" rel="noopener noreferrer" title="Ouvrir l’image en taille originale"><NextImage {...props} unoptimized /></a>;
+}
 
 export const metadata: Metadata = {
   title: "Guide Tester spécial invité",
@@ -55,6 +59,7 @@ export default function GuideTesterPage() {
 
         <section className="guide-tester-illustrations" aria-labelledby="illustrations-title">
           <h2 id="illustrations-title">Les écrans à reconnaître</h2>
+          <p>Cliquez sur une capture pour l’ouvrir en taille originale et agrandir les détails.</p>
           <div className="guide-tester-illustration-grid">
             <figure><Image src="/guides/tester-device-choice.png" alt="Choix anonymisé du téléphone Android à installer" width={1650} height={791} /><figcaption><strong>1. Choisissez l’appareil.</strong> Les modèles et dates ont été masqués.</figcaption></figure>
             <figure><Image src="/guides/tester-device-alternative.png" alt="Second exemple anonymisé de choix d’appareil Android" width={963} height={713} /><figcaption><strong>2. S’il y en a plusieurs.</strong> Sélectionnez le téléphone voulu, puis cliquez sur « Install ».</figcaption></figure>
