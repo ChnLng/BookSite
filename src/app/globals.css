@@ -467,9 +467,10 @@ button,
 
 .catalogue-testing-button {
   padding-inline: 5px;
-  font-size: 0.7rem;
+  font-size: 0.74rem;
   line-height: 1.16;
   letter-spacing: -0.02em;
+  white-space: nowrap;
   overflow-wrap: normal;
   word-break: normal;
   hyphens: none;
