@@ -5061,7 +5061,7 @@ button,
 .guide-tester-step-grid span { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #fff; background: #6a49b8; font-weight: 800; }
 .guide-tester-step-grid h3 { margin: 14px 0 6px; }
 .guide-tester-step-grid p { color: var(--text-muted); line-height: 1.55; margin: 0; }
-.guide-tester-illustration-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+.guide-tester-illustration-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .guide-tester-illustration-grid figure { margin: 0; padding: 12px; border: 1px solid rgba(106,73,184,.16); border-radius: 20px; background: rgba(255,255,255,.75); }
 .guide-tester-illustration-grid img { display: block; width: 100%; height: auto; object-fit: contain; border-radius: 12px; background: #f3f3f4; }
 .guide-tester-original { display: block; cursor: zoom-in; }
