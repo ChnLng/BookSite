@@ -5073,7 +5073,8 @@ button,
 .guide-tester-url, .guide-tester-pending { margin: 0; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; line-height: 1.5; }
 .guide-tester-url { color: #6a49b8; }
 .guide-tester-pending { color: #805213; }
-.guide-tester-copy-link { display: inline-block; margin-top: 10px; color: #6a49b8; font-size: .88rem; font-weight: 700; }
+.guide-tester-copy-link { display: inline-block; margin-top: 12px; padding: 8px 13px; border: 1px solid rgba(106,73,184,.28); border-radius: 999px; background: linear-gradient(135deg, rgba(245,241,255,.96), rgba(234,249,249,.92)); color: #56369a; font-size: .88rem; font-weight: 700; text-decoration: none; }
+.guide-tester-copy-link:hover { border-color: rgba(106,73,184,.5); background: #fff; }
 .guide-tester-footer { margin-top: 42px; padding-top: 22px; border-top: 1px solid rgba(106,73,184,.18); color: var(--text-muted); line-height: 1.6; font-size: .93rem; }
 @media (max-width: 760px) {
   .guide-tester-step-grid, .guide-tester-illustration-grid, .guide-tester-app-list { grid-template-columns: 1fr; }

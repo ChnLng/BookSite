@@ -107,8 +107,8 @@ def header(kicker, title, subtitle):
     para(kicker.upper(), M, 96, CW, size=9.5, color=PURPLE, bold=True)
     end = para(title, M, 118, CW, size=24.5, bold=True, leading=31)
     para(subtitle, M, end + 13, CW, size=11.5, color=MUTED)
-    C.setFillColor(MUTED); C.setFont('Noto', 8); C.drawString(M, 29, 'visdar.fr  /  Android  /  guide invité')
-    C.drawRightString(W - M, 29, f'{PAGE:02d} / {TOTAL:02d}')
+    C.setFillColor(MUTED); C.setFont('Noto', 8); C.drawString(M, 29, 'visdar.fr  •  Android  •  guide invité')
+    C.drawRightString(W - M, 29, f'{PAGE:02d} · {TOTAL:02d}')
 
 def note(title, text, top, warning=False, height=88):
     fill, stroke, fg = (AMBER_BG, HexColor('#eed7ad'), AMBER) if warning else (LILAC, LINE, PURPLE)
@@ -129,7 +129,7 @@ def image_block(path, top, width, caption, maximum=390):
 def end_page():
     C.showPage()
 
-header('Avant le téléchargement', 'Bienvenue : votre invitation de test est gratuite', 'Pendant la phase de test, toute application Android Visd AR proposée au test est gratuite pour les testeurs invités, même si Google Play affiche un prix.')
+header('Avant le téléchargement', 'Bienvenue', 'Pendant la phase de test, toute application Android Visd AR proposée au test est <i>gratuite</i> pour les testeurs invités, même si Google Play affiche un prix.')
 note('Accès à la phase de test', 'Le prix affiché sert uniquement à ouvrir le parcours Google Play : aucun montant ne sera débité. Si vous n’avez pas encore communiqué l’adresse Gmail de votre compte Play Store à Visd AR, écrivez à visdar@outlook.fr. Votre adresse reste confidentielle.', 252, height=116)
 box(M, 402, CW, 162, white, LINE)
 para('1. Compte Google', M + 20, 422, CW - 40, size=13, bold=True)
@@ -139,33 +139,32 @@ para('Cliquez sur le prix ou sur « Buy » : il sert seulement à ouvrir Google 
 note('Confidentialité', 'Votre adresse Gmail sert uniquement à gérer votre accès au test. Pour quitter le test, demandez son retrait à visdar@outlook.fr. Ne transmettez jamais un mot de passe, un code de sécurité ou des données bancaires.', 604, height=105)
 end_page()
 
-header('Étape 1 / appareil', 'Choisissez le téléphone à installer', 'Après avoir cliqué sur le prix, choisissez le téléphone ou la tablette cible. Les noms et les dernières dates d’utilisation ont été masqués dans ces captures.')
+header('Étape 1 · appareil', 'Choisissez le téléphone à installer', 'Après avoir cliqué sur le prix, choisissez le téléphone ou la tablette cible. Les noms et les dernières dates d’utilisation ont été masqués dans ces captures.')
 bottom = image_block(output_image('device-choice'), 230, 475, '1. Ouvrez le menu « Choose a device » et sélectionnez votre appareil Android.', 230)
 bottom = image_block(output_image('device-alternative'), bottom + 14, 365, '2. Si plusieurs appareils sont proposés, choisissez celui sur lequel vous souhaitez installer l’application.', 185)
 para('Cliquez ensuite sur <b>Install</b>. Depuis un ordinateur, cette action lance le téléchargement sur le téléphone choisi.', M, bottom + 14, CW, size=10.3)
 end_page()
 
-header('Étape 2 / conditions', 'Acceptez les conditions Google Play', 'Google Play peut afficher une fenêtre « Review and agree ». Elle dépend du compte et peut ne s’afficher qu’une seule fois.')
+header('Étape 2 · conditions', 'Acceptez les conditions Google Play', 'Google Play peut afficher une fenêtre « Review and agree ». Elle dépend du compte et peut ne s’afficher qu’une seule fois.')
 bottom = image_block(output_image('agree'), 245, 505, '3. Lisez les conditions, puis cliquez sur « Agree » pour poursuivre le téléchargement de test.', 300)
 note('Le mot « Agree » n’est pas un achat', 'Il sert à accepter les conditions de fourniture numérique de Google Play. Cette étape ne remplace pas le choix obligatoire de la carte de test à la page suivante.', bottom + 28, height=92)
 end_page()
 
-header('Étape 3 / paiement de test', 'Choisissez la carte virtuelle et cliquez sur Buy', 'Dans la fenêtre de paiement, vérifiez d’abord le message « This is a test order, you will not be charged ».')
+header('Étape 3 · paiement de test', 'Choisissez la carte virtuelle et cliquez sur Buy', 'Dans la fenêtre de paiement, vérifiez d’abord le message « This is a test order, you will not be charged ».')
 bottom = image_block(output_image('test-card-buy'), 300, 435, '4. Le moyen de paiement doit être « Test card, always approves ». 5. Cliquez sur « Buy » pour confirmer la commande de test.', 300)
 note('Ne choisissez jamais votre carte', 'Si le moyen affiché est une carte bancaire, PayPal ou tout autre paiement personnel, annulez et revenez au choix de paiement. Aucune carte réelle n’est nécessaire.', bottom + 16, warning=True, height=92)
 end_page()
 
-header('Étape 4 / sécurité Google', 'Validez la double authentification si elle apparaît', 'Selon la sécurité de votre compte Google, une vérification supplémentaire peut être demandée avant que le téléchargement démarre.')
+header('Étape 4 · sécurité Google', 'Validez la double authentification si elle apparaît', 'Selon la sécurité de votre compte Google, une vérification supplémentaire peut être demandée avant que le téléchargement démarre.')
 bottom = image_block(output_image('two-factor'), 250, 375, '6. Suivez la méthode proposée par Google, par exemple un QR code ou une clé d’accès, puis cliquez sur « Continuer ».')
 note('Après la vérification', 'Google Play lance l’installation sur l’appareil choisi. Pour toute question, écrivez à visdar@outlook.fr. N’envoyez jamais de mot de passe, de code de sécurité ou de données bancaires.', bottom + 20, height=104)
 end_page()
 
-header('Annexe / liens du testeur', 'Applications Visd AR à tester', 'Chaque titre ouvre directement sa fiche Google Play. Le lien du dictionnaire contextuel sera ajouté dès sa publication.')
+header('Annexe · liens du testeur', 'Applications Visd AR à tester', 'Chaque bouton ouvre directement sa fiche Google Play.')
 apps = [
     ('Calendrier lunisolaire et signes astrologiques chinois', 'com.visdar.calendrier', 'https://play.google.com/store/apps/details?id=com.visdar.calendrier'),
     ('Reconnaissance des sinogrammes manuscrits', 'com.visdar.manuscrits', 'https://play.google.com/store/apps/details?id=com.visdar.manuscrits'),
     ('Pays en chinois : capitale, heure, monnaie, indicatif téléphonique', 'com.visdar.heures', 'https://play.google.com/store/apps/details?id=com.visdar.heures'),
-    ('Dictionnaire contextuel français-chinois', 'Lien Google Play à venir', None),
     ('Grands nombres en chinois', 'com.visdar.chiffres', 'https://play.google.com/store/apps/details?id=com.visdar.chiffres'),
     ('Roue des couleurs en chinois', 'com.visdar.couleurs', 'https://play.google.com/store/apps/details?id=com.visdar.couleurs'),
     ('Clés des sinogrammes (avec exemples)', 'com.visdar.cles', 'https://play.google.com/store/apps/details?id=com.visdar.cles'),
@@ -175,15 +174,15 @@ apps = [
     ('Locutions idiomatiques Chengyu', 'com.visdar.expressions', 'https://play.google.com/store/apps/details?id=com.visdar.expressions'),
     ('Liens de parenté', 'com.visdar.famille', 'https://play.google.com/store/apps/details?id=com.visdar.famille'),
 ]
-top = 235
+top = 224
 for title, package, url in apps:
-    box(M, top, CW, 34, white, LINE, 10)
-    title_text = f'<link href="{escape(url)}" color="#6a49b8"><u>{escape(title)}</u></link>' if url else f'<b>{escape(title)}</b>'
-    para(title_text, M + 12, top + 5, CW - 24, size=8.9, color=PURPLE if url else INK)
-    sub_text = f'<link href="{escape(url)}" color="#6a49b8"><u>{escape(package)}</u></link>' if url else f'<font color="#805213">{escape(package)}</font>'
-    para(sub_text, M + 12, top + 20, CW - 24, size=7.2, color=MUTED)
-    top += 39
-note('Lien en attente', 'Le lien Google Play de « Dictionnaire contextuel français-chinois » sera ajouté dès qu’il sera disponible.', 722, height=66)
+    box(M, top, CW, 46, HexColor('#fbfaff'), LINE, 12)
+    title_text = f'<link href="{escape(url)}" color="#56369a"><b>{escape(title)}</b></link>'
+    para(title_text, M + 16, top + 7, CW - 32, size=8.5, color=PURPLE)
+    url_text = f'<link href="{escape(url)}" color="#6a49b8"><u>{escape(url)}</u></link>'
+    para(url_text, M + 16, top + 24, CW - 32, size=6.45, color=MUTED)
+    C.linkURL(url, (M, H - top - 46, M + CW, H - top), relative=0)
+    top += 50
 end_page()
 
 assert PAGE == TOTAL

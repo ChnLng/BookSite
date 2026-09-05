@@ -12,7 +12,6 @@ const apps = [
   ["Calendrier lunisolaire et signes astrologiques chinois", "com.visdar.calendrier", "https://play.google.com/store/apps/details?id=com.visdar.calendrier"],
   ["Reconnaissance des sinogrammes manuscrits", "com.visdar.manuscrits", "https://play.google.com/store/apps/details?id=com.visdar.manuscrits"],
   ["Pays en chinois : capitale, heure, monnaie, indicatif téléphonique", "com.visdar.heures", "https://play.google.com/store/apps/details?id=com.visdar.heures"],
-  ["Dictionnaire contextuel français-chinois", "Lien Google Play à venir", null],
   ["Grands nombres en chinois", "com.visdar.chiffres", "https://play.google.com/store/apps/details?id=com.visdar.chiffres"],
   ["Roue des couleurs en chinois", "com.visdar.couleurs", "https://play.google.com/store/apps/details?id=com.visdar.couleurs"],
   ["Clés des sinogrammes (avec exemples)", "com.visdar.cles", "https://play.google.com/store/apps/details?id=com.visdar.cles"],
@@ -71,8 +70,8 @@ export default function GuideTesterPage() {
             {apps.map(([title, packageName, url]) => (
               <article key={packageName}>
                 <h3>{url ? <a href={url} target="_blank" rel="noopener noreferrer">{title}</a> : title}</h3>
-                <p className={url ? "guide-tester-url" : "guide-tester-pending"}>{url || packageName}</p>
-                {url ? <a className="guide-tester-copy-link" href={url} target="_blank" rel="noopener noreferrer">Ouvrir Google Play</a> : null}
+                <p className="guide-tester-url">{url}</p>
+                <a className="guide-tester-copy-link" href={url} target="_blank" rel="noopener noreferrer">Ouvrir Google Play</a>
               </article>
             ))}
           </div>
