@@ -165,6 +165,7 @@ apps = [
     ('Calendrier lunisolaire et signes astrologiques chinois', 'com.visdar.calendrier', 'https://play.google.com/store/apps/details?id=com.visdar.calendrier'),
     ('Reconnaissance des sinogrammes manuscrits', 'com.visdar.manuscrits', 'https://play.google.com/store/apps/details?id=com.visdar.manuscrits'),
     ('Pays en chinois : capitale, heure, monnaie, indicatif téléphonique', 'com.visdar.heures', 'https://play.google.com/store/apps/details?id=com.visdar.heures'),
+    ('Dictionnaire contextuel français-chinois', 'com.visdar.contextes', 'https://play.google.com/store/apps/details?id=com.visdar.contextes'),
     ('Grands nombres en chinois', 'com.visdar.chiffres', 'https://play.google.com/store/apps/details?id=com.visdar.chiffres'),
     ('Roue des couleurs en chinois', 'com.visdar.couleurs', 'https://play.google.com/store/apps/details?id=com.visdar.couleurs'),
     ('Clés des sinogrammes (avec exemples)', 'com.visdar.cles', 'https://play.google.com/store/apps/details?id=com.visdar.cles'),
@@ -174,15 +175,17 @@ apps = [
     ('Locutions idiomatiques Chengyu', 'com.visdar.expressions', 'https://play.google.com/store/apps/details?id=com.visdar.expressions'),
     ('Liens de parenté', 'com.visdar.famille', 'https://play.google.com/store/apps/details?id=com.visdar.famille'),
 ]
-top = 224
+top = 220
 for title, package, url in apps:
-    box(M, top, CW, 46, HexColor('#fbfaff'), LINE, 12)
-    title_text = f'<link href="{escape(url)}" color="#56369a"><b>{escape(title)}</b></link>'
-    para(title_text, M + 16, top + 7, CW - 32, size=8.5, color=PURPLE)
+    box(M, top, CW, 44, white, LINE, 12)
+    C.setFillColor(PURPLE)
+    C.roundRect(M, H - top - 44, 4, 44, 2, fill=1, stroke=0)
+    title_text = f'<link href="{escape(url)}" color="#252241"><b>{escape(title)}</b></link>'
+    para(title_text, M + 16, top + 5, CW - 32, size=10.2, color=INK)
     url_text = f'<link href="{escape(url)}" color="#6a49b8"><u>{escape(url)}</u></link>'
-    para(url_text, M + 16, top + 24, CW - 32, size=6.45, color=MUTED)
-    C.linkURL(url, (M, H - top - 46, M + CW, H - top), relative=0)
-    top += 50
+    para(url_text, M + 16, top + 25, CW - 32, size=6.2, color=MUTED)
+    C.linkURL(url, (M, H - top - 44, M + CW, H - top), relative=0)
+    top += 47
 end_page()
 
 assert PAGE == TOTAL

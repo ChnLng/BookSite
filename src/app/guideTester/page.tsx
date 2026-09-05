@@ -12,6 +12,7 @@ const apps = [
   ["Calendrier lunisolaire et signes astrologiques chinois", "com.visdar.calendrier", "https://play.google.com/store/apps/details?id=com.visdar.calendrier"],
   ["Reconnaissance des sinogrammes manuscrits", "com.visdar.manuscrits", "https://play.google.com/store/apps/details?id=com.visdar.manuscrits"],
   ["Pays en chinois : capitale, heure, monnaie, indicatif téléphonique", "com.visdar.heures", "https://play.google.com/store/apps/details?id=com.visdar.heures"],
+  ["Dictionnaire contextuel français-chinois", "com.visdar.contextes", "https://play.google.com/store/apps/details?id=com.visdar.contextes"],
   ["Grands nombres en chinois", "com.visdar.chiffres", "https://play.google.com/store/apps/details?id=com.visdar.chiffres"],
   ["Roue des couleurs en chinois", "com.visdar.couleurs", "https://play.google.com/store/apps/details?id=com.visdar.couleurs"],
   ["Clés des sinogrammes (avec exemples)", "com.visdar.cles", "https://play.google.com/store/apps/details?id=com.visdar.cles"],
