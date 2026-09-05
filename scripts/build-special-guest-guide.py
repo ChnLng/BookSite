@@ -206,16 +206,16 @@ for title, package, url in apps:
     C.setFillColor(HexColor('#ddd6eb'))
     C.roundRect(M + 1, H - top - 50, CW, 48, 12, fill=1, stroke=0)
     C.restoreState()
-    box(M, top, CW, 48, HexColor('#ffffff'), HexColor('#e8e1f5'), 12)
+    box(M, top, CW, 48, HexColor('#fcfaff'), HexColor('#dcd0f0'), 12)
     C.saveState()
     C.setFillAlpha(.65)
     C.setFillColor(HexColor('#a995df'))
     C.roundRect(M, H - top - 48, 2, 48, 1, fill=1, stroke=0)
     C.restoreState()
     title_text = f'<link href="{escape(url)}" color="#252241"><b>{escape(title)}</b></link>'
-    para(title_text, M + 18, top + 7, CW - 36, size=10.8, color=INK)
+    para(title_text, M + 18, top + 6, CW - 36, size=11.2, color=INK)
     url_text = f'<link href="{escape(url)}" color="#6a49b8"><u>{escape(url)}</u></link>'
-    para(url_text, M + 18, top + 28, CW - 36, size=7.5, color=MUTED)
+    para(url_text, M + 18, top + 28, CW - 36, size=8.5, color=MUTED)
     C.linkURL(url, (M, H - top - 48, M + CW, H - top), relative=0)
     top += 50
 end_page()
