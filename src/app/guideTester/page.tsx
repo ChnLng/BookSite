@@ -33,7 +33,8 @@ export default function GuideTesterPage() {
           <h1>Guide d’installation Android</h1>
           <p className="lead">Bienvenue dans le programme Tester spécial invité. Pendant la phase de test, vous pouvez obtenir gratuitement toute application Android Visd AR proposée au test, même si sa fiche Google Play affiche un prix.</p>
           <p>Le prix affiché sert uniquement à ouvrir le parcours Google Play : avec la carte de test, aucun montant ne sera débité.</p>
-          <a className="pill-button" href="/guides/guide-tester-special-invite.pdf" target="_blank" rel="noopener noreferrer">Télécharger le PDF illustré</a>
+          <p className="guide-tester-warning"><strong>Google Play Pass : choisissez « Non merci ».</strong> Cette offre d’abonnement payant de Google est facultative et distincte du test Visd AR. Si elle apparaît après la carte de test, cliquez sur le bouton en bas à gauche du panneau, puis revenez installer l’application.</p>
+          <a className="pill-button" href="/guides/guide-tester-special-invite.pdf?v=play-pass" target="_blank" rel="noopener noreferrer">Télécharger le PDF illustré</a>
         </div>
 
         <section className="guide-tester-notice" aria-labelledby="confidentialite-title">
@@ -59,6 +60,7 @@ export default function GuideTesterPage() {
             <figure><Image src="/guides/tester-device-alternative.png" alt="Second exemple anonymisé de choix d’appareil Android" width={963} height={713} /><figcaption><strong>2. S’il y en a plusieurs.</strong> Sélectionnez le téléphone voulu, puis cliquez sur « Install ».</figcaption></figure>
             <figure><Image src="/guides/tester-agree.png" alt="Fenêtre Google Play Review and agree" width={1128} height={542} /><figcaption><strong>3. Conditions.</strong> Cliquez sur « Agree » lorsque cet écran apparaît.</figcaption></figure>
             <figure><Image src="/guides/tester-test-card-buy.png" alt="Commande de test Google Play avec Test card, always approves et bouton Buy" width={913} height={635} /><figcaption><strong>4 et 5. Paiement.</strong> La seule carte acceptée ici est « Test card, always approves », puis cliquez sur « Buy ».</figcaption></figure>
+            <figure className="guide-play-pass"><div className="guide-play-pass-image"><Image src="/guides/tester-play-pass.jpg" alt="Offre Google Play Pass : refuser avec le bouton Non merci en bas à gauche du panneau" width={1080} height={2400} /><span aria-hidden="true" /></div><figcaption><strong>Après « Buy », si Google Play Pass apparaît : choisissez « Non merci ».</strong> Le bouton encadré en vert, en bas à gauche du panneau, refuse cet abonnement payant facultatif. Il est distinct du test Visd AR. Revenez ensuite à la fiche de l’application et cliquez sur « Installer » si nécessaire. Ne cliquez pas sur « Rembourser » dans la fiche de l’application.</figcaption></figure>
             <figure><Image src="/guides/tester-two-factor.png" alt="Exemple de double authentification Google" width={598} height={487} /><figcaption><strong>6. Vérification Google.</strong> Une double authentification peut être demandée avant le téléchargement.</figcaption></figure>
           </div>
           <p className="guide-tester-warning"><strong>Ne choisissez jamais une carte bancaire personnelle.</strong> Si le moyen de paiement n’est pas « Test card, always approves », ou si Google demande un montant réel, annulez et contactez <a href="mailto:visdar@outlook.fr">visdar@outlook.fr</a>.</p>

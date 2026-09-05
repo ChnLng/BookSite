@@ -5065,7 +5065,11 @@ button,
 .guide-tester-illustration-grid figure { margin: 0; padding: 12px; border: 1px solid rgba(106,73,184,.16); border-radius: 20px; background: rgba(255,255,255,.75); }
 .guide-tester-illustration-grid img { width: 100%; height: 220px; object-fit: contain; border-radius: 12px; background: #f3f3f4; }
 .guide-tester-illustration-grid figcaption { padding: 12px 4px 2px; color: var(--text-muted); line-height: 1.55; font-size: .93rem; }
-.guide-tester-warning { margin: 18px 0 0; padding: 16px 20px; border-radius: 16px; background: #fff6e5; color: #805213; }
+.guide-tester-warning { margin: 18px 0 16px; padding: 16px 20px; border-radius: 16px; background: #fff6e5; color: #805213; }
+.guide-play-pass { grid-column: 1 / -1; }
+.guide-play-pass-image { position: relative; width: min(100%, 320px); margin: auto; }
+.guide-tester-illustration-grid .guide-play-pass-image img { width: 100%; height: auto; max-height: none; }
+.guide-play-pass-image span { position: absolute; left: 6.3%; top: 93.3%; width: 42%; height: 5.2%; border: 3px solid #147c67; border-radius: 12px; pointer-events: none; }
 .guide-tester-app-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .guide-tester-app-list article { padding: 18px 20px; border-radius: 18px; border: 1px solid rgba(106,73,184,.16); background: rgba(255,255,255,.8); min-width: 0; }
 .guide-tester-app-list h3 { margin: 0 0 8px; font-size: 1.02rem; }

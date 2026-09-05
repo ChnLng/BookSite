@@ -23,7 +23,7 @@ CW = W - 2 * M
 INK, MUTED, PURPLE = HexColor('#252241'), HexColor('#68647c'), HexColor('#6a49b8')
 LILAC, LINE, GREEN = HexColor('#f1edfc'), HexColor('#ddd4ef'), HexColor('#147c67')
 AMBER, AMBER_BG = HexColor('#805213'), HexColor('#fff6e5')
-TOTAL, PAGE = 6, 0
+TOTAL, PAGE = 7, 0
 
 SOURCES = {
     'device_a': Path('/Users/ding/Desktop/截屏2026-09-05 01.18.19.png'),
@@ -130,7 +130,8 @@ def end_page():
     C.showPage()
 
 header('Avant le téléchargement', 'Bienvenue', 'Pendant la phase de test, toute application Android Visd AR proposée au test est <i>gratuite</i> pour les testeurs invités, même si Google Play affiche un prix.')
-note('Accès à la phase de test', 'Le prix affiché sert uniquement à ouvrir le parcours Google Play : aucun montant ne sera débité. Si vous n’avez pas encore communiqué l’adresse Gmail de votre compte Play Store à Visd AR, écrivez à visdar@outlook.fr. Votre adresse reste confidentielle.', 252, height=116)
+note('Google Play Pass : choisissez « Non merci »', 'Cette offre d’abonnement payant de Google est facultative et distincte du test Visd AR. Si elle apparaît après la carte de test, refusez-la avec le bouton en bas à gauche, puis revenez installer l’application.', 202, warning=True, height=90)
+note('Accès à la phase de test', 'Pour activer votre accès, communiquez à visdar@outlook.fr l’adresse du compte Google utilisé dans le Play Store. La commande avec la carte de test ne débite aucun montant.', 305, height=83)
 box(M, 402, CW, 162, white, LINE)
 para('1. Compte Google', M + 20, 422, CW - 40, size=13, bold=True)
 para('Vérifiez que le bon compte Gmail est actif dans le Play Store. Sur ordinateur, vérifiez l’avatar Google en haut de la page ; sur téléphone, ouvrez le Play Store avec ce même compte.', M + 20, 450, CW - 40, size=10.7)
@@ -153,6 +154,13 @@ end_page()
 header('Étape 3 · paiement de test', 'Choisissez la carte virtuelle et cliquez sur Buy', 'Dans la fenêtre de paiement, vérifiez d’abord le message « This is a test order, you will not be charged ».')
 bottom = image_block(output_image('test-card-buy'), 300, 435, '4. Le moyen de paiement doit être « Test card, always approves ». 5. Cliquez sur « Buy » pour confirmer la commande de test.', 300)
 note('Ne choisissez jamais votre carte', 'Si le moyen affiché est une carte bancaire, PayPal ou tout autre paiement personnel, annulez et revenez au choix de paiement. Aucune carte réelle n’est nécessaire.', bottom + 16, warning=True, height=92)
+end_page()
+
+header('Après la carte de test · offre facultative', 'Google Play Pass : refusez l’offre', 'Ce panneau propose un abonnement Google distinct de l’application Visd AR. Il n’est pas nécessaire pour installer votre application de test.')
+image_block(PUBLIC / 'tester-play-pass.jpg', 220, 205, 'Bouton en bas à gauche : « Non merci » (encadré en vert).', 456)
+C.setStrokeColor(GREEN); C.setLineWidth(2.5)
+C.roundRect((W - 205) / 2 + 205 * .063, H - 220 - (205 * 2400 / 1080) * .985, 205 * .42, (205 * 2400 / 1080) * .052, 5, fill=0, stroke=1)
+note('Refuser, puis continuer l’installation', 'Cliquez sur « Non merci », en bas à gauche du panneau Google Play Pass. Ne choisissez pas le bouton bleu de droite. Revenez à la fiche Visd AR et cliquez sur « Installer » si nécessaire. Ne cliquez pas sur « Rembourser » dans la fiche de l’application.', 716, warning=True, height=87)
 end_page()
 
 header('Étape 4 · sécurité Google', 'Validez la double authentification si elle apparaît', 'Selon la sécurité de votre compte Google, une vérification supplémentaire peut être demandée avant que le téléchargement démarre.')
