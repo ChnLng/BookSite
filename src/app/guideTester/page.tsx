@@ -34,7 +34,9 @@ export default function GuideTesterPage() {
       <article className="panel glass guide-tester-content">
         <div className="guide-tester-hero">
           <span className="badge">Tester spécial invité</span>
-          <h1>Guide d’installation Android</h1>
+          <h1>Pack Rentrée 2026</h1>
+          <p className="guide-tester-subtitle">Applications Android de la langue et de la culture chinoises</p>
+          <p className="guide-tester-guide-label">Guide d’installation Android</p>
           <p className="lead">Bienvenue dans le programme Tester spécial invité. Pendant la phase de test, vous pouvez obtenir gratuitement toute application Android Visd AR proposée au test, même si sa fiche Google Play affiche un prix.</p>
           <p>Le prix affiché sert uniquement à ouvrir le parcours Google Play : avec la carte de test, aucun montant ne sera débité.</p>
           <p className="guide-tester-warning"><strong>Google Play Pass : choisissez « Non merci ».</strong> Cette offre d’abonnement payant de Google est facultative et distincte du test Visd AR. Si elle apparaît après la carte de test, cliquez sur le bouton en bas à gauche du panneau, puis revenez installer l’application.</p>
