@@ -23,7 +23,7 @@ CW = W - 2 * M
 INK, MUTED, PURPLE = HexColor('#252241'), HexColor('#68647c'), HexColor('#6a49b8')
 LILAC, LINE, GREEN = HexColor('#f1edfc'), HexColor('#ddd4ef'), HexColor('#147c67')
 AMBER, AMBER_BG = HexColor('#805213'), HexColor('#fff6e5')
-TOTAL, PAGE = 7, 0
+TOTAL, PAGE = 8, 0
 
 SOURCES = {
     'device_a': Path('/Users/ding/Desktop/截屏2026-09-05 01.18.19.png'),
@@ -31,6 +31,7 @@ SOURCES = {
     'agree': Path('/Users/ding/Desktop/截屏2026-09-05 01.18.45.png'),
     'checkout': Path('/Users/ding/Desktop/截屏2026-09-05 01.18.53.png'),
     'verify': Path('/Users/ding/Desktop/截屏2026-09-05 01.19.01.png'),
+    'receipt': Path('/Users/ding/Desktop/截屏2026-09-05 09.09.46.png'),
 }
 
 def image_font(size=22):
@@ -74,6 +75,13 @@ def prepare_images():
     verify = Image.open(SOURCES['verify']).convert('RGB')
     draw = ImageDraw.Draw(verify); mark(draw, (465, 330, 525, 366), '6')
     verify.save(output_image('two-factor'), optimize=True)
+
+    receipt = Image.open(SOURCES['receipt']).convert('RGB')
+    draw = ImageDraw.Draw(receipt)
+    draw.rounded_rectangle((530, 214, 910, 270), radius=8, fill='white')
+    CIRCLE_RED = '#d92332'
+    draw.ellipse((705, 413, 920, 474), outline=CIRCLE_RED, width=8)
+    receipt.save(output_image('test-receipt'), optimize=True)
 
 prepare_images()
 
@@ -154,6 +162,11 @@ end_page()
 header('Étape 3 · paiement de test', 'Choisissez la carte virtuelle et cliquez sur Buy', 'Dans la fenêtre de paiement, vérifiez d’abord le message « This is a test order, you will not be charged ».')
 bottom = image_block(output_image('test-card-buy'), 300, 435, '4. Le moyen de paiement doit être « Test card, always approves ». 5. Cliquez sur « Buy » pour confirmer la commande de test.', 300)
 note('Ne choisissez jamais votre carte', 'Si le moyen affiché est une carte bancaire, PayPal ou tout autre paiement personnel, annulez et revenez au choix de paiement. Aucune carte réelle n’est nécessaire.', bottom + 16, warning=True, height=92)
+end_page()
+
+header('Après le paiement · confirmation', 'La commande de test gratuite est validée', 'Après une commande avec la carte de test, Google Play peut envoyer cet e-mail de confirmation. Il indique que le test a été accepté : aucun paiement réel ni débit bancaire n’a été effectué.')
+bottom = image_block(output_image('test-receipt'), 220, 520, 'La ligne « Test card, always approves » est entourée en rouge. Les informations personnelles ont été masquées.', 390)
+note('Ce message signifie : test gratuit réussi', 'La ligne « Test card, always approves » confirme l’utilisation de la carte de test. Le montant affiché dans cet e-mail correspond à une commande de test et ne constitue pas un paiement réel. Si vous voyez une carte bancaire personnelle ou un montant réel à confirmer, arrêtez-vous et contactez visdar@outlook.fr.', bottom + 22, warning=True, height=96)
 end_page()
 
 header('Après la carte de test · offre facultative', 'Google Play Pass : refusez l’offre', 'Ce panneau propose un abonnement Google distinct de l’application Visd AR. Il n’est pas nécessaire pour installer votre application de test.')
