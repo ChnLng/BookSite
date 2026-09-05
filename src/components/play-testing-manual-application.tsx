@@ -63,13 +63,12 @@ export function PlayTestingManualApplication({ initialPackageName }: { initialPa
     });
   };
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
+  const sendRequest = async (openEmailCopy: boolean) => {
     if (!user || !session?.access_token) {
       setAuthOpen(true);
-      return;
+      return false;
     }
-    if (!selectedApps.length || !playEmail.trim() || !consent) return;
+    if (!selectedApps.length || !playEmail.trim() || !consent) return false;
 
     setBusy(true);
     setMessage("");
@@ -89,16 +88,26 @@ export function PlayTestingManualApplication({ initialPackageName }: { initialPa
       const result = await response.json().catch(() => null) as { ok?: boolean; message?: string; emailDelivery?: string | null } | null;
       if (!response.ok || !result?.ok) {
         setMessage(result?.message || "Impossible d’envoyer votre demande pour le moment. Réessayez plus tard ou contactez Visd AR.");
-        return;
+        if (openEmailCopy) window.location.href = manualEmailHref;
+        return false;
       }
       setSubmitted(true);
       setManualEmailCopyNeeded(!result.emailDelivery);
       setMessage(result.message || "Votre demande gratuite a bien été envoyée à Visd AR.");
+      if (openEmailCopy) window.location.href = manualEmailHref;
+      return true;
     } catch {
       setMessage("Connexion interrompue. Réessayez dans un instant ou contactez Visd AR.");
+      if (openEmailCopy) window.location.href = manualEmailHref;
+      return false;
     } finally {
       setBusy(false);
     }
+  };
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    await sendRequest(false);
   };
 
   return (
@@ -169,7 +178,10 @@ export function PlayTestingManualApplication({ initialPackageName }: { initialPa
             {submitted ? <>
               <p className="tiny muted">Votre demande est enregistrée. Sans réponse après 48 heures, ou pour toute question, contactez <a href={`mailto:${adminEmail}`}>{adminEmail}</a>.</p>
               {manualEmailCopyNeeded ? <div className="play-testing-email-backup"><strong>Copie e-mail recommandée</strong><p>Votre demande est bien dans le suivi Visd AR, mais le serveur ne peut pas encore confirmer l’envoi de sa notification e-mail.</p><a className="pill-button" href={manualEmailHref}>Envoyer une copie à {adminEmail}</a></div> : null}
-            </> : user ? <button className="cta-button" type="submit" disabled={busy || !selectedApps.length || !playEmail.trim() || !consent}>{busy ? "Envoi de la demande…" : "Envoyer ma demande gratuite"}</button> : <button className="cta-button" type="button" onClick={() => setAuthOpen(true)}>Me connecter pour envoyer la demande</button>}
+            </> : user ? <>
+              <button className="cta-button" type="submit" disabled={busy || !selectedApps.length || !playEmail.trim() || !consent}>{busy ? "Envoi de la demande…" : "Envoyer ma demande gratuite"}</button>
+              {selectedApps.length && playEmail.trim() && consent ? <div className="play-testing-email-backup"><strong>Envoi direct par e-mail + sauvegarde</strong><p>La demande est d’abord enregistrée dans le suivi Supabase de Visd AR, puis votre messagerie s’ouvre avec le même message déjà rempli. Cliquez ensuite sur « Envoyer » : la copie part directement à <a href={`mailto:${adminEmail}`}>{adminEmail}</a>, indépendamment de la notification du serveur.</p><button className="pill-button" type="button" disabled={busy} onClick={() => void sendRequest(true)}>Enregistrer puis envoyer à Visd AR</button></div> : null}
+            </> : <button className="cta-button" type="button" onClick={() => setAuthOpen(true)}>Me connecter pour envoyer la demande</button>}
             {!selectedApps.length ? <p className="play-testing-warning">Choisissez au moins une application avant d’envoyer votre demande.</p> : null}
             <p className="tiny muted">Vous n’avez rien reçu après 48 heures ou vous avez une question ? <a href={`mailto:${adminEmail}`}>{adminEmail}</a></p>
           </section>
