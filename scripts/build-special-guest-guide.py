@@ -175,17 +175,17 @@ apps = [
     ('Locutions idiomatiques Chengyu', 'com.visdar.expressions', 'https://play.google.com/store/apps/details?id=com.visdar.expressions'),
     ('Liens de parenté', 'com.visdar.famille', 'https://play.google.com/store/apps/details?id=com.visdar.famille'),
 ]
-top = 220
+top = 205
 for title, package, url in apps:
-    box(M, top, CW, 44, white, LINE, 12)
+    box(M, top, CW, 48, HexColor('#f9f7ff'), LINE, 12)
     C.setFillColor(PURPLE)
-    C.roundRect(M, H - top - 44, 4, 44, 2, fill=1, stroke=0)
+    C.roundRect(M, H - top - 48, 4, 48, 2, fill=1, stroke=0)
     title_text = f'<link href="{escape(url)}" color="#252241"><b>{escape(title)}</b></link>'
-    para(title_text, M + 16, top + 5, CW - 32, size=10.2, color=INK)
+    para(title_text, M + 18, top + 7, CW - 36, size=10.8, color=INK)
     url_text = f'<link href="{escape(url)}" color="#6a49b8"><u>{escape(url)}</u></link>'
-    para(url_text, M + 16, top + 25, CW - 32, size=6.2, color=MUTED)
-    C.linkURL(url, (M, H - top - 44, M + CW, H - top), relative=0)
-    top += 47
+    para(url_text, M + 18, top + 28, CW - 36, size=5.85, color=MUTED)
+    C.linkURL(url, (M, H - top - 48, M + CW, H - top), relative=0)
+    top += 50
 end_page()
 
 assert PAGE == TOTAL
