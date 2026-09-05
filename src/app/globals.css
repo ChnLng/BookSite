@@ -465,6 +465,14 @@ button,
   text-align: center;
 }
 
+.catalogue-testing-button {
+  padding-inline: 7px;
+  font-size: 0.78rem;
+  line-height: 1.16;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+
 .catalogue-more-row {
   display: flex;
   justify-content: center;

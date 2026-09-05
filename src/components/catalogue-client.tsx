@@ -137,7 +137,7 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
                       : <strong>{book.priceEur.toFixed(2)} EUR</strong>}
                   </div>
                   <div className="catalogue-card-actions">
-                    <button className="cta-button catalogue-compact-button" type="button" onClick={() => void handleBookCheckout(book)}>
+                    <button className={`cta-button catalogue-compact-button${book.kind === "resource" && getPlayTestingApp(book.id) ? " catalogue-testing-button" : ""}`} type="button" onClick={() => void handleBookCheckout(book)}>
                       {book.kind === "resource" && getPlayTestingApp(book.id) ? "Tester gratuitement" : payingBookId === book.id ? "Paiement..." : "Acheter"}
                     </button>
                     {book.externalUrl && !(book.kind === "resource" && getPlayTestingApp(book.id)) ? <a className="pill-button catalogue-compact-button" href={book.externalUrl} target="_blank" rel="noreferrer">{book.kind === "book" ? "Amazon" : "Lien externe"}</a> : null}
