@@ -466,11 +466,13 @@ button,
 }
 
 .catalogue-testing-button {
-  padding-inline: 7px;
-  font-size: 0.78rem;
+  padding-inline: 5px;
+  font-size: 0.7rem;
   line-height: 1.16;
-  letter-spacing: -0.015em;
-  overflow-wrap: anywhere;
+  letter-spacing: -0.02em;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
 }
 
 .catalogue-more-row {
