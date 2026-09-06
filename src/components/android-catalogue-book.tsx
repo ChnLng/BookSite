@@ -22,6 +22,13 @@ function AppArt({ app }: { app: CatalogueApp }) {
       type === "heures" ? <div className="art-clock"><span>时<small>shí</small></span></div> :
       type === "famille" ? <div className="art-family"><span>祖</span><i /><div><span>父</span><span>母</span></div><i /><span>我</span></div> :
       type === "calendrier" ? <div className="art-calendar"><span>子 丑 寅 卯 辰 巳 午 未 申 酉 戌 亥</span><strong>月</strong><small>Le temps se découvre</small></div> :
+      type === "dialectes" ? <div className="art-map"><span>北</span><span>吴</span><span>粤</span><span>闽</span><i>34 régions</i></div> :
+      type === "classificateur" ? <div className="art-measure"><span>一</span><i>本</i><b>书</b><small>un · classificateur · nom</small></div> :
+      type === "contextes" ? <div className="art-context"><span>mot</span><i>词</i><b>contexte</b></div> :
+      type === "expressions" ? <div className="art-chengyu"><span>画</span><span>龙</span><span>点</span><span>睛</span><small>chéngyǔ</small></div> :
+      type === "temps" ? <div className="art-timeline"><span>昨</span><i>了</i><b>今</b><i>在</i><span>明</span><small>passé · présent · avenir</small></div> :
+      type === "chiffres" ? <div className="art-numbers"><span>一</span><b>十</b><i>万</i><em>亿</em><small>1 · 10 · 10 000 · 100 000 000</small></div> :
+      type === "manuscrits" ? <div className="art-handwriting"><span>永</span><i /><small>écrire · reconnaître · apprendre</small></div> :
       <div className="art-character"><span>汉</span></div>}
     <span className="art-signature">{app.chinese}<small>{app.pinyin}</small></span>
   </div>;
