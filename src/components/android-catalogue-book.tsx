@@ -35,6 +35,7 @@ export function AndroidCatalogueBook({ config, kind }: { config: CatalogueConfig
   const [ready, setReady] = useState(false);
   const [direction, setDirection] = useState("forward");
   const touch = useRef<{ x: number; y: number } | null>(null);
+  const shell = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const pages: { id: string; title: string; content: ReactNode; theme?: string }[] = [];
   const external = (url: string, label: string, primary = false, title?: string) => <a className={`collection-button${primary ? " primary" : ""}`} href={url} target="_blank" rel="noopener noreferrer" title={title}>{label}<ArrowUpRight size={16} /></a>;
@@ -42,7 +43,7 @@ export function AndroidCatalogueBook({ config, kind }: { config: CatalogueConfig
     const index = Math.max(0, Math.min(pages.length - 1, next));
     setDirection(index < page ? "backward" : "forward"); setPage(index);
     window.history.replaceState(null, "", `#${pages[index].id}`);
-    stage.current?.scrollIntoView({ block: "start", behavior: "instant" });
+    shell.current?.scrollIntoView({ block: "start", behavior: "instant" });
     stage.current?.focus({ preventScroll: true });
   };
   const jump = (index: number, children: ReactNode, className = "") => <a key={index} className={className} href={`#${pageIds[index]}`} onClick={event => { event.preventDefault(); go(index); }}>{children}</a>;
@@ -68,14 +69,14 @@ export function AndroidCatalogueBook({ config, kind }: { config: CatalogueConfig
     // Page ids are stable for a mounted edition.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return <main className={`collection-shell${ready ? " collection-ready" : ""}`}>
+  return <main ref={shell} className={`collection-shell${ready ? " collection-ready" : ""}`}>
     <CatalogueViewToggle />
     <header className="collection-header"><a href="/" className="collection-brand"><img src="/images/logo.png" width="42" height="42" alt=""/><span>Visd AR<small>Applications Android</small></span></a><span className="collection-edition">{business ? "Catalogue professionnel" : "Catalogue découverte"}</span><a className="collection-index-link" href="#sommaire" onClick={event => { event.preventDefault(); go(1); }}><BookOpen size={18}/>Sommaire</a></header>
     {business && config.pricingDraft ? <p className="collection-draft">Édition de travail · Proposition de tarifs et de conditions, à confirmer par devis.</p> : null}
+    <nav className="collection-controls" aria-label="Navigation entre les pages"><button onClick={() => go(page-1)} disabled={page===0} aria-label="Page précédente"><ArrowLeft size={19}/><span>Précédente</span></button><span aria-live="polite" aria-atomic="true">{page+1} / {pages.length}<small>{pages[page]?.title}</small></span><button onClick={() => go(page+1)} disabled={page===pages.length-1} aria-label="Page suivante"><span>Suivante</span><ArrowRight size={19}/></button></nav>
     <div className={`collection-stage ${direction}`} ref={stage} tabIndex={0} aria-label="Catalogue à feuilleter" onKeyDown={event => { if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return; if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); go(page + (event.key === "ArrowRight" ? 1 : -1)); } }} onTouchStart={event => { if ((event.target as HTMLElement).closest("a,button,input,textarea")) { touch.current=null; return; } const t=event.touches[0]; touch.current={x:t.clientX,y:t.clientY}; }} onTouchEnd={event => { if(!touch.current) return; const t=event.changedTouches[0],dx=t.clientX-touch.current.x,dy=t.clientY-touch.current.y; touch.current=null; if(Math.abs(dx)>70 && Math.abs(dx)>Math.abs(dy)*1.7) go(page+(dx<0?1:-1)); }}>
       {pages.map((entry, index) => <article key={entry.id} id={entry.id} className={`collection-page ${entry.theme || ""}${page === index ? " is-current" : ""}`} aria-label={`${index+1}. ${entry.title}`}><div className="collection-page-body">{entry.content}</div><div className="collection-page-footer"><span>Visd AR · {business ? "Collection professionnelle" : "Collection Android"}</span><span>{String(index+1).padStart(2,"0")}</span></div></article>)}
     </div>
-    <nav className="collection-controls" aria-label="Navigation entre les pages"><button onClick={() => go(page-1)} disabled={page===0} aria-label="Page précédente"><ArrowLeft size={19}/><span>Précédente</span></button><span aria-live="polite" aria-atomic="true">{page+1} / {pages.length}<small>{pages[page]?.title}</small></span><button onClick={() => go(page+1)} disabled={page===pages.length-1} aria-label="Page suivante"><span>Suivante</span><ArrowRight size={19}/></button></nav>
     <p className="collection-reading-hint">Feuilletez avec les flèches, le clavier ou un glissement horizontal sur téléphone.</p>
     <footer className="collection-site-footer"><span>Catalogue accessible par lien · Non référencé dans la navigation du site.</span><a href="mailto:visdar@outlook.fr"><Mail size={13}/>Contacter Visd AR</a></footer>
   </main>;
