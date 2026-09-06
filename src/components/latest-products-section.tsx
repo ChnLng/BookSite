@@ -25,7 +25,7 @@ export function LatestProductsSection({ products }: { products: LatestProduct[] 
               <span className="latest-product-kind">{product.kind === "book" ? "Livre bilingue" : "Outil numérique"}</span>
               <strong className="latest-product-title">{product.title}</strong>
               <span className="latest-product-price">{getPlayTestingApp(product.id)
-                ? <PlayTestingPrice priceEur={product.priceEur} />
+                ? <PlayTestingPrice priceEur={getPlayTestingApp(product.id)!.priceEur} />
                 : product.priceEur === 0 ? "Gratuit" : euro.format(product.priceEur)}</span>
             </span>
             <ArrowUpRight className="latest-product-arrow" size={15} aria-hidden="true" />

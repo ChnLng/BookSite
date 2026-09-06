@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { StructuredData } from "@/components/structured-data";
+import { getPlayTestingApp } from "@/lib/play-testing";
 import { loadPublicResourcesForSeo } from "@/lib/resources-public-server";
 
 type Props = { children: React.ReactNode; params: Promise<{ id: string }> };
@@ -33,6 +34,7 @@ export default async function ResourceSeoLayout({ children, params }: Props) {
   const { id } = await params;
   const resource = await getResource(id);
   if (!resource) return children;
+  const testingApp = getPlayTestingApp(resource.id) || getPlayTestingApp(resource.slug);
   const url = `https://www.visdar.fr/outils/${resource.slug}`;
   return <><StructuredData data={{
     "@context": "https://schema.org",
@@ -48,7 +50,7 @@ export default async function ResourceSeoLayout({ children, params }: Props) {
       "@type": "Offer",
       url,
       priceCurrency: "EUR",
-      price: resource.priceEur.toFixed(2),
+      price: (testingApp?.priceEur ?? resource.priceEur).toFixed(2),
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: "Visd AR", url: "https://www.visdar.fr" },

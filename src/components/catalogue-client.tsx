@@ -153,7 +153,7 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
                   <div className="split-line">
                     <span>Prix</span>
                     {book.kind === "resource" && getPlayTestingApp(book.id)
-                      ? <PlayTestingPrice priceEur={book.priceEur} />
+                      ? <PlayTestingPrice priceEur={getPlayTestingApp(book.id)!.priceEur} />
                       : <strong>{book.priceEur.toFixed(2)} EUR</strong>}
                   </div>
                   <div className="catalogue-card-actions">

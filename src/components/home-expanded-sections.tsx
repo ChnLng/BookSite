@@ -491,7 +491,7 @@ export function HomeExpandedSections({ initialResources }: { initialResources: R
                               <div className="home-resource-carousel-title-row">
                                 <strong>{resource.titleFr}</strong>
                                 <span>{getPlayTestingApp(resource.id)
-                                  ? <PlayTestingPrice priceEur={resource.priceEur} />
+                                  ? <PlayTestingPrice priceEur={getPlayTestingApp(resource.id)!.priceEur} />
                                   : `${resource.priceEur.toFixed(2)} EUR`}</span>
                               </div>
                               <p className="tiny">{homepageExcerpt(resource.homepageSummaryFr || resource.summaryFr) || "Ouvrez la fiche pour voir les détails et les options de téléchargement."}</p>

@@ -12,8 +12,9 @@ describe("closed testing selection", () => {
     expect(getPlayTestingApp("other-android-app")).toBeNull();
   });
   it("keeps testing opt-in separate from the store link for every listed test app", () => {
-    expect(playTestingApps).toHaveLength(11);
+    expect(playTestingApps).toHaveLength(12);
     for (const app of playTestingApps) {
+      expect(app.priceEur).toBeGreaterThan(0);
       expect(new URL(playTestingOptInUrl(app)).pathname).toBe(`/apps/testing/${app.packageName}`);
       expect(new URL(playTestingStoreUrl(app)).searchParams.get("id")).toBe(app.packageName);
     }

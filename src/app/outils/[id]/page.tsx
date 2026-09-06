@@ -159,8 +159,8 @@ export default function ResourceDetailPage() {
   const returnPromoCode = searchParams.get("promo") || "";
   const processedOrderRef = useRef<string | null>(null);
   const processedStripeSessionRef = useRef<string | null>(null);
-  const basePrice = resource?.priceEur ?? 0;
   const testingApp = getPlayTestingApp(resource?.id) || getPlayTestingApp(resource?.slug);
+  const basePrice = testingApp?.priceEur ?? resource?.priceEur ?? 0;
   const finalPrice = appliedPromo?.discountedPrice ?? resource?.priceEur ?? 0;
   const hasAppliedPromo = Boolean(appliedPromo);
   const promoUnlocksFreeAccess = hasAppliedPromo && finalPrice <= 0;
@@ -816,7 +816,7 @@ export default function ResourceDetailPage() {
                     </div>
                     <div className="book-detail-related-copy">
                       <strong>{item.titleFr}</strong>
-                      <span className="tiny">{getPlayTestingApp(item.id) || getPlayTestingApp(item.slug) ? <PlayTestingPrice priceEur={item.priceEur} /> : `${item.priceEur.toFixed(2)} EUR`}</span>
+                      <span className="tiny">{getPlayTestingApp(item.id) || getPlayTestingApp(item.slug) ? <PlayTestingPrice priceEur={(getPlayTestingApp(item.id) || getPlayTestingApp(item.slug))!.priceEur} /> : `${item.priceEur.toFixed(2)} EUR`}</span>
                     </div>
                   </Link>
                 ))
