@@ -31,8 +31,28 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [payingBookId, setPayingBookId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchUrlReady, setSearchUrlReady] = useState(false);
   const [resources, setResources] = useState<CatalogueProduct[]>([]);
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
+
+  useEffect(() => {
+    const syncSearchFromUrl = () => {
+      setSearchTerm(new URLSearchParams(window.location.search).get("q") || "");
+    };
+    syncSearchFromUrl();
+    setSearchUrlReady(true);
+    window.addEventListener("popstate", syncSearchFromUrl);
+    return () => window.removeEventListener("popstate", syncSearchFromUrl);
+  }, []);
+
+  useEffect(() => {
+    if (!searchUrlReady) return;
+    const url = new URL(window.location.href);
+    const query = searchTerm.trim();
+    if (query) url.searchParams.set("q", query);
+    else url.searchParams.delete("q");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [searchTerm, searchUrlReady]);
 
   useEffect(() => {
     let cancelled = false;
