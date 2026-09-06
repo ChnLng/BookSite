@@ -184,7 +184,7 @@ C.line(135, arrow_y, arrow_tip, arrow_y)
 C.line(arrow_tip, arrow_y, arrow_tip - 6, arrow_y + 4)
 C.line(arrow_tip, arrow_y, arrow_tip - 6, arrow_y - 4)
 para('Cliquez pour refuser.<br/>Cela n’empêche pas le téléchargement.', M, H - arrow_y - 35, 88, size=10.5, bold=True, color=HexColor('#d92332'))
-note('Refuser, puis continuer l’installation', 'Cliquez sur « Non merci », en bas à gauche du panneau Google Play Pass. Ne choisissez pas le bouton bleu de droite. Revenez à la fiche Visd AR et cliquez sur « Installer » si nécessaire. Ne cliquez pas sur « Rembourser » dans la fiche de l’application.', 716, warning=True, height=87)
+note('Refuser, puis continuer l’installation', 'Cliquez sur « Non merci », en bas à gauche du panneau Google Play Pass. Ne choisissez pas le bouton bleu de droite. Revenez à la fiche Visd AR et cliquez sur « Installer » si nécessaire.', 716, warning=True, height=87)
 end_page()
 
 header('Après le paiement · confirmation', 'La commande de test gratuite est validée', 'Après une commande avec la carte de test, Google Play peut envoyer cet e-mail de confirmation. Il indique que le test a été accepté : aucun paiement réel ni débit bancaire n’a été effectué.')
