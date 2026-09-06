@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Check, ChevronRight, Mail } from "lucide-react";
 import type { CatalogueApp, CatalogueConfig, CatalogueKind } from "@/lib/android-catalogue";
 import { CatalogueViewToggle } from "@/components/catalogue-view-toggle";
@@ -42,7 +42,6 @@ export function AndroidCatalogueBook({ config, kind }: { config: CatalogueConfig
   const go = (next: number) => {
     const index = Math.max(0, Math.min(pages.length - 1, next));
     setDirection(index < page ? "backward" : "forward"); setPage(index);
-    window.history.replaceState(null, "", `#${pages[index].id}`);
     shell.current?.scrollIntoView({ block: "start", behavior: "instant" });
     stage.current?.focus({ preventScroll: true });
   };
@@ -62,12 +61,11 @@ export function AndroidCatalogueBook({ config, kind }: { config: CatalogueConfig
     pages.push({ id: "engagements", title: "Utilisation en établissement", content: <div className="collection-editorial collection-terms"><span className="collection-eyebrow">Pour apprendre ensemble</span><h2>Composer un parcours<br/><em>adapté à votre public.</em></h2><p className="collection-lead">Sélectionnez une ou plusieurs applications selon le niveau, l’objectif pédagogique et l’effectif concerné.</p><div className="collection-columns"><section><h3>Trois usages possibles</h3><p><strong>En complément de cours</strong><br/>Pour réviser un point précis, préparer une séquence ou prolonger une notion après le cours.</p><p><strong>En autonomie guidée</strong><br/>Pour proposer un travail ciblé à un groupe, avec un objectif et un retour défini par l’enseignant.</p><p><strong>Dans un projet culturel</strong><br/>Pour ancrer une activité de civilisation, de géographie, d’arts visuels ou d’échanges internationaux.</p></section><section><h3>Un échange avant devis</h3><p>Indiquez le public concerné, l’objectif, les applications retenues et l’effectif. Visd AR prépare alors une proposition précisant le périmètre d’utilisation, les modalités d’accès et le montant hors taxes.</p><p>Une personne référente côté établissement permet d’assurer la cohérence pédagogique et le suivi de la mise en œuvre.</p></section></div><div className="collection-contact"><span><strong>Parlons de votre besoin pédagogique.</strong><small>Visd AR · visdar@outlook.fr</small></span>{external("mailto:visdar@outlook.fr?subject=Utilisation%20des%20applications%20Visd%20AR%20dans%20mon%20%C3%A9tablissement", "Demander une proposition", true)}</div></div> });
   } else if (config.testEnabled) pages.push({ id: "avant-premiere", title: "Phase de test", content: <div className="collection-editorial collection-test"><span className="collection-eyebrow">Phase de test avant lancement</span><h2>{config.testTitle}</h2><p className="collection-lead">{config.testText}</p><div className="collection-test-steps"><section><span>01</span><h3>Préparez votre compte</h3><p>Utilisez le même compte Google pour le groupe, l’inscription au test et Google Play.</p></section><section><span>02</span><h3>Demandez votre accès</h3><p>Suivez les étapes du formulaire. Un code personnel peut être attribué selon les disponibilités.</p></section><section><span>03</span><h3>Installez sans payer</h3><p>Utilisez votre code dans Google Play. Ne validez jamais un achat si un montant reste dû.</p></section></div><div className="collection-actions">{external("https://www.visdar.fr/tests-google-play", "Demander un essai gratuit", true)}{external("/guides/installation-gratuite-google-play.pdf", "Guide d’installation illustré")}</div><p className="collection-fine">Aucun achat requis pour participer. Code à usage unique, sous réserve d’éligibilité et de validité. L’inscription au groupe ne remplace pas l’inscription au test de l’application.</p></div> });
 
-  useEffect(() => {
-    const sync = () => { const id = window.location.hash.slice(1); const next = pages.findIndex(p => p.id === id); if (next >= 0) setPage(next); };
-    sync(); setReady(true); window.addEventListener("hashchange", sync);
-    return () => window.removeEventListener("hashchange", sync);
-    // Page ids are stable for a mounted edition.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    // Always open on the cover. A stale fragment or restored scroll position must not hide the header.
+    if (window.location.hash) window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    setReady(true);
   }, []);
   return <main ref={shell} className={`collection-shell${ready ? " collection-ready" : ""}`}>
     <CatalogueViewToggle />
