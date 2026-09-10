@@ -34,8 +34,8 @@ export function AndroidDemoVideo({ packageName, title, mode = "modal" }: Android
   if (mode === "inline") {
     return (
       <figure className="android-demo-video-inline">
-        <figcaption><Play size={14} aria-hidden="true" /> Démonstration de l’application</figcaption>
-        <video controls autoPlay loop muted preload="metadata" playsInline aria-label={`Démonstration vidéo de ${title}`}>
+        <figcaption><Play size={14} aria-hidden="true" /> Vidéo de démonstration</figcaption>
+        <video controls autoPlay loop muted preload="metadata" playsInline aria-label={`Vidéo de démonstration de ${title}`}>
           <source src={video.src} type="video/mp4" />
           Votre navigateur ne prend pas en charge la lecture vidéo.
         </video>
@@ -47,14 +47,14 @@ export function AndroidDemoVideo({ packageName, title, mode = "modal" }: Android
     <>
       <button className="android-demo-video-trigger" type="button" onClick={() => setOpen(true)}>
         <Play size={16} fill="currentColor" aria-hidden="true" />
-        Voir la démonstration vidéo
+        Voir la vidéo de démonstration
       </button>
       {open ? createPortal(
         <div className="android-demo-video-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
-          <section className="android-demo-video-dialog" role="dialog" aria-modal="true" aria-label={`Démonstration vidéo de ${title}`}>
+          <section className="android-demo-video-dialog" role="dialog" aria-modal="true" aria-label={`Vidéo de démonstration de ${title}`}>
             <div className="android-demo-video-dialog-header">
               <div>
-                <span className="android-demo-video-kicker">Démonstration Android</span>
+                <span className="android-demo-video-kicker">Vidéo de démonstration Android</span>
                 <h2>{title}</h2>
               </div>
               <button type="button" className="android-demo-video-close" onClick={() => setOpen(false)} aria-label="Fermer la vidéo"><X size={20} /></button>
