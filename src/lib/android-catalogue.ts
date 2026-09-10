@@ -15,6 +15,7 @@ export function isCatalogueKind(value: unknown): value is CatalogueKind { return
 const normalizeCatalogueCopy = (value: string) => {
   const edits: [string, string][] = [
     ["Chaque application peut soutenir un cours", "Chaque application peut servir à un cours"],
+    ["Douze outils Android conçus pour des apprenants francophones : chinois, pinyin et explications en français.", "Douze outils Android conçus pour maîtriser la langue chinoise avec pinyin et explications en français."],
     ["Choisir le mot de mesure juste", "Choisir le classificateur (mesure word) juste"],
     ["Comprendre les caractères", "Comprendre les sinogrammes"],
     ["leur situation d’emploi", "leur contexte"],
@@ -50,7 +51,7 @@ export function defaultCatalogue(kind: CatalogueKind): CatalogueConfig {
   return {
     enabled: true,
     title: kind === "android" ? "Le chinois, au creux de la main." : "Douze applications pour apprendre et transmettre le chinois.",
-    introduction: kind === "android" ? "Cinq applications Android pour explorer, comprendre et apprendre à son rythme. Une collection imaginée par Visd AR, entre langues, culture et plaisir de découvrir." : "Douze outils Android conçus pour des apprenants francophones : chinois, pinyin et explications en français. Chaque application peut servir à un cours, une activité autonome ou un projet culturel.",
+    introduction: kind === "android" ? "Cinq applications Android pour explorer, comprendre et apprendre à son rythme. Une collection imaginée par Visd AR, entre langues, culture et plaisir de découvrir." : "Douze outils Android conçus pour maîtriser la langue chinoise avec pinyin et explications en français. Chaque application peut servir à un cours, une activité autonome ou un projet culturel.",
     apps: structuredClone(kind === "android" ? androidApps.filter(app => consumerAppPackages.has(app.packageName)) : androidApps), testEnabled: true,
     testTitle: "Découvrez nos applications en avant-première.",
     testText: "Nos applications sont en phase de test avant lancement. Vous pouvez demander à les essayer gratuitement, dans la limite des codes disponibles et de leur période de validité. L’accès nécessite de rejoindre le groupe et de s’inscrire au test de chaque application avec le même compte Google.",
