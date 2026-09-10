@@ -35,7 +35,7 @@ export function AndroidDemoVideo({ packageName, title, mode = "modal" }: Android
     return (
       <figure className="android-demo-video-inline">
         <figcaption><Play size={14} aria-hidden="true" /> Démonstration de l’application</figcaption>
-        <video controls preload="metadata" playsInline aria-label={`Démonstration vidéo de ${title}`}>
+        <video controls autoPlay loop muted preload="metadata" playsInline aria-label={`Démonstration vidéo de ${title}`}>
           <source src={video.src} type="video/mp4" />
           Votre navigateur ne prend pas en charge la lecture vidéo.
         </video>
