@@ -14,6 +14,8 @@ type AndroidDemoVideoProps = {
 export function AndroidDemoVideo({ packageName, title, mode = "modal" }: AndroidDemoVideoProps) {
   const video = getAndroidDemoVideo(packageName);
   const [open, setOpen] = useState(false);
+  const [inlinePlaying, setInlinePlaying] = useState(false);
+  const [inlineMuted, setInlineMuted] = useState(true);
   const inlineVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -54,13 +56,30 @@ export function AndroidDemoVideo({ packageName, title, mode = "modal" }: Android
   if (!video) return null;
 
   if (mode === "inline") {
+    const toggleInlinePlayback = () => {
+      const element = inlineVideoRef.current;
+      if (!element) return;
+      if (element.paused) void element.play().catch(() => undefined);
+      else element.pause();
+    };
+    const toggleInlineMuted = () => {
+      const element = inlineVideoRef.current;
+      if (!element) return;
+      element.muted = !element.muted;
+      setInlineMuted(element.muted);
+    };
+
     return (
       <figure className="android-demo-video-inline">
         <figcaption><Play size={14} aria-hidden="true" /> Vidéo de démonstration</figcaption>
-        <video ref={inlineVideoRef} controls autoPlay loop muted preload="auto" playsInline aria-label={`Vidéo de démonstration de ${title}`}>
+        <video ref={inlineVideoRef} autoPlay loop muted preload="auto" playsInline aria-label={`Vidéo de démonstration de ${title}`} onPlay={() => setInlinePlaying(true)} onPause={() => setInlinePlaying(false)}>
           <source src={video.src} type="video/mp4" />
           Votre navigateur ne prend pas en charge la lecture vidéo.
         </video>
+        <div className="android-demo-video-controls" aria-label="Commandes de la vidéo">
+          <button type="button" onClick={toggleInlinePlayback}>{inlinePlaying ? "Pause" : "Lire"}</button>
+          <button type="button" onClick={toggleInlineMuted}>{inlineMuted ? "Activer le son" : "Couper le son"}</button>
+        </div>
       </figure>
     );
   }
