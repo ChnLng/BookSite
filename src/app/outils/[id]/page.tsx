@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, LayoutGrid } from "lucide-react";
 import { PartnerAdSlot } from "@/components/partner-ad-slot";
+import { AndroidDemoVideo } from "@/components/android-demo-video";
 import { PlayTestingNotice, PlayTestingPrice } from "@/components/play-testing-price";
 import { getPlayTestingApp } from "@/lib/play-testing";
 import { FormattedInlineText, FormattedText } from "@/components/formatted-text";
@@ -956,6 +957,7 @@ export default function ResourceDetailPage() {
             <div className="resource-detail-content">
           <span className="badge">Coin ludique & Outils</span>
           <h1 className="book-detail-title" style={{ marginTop: 18 }}><FormattedInlineText text={resource.titleRichFr || resource.titleFr} /></h1>
+          {testingApp ? <AndroidDemoVideo packageName={testingApp.packageName} title={resource.titleFr} /> : null}
           {testingApp ? <PlayTestingNotice app={testingApp} priceEur={basePrice} /> : null}
           {!effectiveHasAccess && !testingApp ? <div className="resource-action-stack">
             <div className="resource-inline-price">
