@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Play, X } from "lucide-react";
 import { getAndroidDemoVideo } from "@/lib/android-demo-videos";
 
@@ -48,7 +49,7 @@ export function AndroidDemoVideo({ packageName, title, mode = "modal" }: Android
         <Play size={16} fill="currentColor" aria-hidden="true" />
         Voir la démonstration vidéo
       </button>
-      {open ? (
+      {open ? createPortal(
         <div className="android-demo-video-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
           <section className="android-demo-video-dialog" role="dialog" aria-modal="true" aria-label={`Démonstration vidéo de ${title}`}>
             <div className="android-demo-video-dialog-header">
@@ -63,7 +64,8 @@ export function AndroidDemoVideo({ packageName, title, mode = "modal" }: Android
               Votre navigateur ne prend pas en charge la lecture vidéo.
             </video>
           </section>
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </>
   );

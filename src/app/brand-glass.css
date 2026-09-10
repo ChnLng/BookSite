@@ -316,7 +316,7 @@ html[data-preferred-view="desktop"] .footer-link-button { white-space: nowrap; f
 .android-demo-video-dialog-header h2 { margin: 4px 0 0; color: #2b2542; font-size: clamp(1.2rem, 2.6vw, 1.7rem); line-height: 1.2; }
 .android-demo-video-kicker { color: #8064a4; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .android-demo-video-close { display: grid; flex: 0 0 auto; width: 36px; height: 36px; place-items: center; border: 1px solid rgba(121, 95, 166, .22); border-radius: 50%; background: rgba(255,255,255,.72); color: #66537e; cursor: pointer; }
-.android-demo-video-player { display: block; width: calc(100% - 32px); max-height: 72dvh; margin: 0 16px 18px; border-radius: 16px; background: #15131e; box-shadow: 0 12px 28px rgba(48, 38, 72, .16); }
+.android-demo-video-player { display: block; width: min(100% - 32px, 430px); aspect-ratio: 9 / 16; max-height: 76dvh; height: auto; margin: 0 auto 18px; border-radius: 16px; background: #15131e; object-fit: contain; box-shadow: 0 12px 28px rgba(48, 38, 72, .16); }
 .android-demo-video-inline { display: grid; gap: 8px; margin: 18px 0 6px; }
 .android-demo-video-inline figcaption { display: flex; align-items: center; gap: 7px; color: #715a88; font-size: .78rem; font-weight: 800; letter-spacing: .04em; }
 .android-demo-video-inline video { display: block; width: min(100%, 520px); max-height: 260px; border: 1px solid rgba(255,255,255,.95); border-radius: 16px; background: #171522; box-shadow: 0 12px 28px rgba(79, 61, 101, .14); }
