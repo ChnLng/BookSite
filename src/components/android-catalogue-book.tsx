@@ -44,25 +44,69 @@ function formatCatalogueSubtitle(value: string) {
 function CreationAbout() {
   const sections = [
     {
-      french: "En classe, le temps est compté. Pourtant, la curiosité des étudiants ne s’arrête pas à la fin d’une séance. Ces applications sont nées d’un souhait simple : proposer, en complément du cours, des contenus fiables, clairs et rapides à consulter, afin de transformer les notions abordées en classe en repères structurés et en connaissances plus complètes.",
-      chinese: "课堂时间总是有限，但学生的好奇心不会在下课时停止。这些应用源于一个朴素的愿望：在课程之外，提供可信、清晰且便于快速查阅的补充内容，让课堂中涉及的知识点得到系统梳理和完整延展。",
+      frenchTitle: "Pourquoi ces applications ?",
+      chineseTitle: "让课堂知识得到系统延伸",
+      french: [
+        "En classe, le temps est précieux et ne permet pas toujours d’explorer toute la richesse d’une notion. Pourtant, les questions des étudiants et leur envie d’apprendre se poursuivent bien au-delà du cours.",
+        "Ces applications ont été conçues pour leur permettre d’aller plus loin, à leur rythme. Faciles et rapides à consulter, elles les aident à revoir les notions abordées en classe, à établir des liens entre elles et à construire progressivement des connaissances plus solides et mieux structurées.",
+      ],
+      chinese: [
+        "课堂时间十分宝贵，许多知识难以在有限的课时内充分展开，而学生的思考与求知欲并不会随着下课而停止。",
+        "这些应用旨在帮助学生按照自己的节奏进一步探索。它们清晰、便捷、易于查阅，既能帮助学生复习课堂所学，也能引导他们建立知识之间的联系，逐步形成更加扎实、系统的语言知识体系。",
+      ],
     },
     {
-      french: "Dans les applications d’apprentissage du chinois, les contenus conçus à partir de l’anglais occupent encore une place dominante. Ces outils font un autre choix : partir du français, langue de référence des apprenants francophones, et créer des passerelles directes entre le français et le chinois, dans les deux sens. Ils cherchent ainsi à répondre à un besoin encore peu couvert aujourd’hui.",
-      chinese: "当下，不少汉语学习应用仍以英语为主要媒介。这里尝试从法语母语学习者的理解路径出发，建立法语与汉语之间双向、直接的连接，填补目前仍较少被充分覆盖的需要。",
+      frenchTitle: "Une approche pensée pour les francophones",
+      chineseTitle: "从法语出发，搭建直接的语言桥梁",
+      french: [
+        "De nombreux outils d’apprentissage du chinois utilisent aujourd’hui l’anglais comme langue intermédiaire. Cela peut constituer un obstacle supplémentaire pour les apprenants francophones.",
+        "Ces applications proposent donc une approche différente : partir directement du français pour expliquer le chinois avec précision et clarté. Cette démarche facilite la compréhension, limite les détours par une troisième langue et répond plus naturellement aux habitudes linguistiques du public francophone.",
+      ],
+      chinese: [
+        "目前，许多汉语学习工具仍以英语作为中介语言，这可能给法语区学习者增加额外的理解障碍。",
+        "因此，这些应用选择从法语出发，以清晰、准确的方式解释汉语，建立法汉之间直接的语言联系。这不仅减少了第三种语言带来的转换过程，也更加贴合法语区学习者的语言习惯和实际需求。",
+      ],
     },
     {
-      french: "Cette démarche est à la fois pédagogique et personnelle. J’espère que ces applications, conçues avec patience et exigence, trouveront leur place auprès de celles et ceux qui apprennent le chinois, et recevront leur confiance et leur reconnaissance.",
-      chinese: "这既是一项教学实践，也是一份持续投入的尝试。希望这些经过耐心制作与反复打磨的应用，能够被更多汉语学习者喜爱、使用并认可。",
+      frenchTitle: "Un complément au cours, au service de l’autonomie",
+      chineseTitle: "辅助课堂，支持自主学习",
+      french: [
+        "Ces applications n’ont pas vocation à remplacer le cours ou le travail de l’enseignant. Elles constituent un support complémentaire que les étudiants peuvent consulter lorsqu’ils souhaitent vérifier une notion, approfondir un point ou organiser leurs révisions.",
+        "Chaque contenu est sélectionné, vérifié et présenté avec soin afin de proposer une ressource à la fois accessible et rigoureuse. L’objectif est simple : aider les étudiants à gagner en autonomie tout en conservant des repères fiables dans leur apprentissage.",
+      ],
+      chinese: [
+        "这些应用并非为了替代课堂或教师的教学，而是作为补充资源，帮助学生在需要时查证知识、深入理解某个要点或系统整理复习内容。",
+        "每一项内容都经过认真筛选、核查与编排，力求兼顾易用性与严谨性。其目标很简单：在为学生提供可靠学习依据的同时，帮助他们逐步提升自主学习能力。",
+      ],
     },
     {
-      frenchTitle: "Une démarche née de l’enseignement sur le terrain",
-      chineseTitle: "源自一线教学的探索与实践",
-      french: "Depuis 2018, j’enseigne le chinois dans des écoles d’ingénieurs, des écoles de commerce et des universités. Au contact des étudiants, j’ai profondément ressenti les limites du temps de classe ; j’ai également constaté que la plupart des applications d’auto-apprentissage s’appuient sur l’anglais et qu’il manque un système de correspondances directes pensé spécifiquement pour les apprenants dont le français est la langue maternelle.\n\nC’est à partir de ces observations issues de l’enseignement que j’ai développé cette série d’applications. Elles sont conçues tout spécialement pour les apprenants francophones et établissent un lien direct entre le français et le chinois. Elles n’ont pas vocation à remplacer le cours ; elles constituent un outil complémentaire structuré, permettant aux étudiants de consulter avec précision et de consolider, hors de la classe, les notions étudiées.\n\nIl s’agit à la fois d’une pratique pédagogique et d’un travail poursuivi avec constance. Les applications sont aujourd’hui disponibles sur Android. En tant que collègue dans le domaine de l’éducation, j’espère vivement recueillir les avis et suggestions des spécialistes et des enseignants expérimentés, afin de poursuivre leur amélioration.",
-      chinese: "自 2018 年起，我一直在工程师学校、商学院及大学从事汉语一线教学。在与学生的接触中，我深感课堂时间的有限，也注意到市场上大多数自学应用均以英语为主要媒介，缺乏专门面向法语母语者的直接对应体系。\n\n正是基于一线的教学观察，我开发了这一系列应用。它们专为法语区学习者设计，建立法汉之间的直接桥梁。应用的定位并非替代课堂，而是作为系统性的补充工具，帮助学生在课外精准查阅、巩固课堂所学。\n\n这既是一项教学实践，也是一份持续投入的心血。目前应用已在 Android 平台上线。作为教育同行，我非常期待能听取专家及前辈的宝贵意见与建议，以帮助这一工具不断优化完善。",
+      frenchTitle: "Un projet né de l’expérience pédagogique",
+      chineseTitle: "源于一线教学的长期积累",
+      french: [
+        "J’enseigne le chinois depuis 2018 dans des écoles d’ingénieurs, des écoles de commerce et des universités. Ces outils sont nés de mon expérience en classe, de mes échanges avec les étudiants et de l’observation de leurs besoins réels.",
+        "D’abord développées sous forme de ressources en ligne en 2025, ces solutions sont aujourd’hui disponibles sous forme d’applications Android, afin d’accompagner les étudiants de manière plus simple et plus régulière dans leur apprentissage.",
+      ],
+      chinese: [
+        "自2018年起，我一直在工程师院校、商学院和大学从事汉语教学。这些工具源于真实的课堂实践，也来自我与学生的长期交流，以及对他们实际学习需求的持续观察。",
+        "项目于2025年首先以在线资源的形式推出，如今已发展为Android应用，以更便捷、更持续的方式陪伴学生学习。",
+      ],
+    },
+    {
+      frenchTitle: "Découvrir les applications et envisager un partenariat",
+      chineseTitle: "欢迎试用与院校合作",
+      french: [
+        "Les équipes pédagogiques peuvent bénéficier d’une présentation ainsi que d’un accès d’essai gratuit aux applications.",
+        "Pour les établissements qui souhaiteraient ensuite les proposer à leurs étudiants, plusieurs formes de collaboration peuvent être envisagées : acquisition de licences institutionnelles, déploiement au sein d’une formation, adaptation aux programmes enseignés ou création de contenus pédagogiques sur mesure.",
+        "Je serais heureuse d’échanger avec les établissements intéressés afin d’identifier la formule la mieux adaptée à leurs objectifs et aux besoins de leurs étudiants.",
+      ],
+      chinese: [
+        "教学团队可申请应用介绍及免费试用，以便实际了解其内容与使用方式。",
+        "对于希望进一步向学生提供这些应用的院校，可以探讨多种合作形式，包括院校授权采购、在具体课程或培养项目中部署、根据教学大纲调整内容，以及定制开发教学资源。",
+        "期待与有合作意向的院校进一步交流，共同确定最符合教学目标和学生需求的合作方案。",
+      ],
     },
   ];
-  return <div className="collection-about"><div className="collection-about-heading"><span className="collection-eyebrow">Une intention pédagogique · 教学初衷</span><h2>À propos<br/><em>de cette création.</em></h2><p>让课堂之外的学习，也有清晰、可靠而自在的延续。</p></div><div className="collection-about-sections">{sections.map((section, index) => <div className="collection-about-pair" key={index}><section lang="fr">{section.frenchTitle ? <h3>{section.frenchTitle}</h3> : null}{section.french.split("\n\n").map((paragraph, paragraphIndex) => <p key={paragraphIndex}>{paragraph}</p>)}</section><section lang="zh-CN">{section.chineseTitle ? <h3>{section.chineseTitle}</h3> : null}{section.chinese.split("\n\n").map((paragraph, paragraphIndex) => <p key={paragraphIndex}>{paragraph}</p>)}</section></div>)}</div></div>;
+  return <div className="collection-about"><div className="collection-about-sections">{sections.map((section) => <div className="collection-about-pair" key={section.frenchTitle}><section lang="fr"><h3>{section.frenchTitle}</h3>{section.french.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</section><section lang="zh-CN"><h3>{section.chineseTitle}</h3>{section.chinese.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</section></div>)}</div></div>;
 }
 
 export function AndroidCatalogueBook({ config, kind, presentation = "standard" }: { config: CatalogueConfig; kind: CatalogueKind; presentation?: "standard" | "mobile" }) {
@@ -90,14 +134,14 @@ export function AndroidCatalogueBook({ config, kind, presentation = "standard" }
     <div className="cover-copy"><span className="collection-eyebrow">Applications Android · {business ? "Établissements & professionnels" : "La collection"}</span><h1>{config.title}</h1><p className="collection-lead">{config.introduction}</p>{jump(1, <>Ouvrir le catalogue <ArrowRight size={19} /></>, "collection-button primary")}<span className="cover-languages">汉字 <i /> Pinyin <i /> Français</span></div>
     <div className="cover-composition" aria-hidden="true"><div className="cover-orbit"/><span className="cover-glyph glyph-one">学<small>apprendre</small></span><span className="cover-glyph glyph-two">寻<small>explorer</small></span><span className="cover-glyph glyph-three">知<small>comprendre</small></span><span className="cover-seal">Visd AR<br/><small>Des mots aux découvertes.</small></span></div>
   </div> });
-  pages.push({ id: "sommaire", title: "Sommaire", content: <div className="collection-toc"><span className="collection-eyebrow">{mobileGuide ? "Les douze applications · 十二款应用" : "Votre parcours"}</span><h2>{apps.length === 5 ? "Cinq" : apps.length} portes d’entrée.<br/><em>Une même curiosité.</em></h2>{!mobileGuide ? <p>Choisissez une application ou laissez-vous guider, page après page.</p> : null}<nav aria-label="Sommaire du catalogue">{apps.map((app, index) => jump(index + firstAppPage, <><span className="toc-number">{String(index + 1).padStart(2, "0")}</span><span><strong>{app.title}</strong><small>{app.subtitle}</small></span><ChevronRight size={20}/></>, "toc-entry"))}{mobileGuide ? jump(firstAppPage + apps.length, <>À propos de cette création <ArrowRight size={18}/></>, "toc-extra") : business ? <>{jump(apps.length + 2, <>Licences pour les établissements <ArrowRight size={18}/></>, "toc-extra")}{jump(apps.length + 3, <>Personnalisation & création <ArrowRight size={18}/></>, "toc-extra")}{jump(apps.length + 4, <>Utilisation en établissement <ArrowRight size={18}/></>, "toc-extra")}</> : config.testEnabled ? jump(apps.length + 2, <>Phase de test · Demander un essai gratuit <ArrowRight size={18}/></>, "toc-extra") : null}</nav></div> });
+  pages.push({ id: "sommaire", title: "Sommaire", content: <div className="collection-toc"><span className="collection-eyebrow">{mobileGuide ? "Les douze applications · 十二款应用" : "Votre parcours"}</span><h2>{apps.length === 5 ? "Cinq" : apps.length} portes d’entrée.<br/><em>Une même curiosité.</em></h2>{!mobileGuide ? <p>Choisissez une application ou laissez-vous guider, page après page.</p> : null}<nav aria-label="Sommaire du catalogue">{apps.map((app, index) => jump(index + firstAppPage, <><span className="toc-number">{String(index + 1).padStart(2, "0")}</span><span><strong>{app.title}</strong><small>{app.subtitle}</small></span><ChevronRight size={20}/></>, "toc-entry"))}{mobileGuide ? jump(firstAppPage + apps.length, <>Pourquoi ces applications ? <ArrowRight size={18}/></>, "toc-extra") : business ? <>{jump(apps.length + 2, <>Licences pour les établissements <ArrowRight size={18}/></>, "toc-extra")}{jump(apps.length + 3, <>Personnalisation & création <ArrowRight size={18}/></>, "toc-extra")}{jump(apps.length + 4, <>Utilisation en établissement <ArrowRight size={18}/></>, "toc-extra")}</> : config.testEnabled ? jump(apps.length + 2, <>Phase de test · Demander un essai gratuit <ArrowRight size={18}/></>, "toc-extra") : null}</nav></div> });
   apps.forEach((app, index) => {
     const publicPrice = publicPrices[app.packageName];
     const explanation = <><p className="collection-tagline">{formatCatalogueSubtitle(app.subtitle)}</p><p>{app.description}</p><ul className="collection-features">{app.features.map(feature => <li key={feature}><Check size={16}/>{feature}</li>)}</ul><p className="collection-audience">{app.audience}</p>{business && publicPrice !== undefined ? <p className="collection-app-price">Prix public Google Play <strong>{publicPrice.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })} TTC</strong></p> : null}{!business && !mobileGuide && external(`https://play.google.com/store/apps/details?id=${app.packageName}`, "Découvrir sur Google Play", true)}{!mobileGuide && <small className="collection-fine">Application Android. Tarif public indicatif ; le tarif institutionnel et les modalités d’accès sont précisés dans le devis.</small>}</>;
     pages.push({ id: app.packageName.split(".").pop()!, title: app.title, theme: themes[index % themes.length], content: mobileGuide ? <div className="collection-mobile-app"><header><span className="collection-eyebrow">La collection · {String(index + 1).padStart(2, "0")}</span><h2>{app.title}</h2></header><AndroidDemoVideo packageName={app.packageName} title={app.title} mode="inline" /><div className="collection-app-copy">{explanation}</div></div> : <div className={`collection-app-spread${business ? " has-demo-video" : ""}`}><AppArt app={app}/><div className="collection-app-copy"><span className="collection-eyebrow">La collection · {String(index + 1).padStart(2, "0")}</span><h2>{app.title}</h2>{explanation}</div>{business ? <AndroidDemoVideo packageName={app.packageName} title={app.title} mode="inline" /> : null}</div> });
   });
   if (mobileGuide) {
-    pages.push({ id: "a-propos", title: "À propos de cette création", content: <CreationAbout /> });
+    pages.push({ id: "a-propos", title: "Pourquoi ces applications ?", content: <CreationAbout /> });
   } else if (business) {
     pages.push({ id: "licences", title: "Licences", content: <div className="collection-editorial"><span className="collection-eyebrow">Pour apprendre ensemble</span><h2>Une collection.<br/><em>À l’échelle de votre établissement.</em></h2><p className="collection-lead">Les prix publics de chaque application sont indiqués dans ce catalogue. Pour une même application et une même commande, une remise est appliquée dès 12 licences.</p><div className="collection-price-table"><table><thead><tr><th>Nombre de licences</th><th>Part du prix public</th><th>Remise</th></tr></thead><tbody>{config.tiers.map((tier, i) => <tr key={tier.minimum}><td>{config.tiers[i+1] ? `${tier.minimum}–${config.tiers[i+1].minimum-1}` : `${tier.minimum} et plus`}</td><td><strong>{tier.percent} %</strong></td><td>{100-tier.percent} %</td></tr>)}</tbody></table></div><p>{config.licenceTerms}</p><p className="collection-note">Le prix de référence est le prix public Google Play affiché pour l’application choisie. La remise est calculée pour une même application, dans une même commande. Le devis précise le prix final, le régime de TVA applicable, les utilisateurs concernés et les modalités d’accès.</p>{external("mailto:visdar@outlook.fr?subject=Licences%20Android%20pour%20mon%20%C3%A9tablissement", "Demander un devis", true)}</div> });
     pages.push({ id: "creation", title: "Personnalisation & création", content: <div className="collection-editorial"><span className="collection-eyebrow">Votre projet pédagogique</span><h2>Une application<br/><em>à votre image.</em></h2><p>Des périmètres adaptés aux besoins d’un établissement, d’un organisme de formation ou d’un partenaire. Les prix sont exprimés en euros hors taxes et confirmés après cadrage.</p><div className="collection-packages">{config.packages.map(pack => <section key={pack.name}><h3>{pack.name}</h3><p className="collection-package-price">à partir de<br/>{pack.price.toLocaleString("fr-FR")} € <small>HT</small></p><p>{pack.scope}</p></section>)}</div><p className="collection-note">Un devis définit le contenu, les livrables, les validations et les droits d’utilisation avant le démarrage. Les demandes impliquant serveur, comptes utilisateurs, paiement, IA ou iOS font l’objet d’un périmètre complémentaire.</p>{external("mailto:visdar@outlook.fr?subject=Projet%20d%E2%80%99application%20p%C3%A9dagogique", "Parlons de votre projet", true)}</div> });
@@ -111,7 +155,7 @@ export function AndroidCatalogueBook({ config, kind, presentation = "standard" }
     setReady(true);
   }, []);
   return <main ref={shell} className={`collection-shell${ready ? " collection-ready" : ""}`}>
-    <CatalogueViewToggle />
+    {!mobileGuide ? <CatalogueViewToggle /> : null}
     <header className="collection-header"><a href={mobileGuide ? "/collections/android-mobile" : business ? "/collections/android-professionnels" : "/collections/android"} className="collection-brand"><img src="/images/logo.png" width="42" height="42" alt=""/><span>Visd AR<small>Applications Android</small></span></a><span className="collection-edition">{mobileGuide ? "Guide mobile" : business ? "Catalogue professionnel" : "Catalogue découverte"}</span><a className="collection-index-link" href="#sommaire" onClick={event => { event.preventDefault(); go(mobileGuide ? 0 : 1); }}><BookOpen size={18}/>Sommaire</a></header>
     <nav className="collection-controls" aria-label="Navigation entre les pages"><button onClick={() => go(page-1)} disabled={page===0} aria-label="Page précédente"><ArrowLeft size={19}/><span>Précédente</span></button><span aria-live="polite" aria-atomic="true">{page+1} / {pages.length}<small>{pages[page]?.title}</small></span><button onClick={() => go(page+1)} disabled={page===pages.length-1} aria-label="Page suivante"><span>Suivante</span><ArrowRight size={19}/></button></nav>
     <div className={`collection-stage ${direction}`} ref={stage} tabIndex={0} aria-label="Catalogue à feuilleter" onKeyDown={event => { if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return; if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); go(page + (event.key === "ArrowRight" ? 1 : -1)); } }} onTouchStart={event => { if ((event.target as HTMLElement).closest("a,button,input,textarea")) { touch.current=null; return; } const t=event.touches[0]; touch.current={x:t.clientX,y:t.clientY}; }} onTouchEnd={event => { if(!touch.current) return; const t=event.changedTouches[0],dx=t.clientX-touch.current.x,dy=t.clientY-touch.current.y; touch.current=null; if(Math.abs(dx)>70 && Math.abs(dx)>Math.abs(dy)*1.7) go(page+(dx<0?1:-1)); }}>
