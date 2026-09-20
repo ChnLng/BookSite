@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { AndroidCatalogueBook } from "@/components/android-catalogue-book";
 import { isCatalogueKind } from "@/lib/android-catalogue";
 import { loadAndroidCatalogue } from "@/lib/android-catalogue-server";
-import { loadAndroidMobileGuideDescriptions } from "@/lib/android-mobile-guide-server";
 import "@/app/android-catalogue.css";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +17,8 @@ export default async function CataloguePage({ params }: { params: Promise<{ edit
   const { edition } = await params;
   const mobileGuide = edition === "android-mobile";
   if (!mobileGuide && !isCatalogueKind(edition)) notFound();
-  const [result, mobileDescriptions] = await Promise.all([
-    loadAndroidCatalogue(mobileGuide ? "android-professionnels" : edition),
-    mobileGuide ? loadAndroidMobileGuideDescriptions() : Promise.resolve({}),
-  ]);
+  const result = await loadAndroidCatalogue(mobileGuide ? "android-professionnels" : edition);
   if (result.disabled) notFound();
   if (!result.config) return <main className="collection-shell"><h1>Le catalogue est momentanément indisponible.</h1><p>Veuillez réessayer dans quelques instants.</p><a href="mailto:visdar@outlook.fr">Contacter Visd AR</a></main>;
-  return <AndroidCatalogueBook config={result.config} kind={mobileGuide ? "android" : edition} presentation={mobileGuide ? "mobile" : "standard"} mobileDescriptions={mobileDescriptions}/>;
+  return <AndroidCatalogueBook config={result.config} kind={mobileGuide ? "android" : edition} presentation={mobileGuide ? "mobile" : "standard"}/>;
 }
