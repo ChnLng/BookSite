@@ -8,12 +8,13 @@ import { ChevronLeft, ChevronRight, ExternalLink, LayoutGrid } from "lucide-reac
 import { PartnerAdSlot } from "@/components/partner-ad-slot";
 import { AndroidDemoVideo } from "@/components/android-demo-video";
 import { PlayTestingNotice, PlayTestingPrice } from "@/components/play-testing-price";
-import { getPlayTestingApp } from "@/lib/play-testing";
+import { getPlayTestingApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
 import { FormattedInlineText, FormattedText } from "@/components/formatted-text";
 import { ProductDocumentsPanel } from "@/components/product-documents-panel";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
+import { AuthModal } from "@/components/auth-modal";
 import { loadDisplayResources, type DisplayResource } from "@/lib/resources-service";
 import { randomPurchaseThankYouMessage } from "@/lib/purchase-thank-you";
 
@@ -145,6 +146,7 @@ export default function ResourceDetailPage() {
   const [shareUnlockBusy, setShareUnlockBusy] = useState(false);
   const [optimisticSharedUnlock, setOptimisticSharedUnlock] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState<PaymentSuccessState | null>(null);
   const [purchaseThankYouMessage] = useState(() => randomPurchaseThankYouMessage());
@@ -161,6 +163,13 @@ export default function ResourceDetailPage() {
   const processedOrderRef = useRef<string | null>(null);
   const processedStripeSessionRef = useRef<string | null>(null);
   const testingApp = getPlayTestingApp(resource?.id) || getPlayTestingApp(resource?.slug);
+  const publicPlayStoreUrl = getPublicPlayStoreUrl(resource?.id) || getPublicPlayStoreUrl(resource?.slug);
+  const resourceExternalUrl = resource?.externalUrl || "";
+  const showResourceExternalUrl = Boolean(
+    resourceExternalUrl
+    && resourceExternalUrl !== publicPlayStoreUrl
+    && !(publicPlayStoreUrl && resourceExternalUrl.includes("/tests-google-play")),
+  );
   const basePrice = testingApp?.priceEur ?? resource?.priceEur ?? 0;
   const finalPrice = appliedPromo?.discountedPrice ?? resource?.priceEur ?? 0;
   const hasAppliedPromo = Boolean(appliedPromo);
@@ -412,6 +421,12 @@ export default function ResourceDetailPage() {
         return;
       }
 
+      if (!user || !session?.access_token) {
+        setActionMessage("Connectez-vous pour passer commande.");
+        setShowAuthModal(true);
+        return;
+      }
+
       setPaymentError("");
 
       try {
@@ -492,7 +507,13 @@ export default function ResourceDetailPage() {
   }, [actionBusy, appliedPromo?.code, resource, session?.access_token]);
 
   useEffect(() => {
-    if (!resource || testingApp || !openBuyImmediately || autoStartedCheckout || !session?.access_token) return;
+    if (!resource || testingApp || !openBuyImmediately || autoStartedCheckout) return;
+    if (!session?.access_token) {
+      setAutoStartedCheckout(true);
+      setActionMessage("Connectez-vous pour passer commande.");
+      setShowAuthModal(true);
+      return;
+    }
     setAutoStartedCheckout(true);
     if (finalPrice > 0) void startStripeCheckout();
   }, [autoStartedCheckout, finalPrice, openBuyImmediately, resource, session?.access_token, startStripeCheckout, testingApp]);
@@ -709,7 +730,8 @@ export default function ResourceDetailPage() {
     }
 
     if (!user || !session?.access_token) {
-      setActionMessage("Connectez-vous d'abord pour débloquer cette ressource.");
+      setActionMessage("Connectez-vous pour passer commande.");
+      setShowAuthModal(true);
       return;
     }
 
@@ -1028,9 +1050,24 @@ export default function ResourceDetailPage() {
                     </button>
                   ) : null}
 
-                  {resource.externalUrl ? (
+                  {publicPlayStoreUrl ? (
                     <a
-                      href={resource.externalUrl}
+                      href={publicPlayStoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="pill-button external-link-button shrink-0 flex items-center gap-2"
+                    >
+                      <ExternalLink size={14} />
+                      <span>Google Play</span>
+                      <span className="external-link-tooltip" role="tooltip">
+                        {publicPlayStoreUrl}
+                      </span>
+                    </a>
+                  ) : null}
+
+                  {showResourceExternalUrl ? (
+                    <a
+                      href={resourceExternalUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="pill-button external-link-button shrink-0 flex items-center gap-2"
@@ -1038,7 +1075,7 @@ export default function ResourceDetailPage() {
                       <ExternalLink size={14} />
                       <span>Lien externe</span>
                       <span className="external-link-tooltip" role="tooltip">
-                        {resource.externalUrl}
+                        {resourceExternalUrl}
                       </span>
                     </a>
                   ) : null}
@@ -1083,6 +1120,8 @@ export default function ResourceDetailPage() {
           </div>
         </section>
       </section>
+
+      <AuthModal open={showAuthModal} onClose={() => setShowAuthModal(false)} notice="Connectez-vous ou créez votre compte pour passer commande et accéder à vos téléchargements." />
 
       {showPayment && resource ? (
         <div className="overlay-backdrop" role="presentation" onClick={() => setShowPayment(false)}>
