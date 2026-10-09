@@ -1037,7 +1037,7 @@ export default function ResourceDetailPage() {
                         ? "Ouverture..."
                         : promoUnlocksFreeAccess
                           ? "Partager pour déverrouiller"
-                          : "Acheter cet outil"}
+                          : "Acheter"}
                   </button>
 
                   {!effectiveHasAccess && !promoUnlocksFreeAccess ? (
