@@ -17,6 +17,7 @@ import { useAuth } from "@/components/auth-provider";
 import { AuthModal } from "@/components/auth-modal";
 import { loadDisplayResources, type DisplayResource } from "@/lib/resources-service";
 import { randomPurchaseThankYouMessage } from "@/lib/purchase-thank-you";
+import { getExternalLinkLabel } from "@/lib/external-link-label";
 
 type ReviewRecord = {
   id: string;
@@ -1058,7 +1059,7 @@ export default function ResourceDetailPage() {
                       className="pill-button external-link-button shrink-0 flex items-center gap-2"
                     >
                       <ExternalLink size={14} />
-                      <span>Google Play</span>
+                      <span>{getExternalLinkLabel(publicPlayStoreUrl)}</span>
                       <span className="external-link-tooltip" role="tooltip">
                         {publicPlayStoreUrl}
                       </span>
@@ -1073,7 +1074,7 @@ export default function ResourceDetailPage() {
                       className="pill-button external-link-button shrink-0 flex items-center gap-2"
                     >
                       <ExternalLink size={14} />
-                      <span>Lien externe</span>
+                      <span>{getExternalLinkLabel(resourceExternalUrl)}</span>
                       <span className="external-link-tooltip" role="tooltip">
                         {resourceExternalUrl}
                       </span>

@@ -11,6 +11,7 @@ import type { DisplayBook } from "@/lib/books-service";
 import { loadDisplayResources } from "@/lib/resources-service";
 import { getPlayTestingApp, playTestingApplicationUrl } from "@/lib/play-testing";
 import { PlayTestingPrice } from "@/components/play-testing-price";
+import { getExternalLinkLabel } from "@/lib/external-link-label";
 
 type CatalogueProduct = {
   id: string;
@@ -160,7 +161,7 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
                     <button className={`cta-button catalogue-compact-button${book.kind === "resource" && getPlayTestingApp(book.id) ? " catalogue-testing-button" : ""}`} type="button" onClick={() => void handleBookCheckout(book)}>
                       {book.kind === "resource" && getPlayTestingApp(book.id) ? "Test gratuit" : payingBookId === book.id ? "Paiement..." : "Acheter"}
                     </button>
-                    {book.externalUrl && !(book.kind === "resource" && getPlayTestingApp(book.id)) ? <a className="pill-button catalogue-compact-button" href={book.externalUrl} target="_blank" rel="noreferrer">{book.kind === "book" ? "Amazon" : "Lien externe"}</a> : null}
+                    {book.externalUrl && !(book.kind === "resource" && getPlayTestingApp(book.id)) ? <a className="pill-button catalogue-compact-button" href={book.externalUrl} target="_blank" rel="noreferrer">{getExternalLinkLabel(book.externalUrl)}</a> : null}
                   </div>
                 </div>
               </article>

@@ -25,6 +25,7 @@ import {
 import { loadHomepageResources } from "@/lib/homepage-resources";
 import { getPlayTestingApp } from "@/lib/play-testing";
 import { PlayTestingPrice } from "@/components/play-testing-price";
+import { getExternalLinkLabel } from "@/lib/external-link-label";
 
 const iconMap = {
   sparkles: Sparkles,
@@ -554,7 +555,7 @@ export function HomeExpandedSections({ initialResources }: { initialResources: R
                         <div className="actions-row">
                           {entry.externalUrl ? (
                             <a className="cta-button secondary" href={entry.externalUrl} target="_blank" rel="noreferrer">
-                              Ouvrir
+                              {getExternalLinkLabel(entry.externalUrl, "Ouvrir")}
                             </a>
                           ) : null}
                           {entry.fileUrl ? (
