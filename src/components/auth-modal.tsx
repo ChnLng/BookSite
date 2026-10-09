@@ -6,9 +6,9 @@ import { useAuth } from "@/components/auth-provider";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { authErrorMessage } from "@/lib/auth-messages";
 
-type AuthModalProps = { open: boolean; onClose: () => void };
+type AuthModalProps = { open: boolean; onClose: () => void; notice?: string };
 
-export function AuthModal({ open, onClose }: AuthModalProps) {
+export function AuthModal({ open, onClose, notice }: AuthModalProps) {
   const { signInWithPassword, signUpWithPassword } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
   const [email, setEmail] = useState("");
@@ -112,7 +112,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         <button className="overlay-close" type="button" aria-label="Fermer" onClick={onClose}><X size={18} /></button>
         <span className="badge">Visd AR · Votre espace</span>
         <h2 id="auth-title">{mode === "reset" ? "Retrouver votre compte" : mode === "signup" ? "Créer votre compte" : "Heureux de vous retrouver"}</h2>
-        <p className="tiny muted">{mode === "reset" ? "Nous vous enverrons un lien sécurisé pour choisir un nouveau mot de passe." : "Accédez à vos achats et demandez à tester nos applications."}</p>
+        <p className="tiny muted">{mode === "reset" ? "Nous vous enverrons un lien sécurisé pour choisir un nouveau mot de passe." : notice || "Accédez à vos achats et demandez à tester nos applications."}</p>
         {mode !== "reset" ? <>
           <div className="auth-provider-grid">
             <button className="cta-button auth-provider" type="button" disabled={busy} onClick={() => void handleOAuth("google")}>{oauthLoading === "google" ? <LoaderCircle size={16} className="spin" /> : null} Continuer avec Google</button>
