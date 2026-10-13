@@ -26,7 +26,7 @@ const apps = [
 ] as const;
 
 const screenshots = [
-  ["/guides/production-install/01-choisir-appareil.png", "Choisir le téléphone Android", "1. Choisissez l’appareil.", "Connectez-vous à votre compte Google, ouvrez la fiche de l’application puis sélectionnez le téléphone qui doit la recevoir."],
+  ["/guides/production-install/01-choisir-appareil.png", "Choisir le téléphone Android", "1. Cliquez sur le prix et choisissez l’appareil.", "Connectez-vous à votre compte Google, ouvrez la fiche de l’application, cliquez sur le bouton affichant son prix, puis sélectionnez le téléphone qui doit la recevoir."],
   ["/guides/production-install/02-choisir-utiliser-code.png", "Choix du mode de paiement Google Play", "2. Choisissez « Redeem code ».", "Lorsque Google Play propose les moyens de paiement, sélectionnez « Redeem code ». N’ajoutez pas de carte bancaire personnelle."],
   ["/guides/production-install/03-saisir-code.png", "Saisie d’un code promotionnel Google Play", "3. Saisissez votre code personnel.", "Copiez le code reçu par e-mail, collez-le ici, puis cliquez sur « Redeem ». Le code affiché dans cette illustration a été masqué."],
   ["/guides/production-install/04-confirmer-gratuite.png", "Application gratuite grâce au code promotionnel", "4. Vérifiez que le prix est à 0 €.", "Le prix d’origine est barré et Google Play affiche 0 €. Cliquez sur « Install » : aucun paiement bancaire n’est demandé."],
@@ -58,7 +58,7 @@ export default function GuideProductionPage() {
         <section className="guide-tester-steps" aria-labelledby="production-steps-title">
           <h2 id="production-steps-title">Le parcours complet</h2>
           <div className="guide-tester-step-grid guide-production-step-grid">
-            <div><span>1</span><h3>Ouvrez la fiche</h3><p>Connectez votre compte Google et ouvrez le lien de l’application choisie ci-dessous.</p></div>
+            <div><span>1</span><h3>Ouvrez la fiche</h3><p>Connectez votre compte Google, ouvrez le lien de l’application choisie ci-dessous et cliquez sur le bouton affichant son prix.</p></div>
             <div><span>2</span><h3>Utilisez votre code</h3><p>Au moment du paiement, choisissez « Redeem code », collez le code reçu puis validez.</p></div>
             <div><span>3</span><h3>Installez gratuitement</h3><p>Vérifiez que le prix affiché est 0 €, cliquez sur « Install » et acceptez une éventuelle vérification Google.</p></div>
           </div>
