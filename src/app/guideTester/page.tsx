@@ -14,17 +14,13 @@ export const metadata: Metadata = {
 
 const apps = [
   ["Calendrier lunisolaire et signes astrologiques chinois", "com.visdar.calendrier", "https://play.google.com/store/apps/details?id=com.visdar.calendrier"],
-  ["Reconnaissance des sinogrammes manuscrits", "com.visdar.manuscrits", "https://play.google.com/store/apps/details?id=com.visdar.manuscrits"],
-  ["Pays en chinois : capitale, heure, monnaie, indicatif téléphonique", "com.visdar.heures", "https://play.google.com/store/apps/details?id=com.visdar.heures"],
   ["Dictionnaire contextuel français-chinois", "com.visdar.contextes", "https://play.google.com/store/apps/details?id=com.visdar.contextes"],
   ["Grands nombres en chinois", "com.visdar.chiffres", "https://play.google.com/store/apps/details?id=com.visdar.chiffres"],
-  ["Roue des couleurs en chinois", "com.visdar.couleurs", "https://play.google.com/store/apps/details?id=com.visdar.couleurs"],
-  ["Clés des sinogrammes (avec exemples)", "com.visdar.cles", "https://play.google.com/store/apps/details?id=com.visdar.cles"],
-  ["Dialectes et langues régionales en Chine", "com.visdar.dialectes", "https://play.google.com/store/apps/details?id=com.visdar.dialectes"],
   ["Classificateurs chinois", "com.visdar.classificateur", "https://play.google.com/store/apps/details?id=com.visdar.classificateur"],
   ["Exprimer le temps en chinois", "com.visdar.temps", "https://play.google.com/store/apps/details?id=com.visdar.temps"],
   ["Locutions idiomatiques Chengyu", "com.visdar.expressions", "https://play.google.com/store/apps/details?id=com.visdar.expressions"],
   ["Liens de parenté", "com.visdar.famille", "https://play.google.com/store/apps/details?id=com.visdar.famille"],
+  ["Chinese For Two 中文双人游戏", "com.visdar.binome", "https://play.google.com/apps/testing/com.visdar.binome"],
 ] as const;
 
 export default function GuideTesterPage() {
@@ -39,8 +35,8 @@ export default function GuideTesterPage() {
           <p className="guide-tester-guide-label">Guide d’installation Android</p>
           <p className="lead">Bienvenue dans le programme Tester spécial invité. Pendant la phase de test, vous pouvez obtenir gratuitement toute application Android Visd AR proposée au test, même si sa fiche Google Play affiche un prix.</p>
           <p>Le prix affiché sert uniquement à ouvrir le parcours Google Play : avec la carte de test, aucun montant ne sera débité.</p>
+          <p className="guide-tester-switch"><a href="/guideProduction">Les applications déjà publiées sur Google Play disposent d’un guide distinct avec code promotionnel personnel.</a></p>
           <p className="guide-tester-warning"><strong>Google Play Pass : choisissez « Non merci ».</strong> Cette offre d’abonnement payant de Google est facultative et distincte du test Visd AR. Si elle apparaît après la carte de test, cliquez sur le bouton en bas à gauche du panneau, puis revenez installer l’application.</p>
-          <a className="pill-button" href="/guides/guide-tester-special-invite.pdf?v=play-pass" target="_blank" rel="noopener noreferrer">Télécharger le PDF illustré</a>
         </div>
 
         <section className="guide-tester-notice" aria-labelledby="confidentialite-title">
