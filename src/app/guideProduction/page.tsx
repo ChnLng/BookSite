@@ -43,7 +43,7 @@ export default function GuideProductionPage() {
         <div className="guide-tester-hero">
           <span className="badge">Applications Google Play publiées</span>
           <h1>Installation gratuite avec un code</h1>
-          <p className="guide-tester-subtitle">Cinq applications Android Visd AR disponibles sur Google Play</p>
+          <p className="guide-tester-subtitle">Applications Android Visd AR disponibles sur Google Play</p>
           <p className="guide-tester-guide-label">Guide d’installation · production</p>
           <p className="lead">Bienvenue. Ces applications sont déjà publiées sur Google Play. Leur prix officiel peut apparaître sur la fiche, mais votre code promotionnel personnel permet de les obtenir gratuitement.</p>
         </div>
