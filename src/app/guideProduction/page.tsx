@@ -22,6 +22,7 @@ const apps = [
   ["Reconnaissance des sinogrammes manuscrits 汉字手写识别", "com.visdar.manuscrits", "https://play.google.com/store/apps/details?id=com.visdar.manuscrits"],
   ["Roue chromatique 色盘", "com.visdar.couleurs", "https://play.google.com/store/apps/details?id=com.visdar.couleurs"],
   ["Heures du monde 全球时间", "com.visdar.heures", "https://play.google.com/store/apps/details?id=com.visdar.heures"],
+  ["Grands nombres en chinois", "com.visdar.chiffres", "https://play.google.com/store/apps/details?id=com.visdar.chiffres"],
 ] as const;
 
 const screenshots = [
