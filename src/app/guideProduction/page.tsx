@@ -26,7 +26,7 @@ const apps = [
 ] as const;
 
 const screenshots = [
-  ["/guides/production-install/01-choisir-appareil.png", "Choisir le téléphone Android", "1. Cliquez sur le prix et choisissez l’appareil.", "Connectez-vous à votre compte Google, ouvrez la fiche de l’application, cliquez sur le bouton affichant son prix, puis sélectionnez le téléphone qui doit la recevoir."],
+  ["/guides/production-install/01-choisir-appareil.png", "Choisir le téléphone Android", "1. Cliquez sur le prix et choisissez l’appareil.", "Connectez-vous à votre compte Google, ouvrez la fiche de l’application, cliquez sur le bouton affichant son prix, puis sélectionnez le téléphone qui doit la recevoir. Ce prix est le tarif normal : après avoir choisi « Redeem code » comme mode de paiement et validé votre code promotionnel, Google Play affichera 0 € avant l’installation."],
   ["/guides/production-install/02-choisir-utiliser-code.png", "Choix du mode de paiement Google Play", "2. Choisissez « Redeem code ».", "Lorsque Google Play propose les moyens de paiement, sélectionnez « Redeem code ». N’ajoutez pas de carte bancaire personnelle."],
   ["/guides/production-install/03-saisir-code.png", "Saisie d’un code promotionnel Google Play", "3. Saisissez votre code personnel.", "Copiez le code reçu par e-mail, collez-le ici, puis cliquez sur « Redeem ». Le code affiché dans cette illustration a été masqué."],
   ["/guides/production-install/04-confirmer-gratuite.png", "Application gratuite grâce au code promotionnel", "4. Vérifiez que le prix est à 0 €.", "Le prix d’origine est barré et Google Play affiche 0 €. Cliquez sur « Install » : aucun paiement bancaire n’est demandé."],
