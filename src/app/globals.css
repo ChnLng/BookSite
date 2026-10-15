@@ -98,7 +98,7 @@ button,
   align-items: center;
   gap: clamp(22px, 3vw, 40px);
   margin-top: 14px;
-  padding: clamp(22px, 2.6vw, 34px);
+  padding: clamp(16px, 1.8vw, 24px) clamp(22px, 2.6vw, 34px);
   border: 1px solid rgba(255, 255, 255, 0.95);
   border-radius: 30px;
   background:
@@ -147,8 +147,8 @@ button,
   flex-direction: column;
   justify-content: center;
   min-width: 0;
-  padding-top: clamp(16px, 2vw, 28px);
-  padding-bottom: clamp(16px, 2vw, 28px);
+  padding-top: clamp(8px, 1vw, 14px);
+  padding-bottom: clamp(8px, 1vw, 14px);
 }
 
 .home-story-pane-left {
@@ -225,29 +225,20 @@ button,
   line-height: 1;
 }
 
-.home-story-lead {
+.home-story-lead,
+.home-story-conclusion {
   margin: 0;
   color: #293251;
-  font-family: var(--font-heading), Georgia, serif;
-  font-size: clamp(1.43rem, 1.8vw, 1.7rem);
+  font-family: var(--font-body), sans-serif;
+  font-size: clamp(1.25rem, 1.6vw, 1.45rem);
   font-weight: 600;
-  letter-spacing: -0.012em;
-  line-height: 1.31;
+  line-height: 1.45;
   text-wrap: pretty;
 }
 
 .home-story-lead strong {
   color: var(--home-story-accent);
   font-weight: 700;
-}
-
-.home-story-conclusion {
-  margin: 0;
-  color: #53617e;
-  font-size: clamp(1.25rem, 1.6vw, 1.45rem);
-  font-weight: 600;
-  line-height: 1.58;
-  text-wrap: pretty;
 }
 
 .home-story-conclusion strong {
@@ -258,8 +249,8 @@ button,
 @media (max-width: 860px) {
   .home-story.glass {
     grid-template-columns: minmax(0, 1fr);
-    gap: 18px;
-    padding: 22px;
+    gap: 10px;
+    padding: 18px 22px;
     border-radius: 24px;
   }
 
@@ -273,12 +264,12 @@ button,
   }
 
   .home-story-pane-left {
-    padding: 15px 18px 32px;
+    padding: 8px 14px 26px;
   }
 
   .home-story-pane-right {
     margin-top: -18px;
-    padding: 42px 18px 22px;
+    padding: 33px 14px 12px;
     background: linear-gradient(145deg, rgba(241, 236, 255, 0.68), rgba(232, 230, 250, 0.48));
     clip-path: polygon(0 22px, 100% 0, 100% 100%, 0 100%);
   }
@@ -301,7 +292,7 @@ button,
     align-items: center;
     justify-content: flex-start;
     gap: 9px;
-    padding: 0 0 13px;
+    padding: 0 0 10px;
     border-right: 0;
     border-bottom: 1px solid rgba(104, 91, 167, 0.17);
   }
@@ -314,8 +305,9 @@ button,
     font-size: 2rem;
   }
 
-  .home-story-lead {
-    font-size: clamp(1.34rem, 5vw, 1.55rem);
+  .home-story-lead,
+  .home-story-conclusion {
+    font-size: clamp(1.27rem, 4.4vw, 1.45rem);
   }
 }
 
