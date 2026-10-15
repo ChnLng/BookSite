@@ -113,12 +113,16 @@ export function HomePageClient({ initialMobile: _initialMobile, latestProducts, 
           </div>
         </div>
         <div className="home-story-copy">
-          <p className="home-story-lead">
-            Ce personnage numérique dont vous voyez le visage s’appelle <strong>Visd</strong>. Il vous propose de voir d’autres dimensions de ce monde grâce à la pratique d’une autre langue, le chinois. Il vous accompagne et répond à votre curiosité.
-          </p>
-          <p className="home-story-conclusion">
-            L’objectif de ces créations est de vous faire pénétrer dans d’autres univers comme si c’était dans une <strong>réalité augmentée</strong>.
-          </p>
+          <div className="home-story-pane home-story-pane-left">
+            <p className="home-story-lead">
+              Ce personnage numérique dont vous voyez le visage s’appelle <strong>Visd</strong>. Il vous propose de voir d’autres dimensions de ce monde grâce à la pratique d’une autre langue, le chinois. Il vous accompagne et répond à votre curiosité.
+            </p>
+          </div>
+          <div className="home-story-pane home-story-pane-right">
+            <p className="home-story-conclusion">
+              L’objectif de ces créations est de vous faire pénétrer dans d’autres univers comme si c’était dans une <strong>réalité augmentée</strong>.
+            </p>
+          </div>
         </div>
       </section>
 
