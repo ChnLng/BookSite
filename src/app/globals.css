@@ -91,21 +91,14 @@ button,
   overflow-x: clip;
 }
 
-.home-story.glass {
+.home-story {
   --home-story-accent: #6250ad;
   display: grid;
   grid-template-columns: 132px minmax(0, 1fr);
   align-items: center;
   gap: clamp(22px, 3vw, 40px);
   margin-top: 14px;
-  padding: clamp(16px, 1.8vw, 24px) clamp(22px, 2.6vw, 34px);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  border-radius: 30px;
-  background:
-    radial-gradient(circle at 5% 50%, rgba(182, 226, 242, 0.34), transparent 28%),
-    radial-gradient(circle at 96% 0%, rgba(203, 187, 250, 0.28), transparent 38%),
-    linear-gradient(125deg, rgba(255, 255, 255, 0.92), rgba(249, 247, 255, 0.84));
-  box-shadow: 0 16px 42px rgba(68, 74, 126, 0.085), inset 0 1px 0 #fff;
+  padding: clamp(10px, 1.4vw, 18px) clamp(18px, 2.2vw, 30px);
 }
 
 .home-story-copy {
@@ -115,7 +108,6 @@ button,
   isolation: isolate;
   min-width: 0;
   overflow: hidden;
-  border-radius: 20px;
 }
 
 .home-story-copy::before,
@@ -247,11 +239,10 @@ button,
 }
 
 @media (max-width: 860px) {
-  .home-story.glass {
+  .home-story {
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
-    padding: 18px 22px;
-    border-radius: 24px;
+    padding: 12px 18px;
   }
 
   .home-story-copy {
