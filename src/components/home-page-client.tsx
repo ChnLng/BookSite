@@ -103,6 +103,21 @@ export function HomePageClient({ initialMobile: _initialMobile, latestProducts, 
         isHomePage={true}
       />
 
+      <section className="home-story glass" aria-label="L’histoire de Visd">
+        <div className="home-story-identity">
+          <span className="home-story-kicker">L’univers de</span>
+          <span className="home-story-name">Visd</span>
+        </div>
+        <div className="home-story-copy">
+          <p className="home-story-lead">
+            Ce personnage numérique dont vous voyez le visage s’appelle <strong>Visd</strong>. Il vous propose de voir d’autres dimensions de ce monde grâce à la pratique d’une autre langue, le chinois. Il vous accompagne et répond à votre curiosité.
+          </p>
+          <p className="home-story-conclusion">
+            L’objectif de ces créations est de vous faire pénétrer dans d’autres univers comme si c’était dans une réalité augmentée.
+          </p>
+        </div>
+      </section>
+
       <section className="homepage-responsive-grid homepage-main-grid">
         <div className="home-desktop-sidebar-wrapper">
           <HomeDesktopSidebar latestProducts={latestProducts} />
