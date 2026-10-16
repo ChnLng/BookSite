@@ -23,6 +23,7 @@ const apps = [
   ["Roue chromatique 色盘", "com.visdar.couleurs", "https://play.google.com/store/apps/details?id=com.visdar.couleurs"],
   ["Heures du monde 全球时间", "com.visdar.heures", "https://play.google.com/store/apps/details?id=com.visdar.heures"],
   ["Grands nombres en chinois", "com.visdar.chiffres", "https://play.google.com/store/apps/details?id=com.visdar.chiffres"],
+  ["Classificateurs chinois 量词", "com.visdar.classificateur", "https://play.google.com/store/apps/details?id=com.visdar.classificateur"],
 ] as const;
 
 const screenshots = [

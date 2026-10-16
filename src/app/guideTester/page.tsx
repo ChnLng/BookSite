@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 const apps = [
   ["Calendrier lunisolaire et signes astrologiques chinois", "com.visdar.calendrier", "https://play.google.com/store/apps/details?id=com.visdar.calendrier"],
   ["Dictionnaire contextuel français-chinois", "com.visdar.contextes", "https://play.google.com/store/apps/details?id=com.visdar.contextes"],
-  ["Classificateurs chinois", "com.visdar.classificateur", "https://play.google.com/store/apps/details?id=com.visdar.classificateur"],
   ["Exprimer le temps en chinois", "com.visdar.temps", "https://play.google.com/store/apps/details?id=com.visdar.temps"],
   ["Locutions idiomatiques Chengyu", "com.visdar.expressions", "https://play.google.com/store/apps/details?id=com.visdar.expressions"],
   ["Liens de parenté", "com.visdar.famille", "https://play.google.com/store/apps/details?id=com.visdar.famille"],
