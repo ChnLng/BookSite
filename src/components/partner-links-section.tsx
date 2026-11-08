@@ -34,7 +34,7 @@ type PartnerLinksSectionProps = {
 export function PartnerLinksSection({
   links: providedLinks,
   sectionId = "liens-partenaires",
-  title = "Liens partenaires",
+  title = "Liens externes",
 }: PartnerLinksSectionProps) {
   const [links, setLinks] = useState<PartnerLinkItem[]>(providedLinks ?? fallbackLinks);
 
@@ -102,13 +102,13 @@ export function PartnerLinksSection({
             rel="noreferrer"
             aria-label={link.titleFr}
           >
-            <Image
+            {link.iconUrl ? <Image
               src={link.iconUrl}
               alt={link.titleFr}
               width={56}
               height={56}
               className="partner-link-icon"
-            />
+            /> : <span className="partner-link-monogram" aria-hidden="true">{link.titleFr === "Applications Android" ? "▶" : link.titleFr === "Albums illustrés sur Amazon Kindle" ? "K" : link.titleFr === "TikTok" ? "♪" : link.titleFr === "X" ? "𝕏" : link.titleFr === "YouTube" ? "▶" : link.titleFr.slice(0, 2).toUpperCase()}</span>}
             <span className="partner-link-tooltip" role="tooltip">
               {link.tooltipText || link.titleFr}
             </span>

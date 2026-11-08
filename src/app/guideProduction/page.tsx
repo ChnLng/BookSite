@@ -24,6 +24,8 @@ const apps = [
   ["Heures du monde 全球时间", "com.visdar.heures", "https://play.google.com/store/apps/details?id=com.visdar.heures"],
   ["Grands nombres en chinois", "com.visdar.chiffres", "https://play.google.com/store/apps/details?id=com.visdar.chiffres"],
   ["Classificateurs chinois 量词", "com.visdar.classificateur", "https://play.google.com/store/apps/details?id=com.visdar.classificateur"],
+  ["Calendrier lunisolaire chinois 万年历", "com.visdar.calendrier", "https://play.google.com/store/apps/details?id=com.visdar.calendrier"],
+  ["Chinois en binôme — 7 jeux à deux", "com.visdar.binome", "https://play.google.com/store/apps/details?id=com.visdar.binome"],
 ] as const;
 
 const screenshots = [
@@ -47,12 +49,12 @@ export default function GuideProductionPage() {
           <h1>Installation gratuite avec un code</h1>
           <p className="guide-tester-subtitle">Applications Android Visd AR disponibles sur Google Play</p>
           <p className="guide-tester-guide-label">Guide d’installation · production</p>
-          <p className="lead">Bienvenue. Ces applications sont déjà publiées sur Google Play. Leur prix officiel peut apparaître sur la fiche, mais votre code promotionnel personnel permet de les obtenir gratuitement.</p>
+          <p className="lead">Bienvenue. Ces applications sont déjà publiées sur Google Play. Pour les applications payantes, votre code promotionnel personnel permet de les obtenir gratuitement. « Classificateurs chinois » est actuellement gratuit sur Google Play et s’installe directement.</p>
         </div>
 
         <section className="guide-tester-notice" aria-labelledby="production-before-title">
           <h2 id="production-before-title">Avant de commencer</h2>
-          <p>Consultez l’e-mail envoyé par Visd AR : il contient un <strong>code promotionnel personnel</strong> pour l’application demandée. Chaque code est <strong>limité à une seule utilisation</strong>.</p>
+          <p>Pour une application payante, consultez l’e-mail envoyé par Visd AR : il contient un <strong>code promotionnel personnel</strong> pour l’application demandée. Chaque code est <strong>limité à une seule utilisation</strong>.</p>
           <p>Connectez-vous au Play Store avec votre compte Google, puis utilisez le code au moment du paiement. Le parcours est gratuit : <strong>n’ajoutez pas de carte bancaire personnelle</strong>.</p>
           <p>Besoin d’un autre code ou d’une autre application ? Écrivez de nouveau à <a href="mailto:visdar@outlook.fr">visdar@outlook.fr</a> en indiquant l’application souhaitée.</p>
         </section>
@@ -82,7 +84,7 @@ export default function GuideProductionPage() {
 
         <section className="guide-tester-directory" aria-labelledby="production-directory-title">
           <h2 id="production-directory-title">Liens directs des applications publiées</h2>
-          <p>Choisissez l’application pour laquelle vous avez reçu un code, puis ouvrez sa fiche Google Play.</p>
+          <p>Choisissez l’application pour laquelle vous avez reçu un code, puis ouvrez sa fiche Google Play. Pour « Classificateurs chinois », aucun code n’est nécessaire tant que Google Play affiche « Installer ».</p>
           <div className="guide-tester-app-list">
             {apps.map(([title, packageName, url]) => (
               <article key={packageName}>

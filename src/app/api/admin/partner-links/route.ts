@@ -77,13 +77,13 @@ export async function POST(request: Request) {
   const payload = (await request.json().catch(() => null)) as { payload?: PartnerLinkPayload } | null;
   const link = payload?.payload;
 
-  if (!link?.titleFr?.trim() || !link.iconUrl?.trim() || !link.targetUrl?.trim()) {
-    return NextResponse.json({ ok: false, message: "Remplissez le titre, l'icone et l'URL cible." }, { status: 400 });
+  if (!link?.titleFr?.trim() || !link.targetUrl?.trim()) {
+    return NextResponse.json({ ok: false, message: "Remplissez le titre et l'URL cible." }, { status: 400 });
   }
 
   const rowPayload = {
     title_fr: link.titleFr.trim(),
-    icon_url: link.iconUrl.trim(),
+    icon_url: link.iconUrl?.trim() || "",
     target_url: link.targetUrl.trim(),
     tooltip_text: link.tooltipText?.trim() || link.titleFr.trim(),
     sort_order: Number(link.sortOrder || 0),

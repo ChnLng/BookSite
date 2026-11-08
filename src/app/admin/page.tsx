@@ -153,7 +153,7 @@ const adminSections = [
   { key: "testing", label: "测试与兑换码", subtitle: "Tests Google Play", group: "用户与反馈", description: "管理 Google Play 代码库存、有效期、自动分配和历史测试申请。" },
   { key: "messages", label: "联系留言", subtitle: "Messages privés", group: "用户与反馈", description: "查看发给管理员的联系留言及测试申请。" },
   { key: "reviews", label: "留言与评价", subtitle: "Livre d’or & avis", group: "用户与反馈", description: "分别筛选首页公开留言、图书评价与工具评价，管理内容是否显示。" },
-  { key: "partners", label: "友情链接", subtitle: "Liens partenaires", group: "推广与合作", description: "管理推荐链接、图标和显示顺序，与 Ads 展示广告分开。" },
+  { key: "partners", label: "外部链接", subtitle: "Liens externes", group: "推广与合作", description: "管理外部链接、图标和显示顺序，与 Ads 展示广告分开。" },
   { key: "advertising", label: "展示广告", subtitle: "Ads · Adsterra", group: "推广与合作", description: "查看本站广告配置，进入 Adsterra 管理广告内容与收益。" },
 ] as const;
 

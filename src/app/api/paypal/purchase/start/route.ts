@@ -6,7 +6,7 @@ import { applyDiscount } from "@/lib/promo";
 import { paypalAccessToken, paypalBaseUrl } from "@/lib/paypal-server";
 import { hasPurchasedBook, hasPurchasedResource } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
-import { getPlayTestingApp, playTestingApplicationUrl } from "@/lib/play-testing";
+import { getPlayTestingApp, getPublicPlayStoreUrl, playTestingApplicationUrl } from "@/lib/play-testing";
 
 type ResolvedBook = {
   kind: "book";
@@ -165,6 +165,8 @@ export async function POST(request: Request) {
   }
   const testingApp = purchase.kind === "resource" ? getPlayTestingApp(purchase.id) || getPlayTestingApp(purchase.slug) : null;
   if (testingApp) return NextResponse.json({ ok: false, message: "Cette application est proposée gratuitement pendant sa phase de test avant lancement.", applicationUrl: playTestingApplicationUrl(testingApp) }, { status: 409 });
+  const playStoreUrl = purchase.kind === "resource" ? getPublicPlayStoreUrl(purchase.id) || getPublicPlayStoreUrl(purchase.slug) : null;
+  if (playStoreUrl) return NextResponse.json({ ok: false, message: "Achetez cette application directement sur Google Play.", applicationUrl: playStoreUrl }, { status: 409 });
 
   const alreadyOwned = purchase.kind === "book"
     ? await hasPurchasedBook(supabase, {

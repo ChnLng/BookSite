@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ResourceItem } from "@/lib/home-sections";
 import { richTextToPlainText } from "./rich-text";
+import { chineseForTwoResource } from "./public-android-resources";
+import { getPublicPlayStoreApp } from "./play-testing";
 
 type HomepageResourceRow = {
   id: string;
@@ -28,7 +30,7 @@ export function mapHomepageResource(row: HomepageResourceRow): ResourceItem {
     coverImageUrl: row.cover_image_url || row.qr_image_url || "/images/logo.png",
     qrImageUrl: "",
     externalUrl: "",
-    priceEur: Number.isFinite(price) ? Math.max(0, price) : 0,
+    priceEur: getPublicPlayStoreApp(row.id)?.priceEur ?? getPublicPlayStoreApp(row.slug)?.priceEur ?? (Number.isFinite(price) ? Math.max(0, price) : 0),
     visible: true,
     sortOrder: row.sort_order ?? 0,
     // The homepage links to the product page, never to protected downloads.
@@ -46,7 +48,27 @@ export async function loadHomepageResources(supabase: SupabaseClient): Promise<R
       .order("created_at", { ascending: true })
       .abortSignal(AbortSignal.timeout(5000));
 
-    return error ? null : ((data || []) as HomepageResourceRow[]).map(mapHomepageResource);
+    if (error) return null;
+    const resources = ((data || []) as HomepageResourceRow[]).map(mapHomepageResource);
+    if (!resources.some((item) => item.slug === chineseForTwoResource.slug)) {
+      const androidCategoryId = resources.find((item) => getPublicPlayStoreApp(item.id))?.categoryId ?? null;
+      resources.push({
+        id: chineseForTwoResource.id,
+        slug: chineseForTwoResource.slug,
+        categoryId: androidCategoryId,
+        titleFr: chineseForTwoResource.titleFr,
+        homepageSummaryFr: chineseForTwoResource.summaryFr,
+        summaryFr: chineseForTwoResource.summaryFr,
+        coverImageUrl: chineseForTwoResource.coverImageUrl,
+        qrImageUrl: "",
+        externalUrl: chineseForTwoResource.externalUrl,
+        priceEur: getPublicPlayStoreApp(chineseForTwoResource.slug)?.priceEur ?? 0,
+        visible: true,
+        sortOrder: chineseForTwoResource.sortOrder,
+        downloads: [],
+      });
+    }
+    return resources;
   } catch {
     return null;
   }

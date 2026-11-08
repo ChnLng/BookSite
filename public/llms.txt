@@ -1,13 +1,15 @@
-# Visd AR
+# Visd AR — livres et applications pour apprendre le chinois
 
 Visd AR est une marque française de livres numériques bilingues chinois-français et de ressources ludiques destinées principalement aux francophones qui apprennent le mandarin.
 
 ## Contenus principaux
 
-- Accueil : https://www.visdar.fr/
-- Catalogue des livres : https://www.visdar.fr/catalogue
-- Guide de lecture avec sinogrammes, pinyin et traduction : https://www.visdar.fr/blog/lecture-chinois-pinyin-traduction
-- Plan du site : https://www.visdar.fr/sitemap.xml
+- [Accueil](https://www.visdar.fr/) : présentation de Visd AR et des nouveautés.
+- [Catalogue](https://www.visdar.fr/catalogue) : livres numériques et outils d'apprentissage.
+- [Applications Android](https://www.visdar.fr/outils/) : fiches des applications et liens vers Google Play.
+- [Chinois en binôme](https://www.visdar.fr/outils/chinois-en-binome-android) : sept jeux en face à face pour deux joueurs.
+- [Guide de lecture](https://www.visdar.fr/blog/lecture-chinois-pinyin-traduction) : sinogrammes, pinyin et traduction française.
+- [Plan du site](https://www.visdar.fr/sitemap.xml) : pages publiques indexables.
 
 ## Thèmes
 
@@ -17,3 +19,4 @@ Visd AR est une marque française de livres numériques bilingues chinois-franç
 - Jeux, exercices et outils numériques pour pratiquer le chinois
 
 Les descriptions, prix et disponibilités faisant autorité sont ceux affichés sur les pages publiques des produits.
+Les applications Android publiées sont achetées et installées directement sur Google Play ; le site Visd AR ne fournit pas de licence Google Play après un paiement sur son propre site.

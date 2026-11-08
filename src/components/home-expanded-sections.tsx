@@ -23,9 +23,10 @@ import {
   type ResourceItem,
 } from "@/lib/home-sections";
 import { loadHomepageResources } from "@/lib/homepage-resources";
-import { getPlayTestingApp } from "@/lib/play-testing";
+import { getPlayTestingApp, getPublicPlayStoreApp } from "@/lib/play-testing";
 import { PlayTestingPrice } from "@/components/play-testing-price";
 import { getExternalLinkLabel } from "@/lib/external-link-label";
+import { withExternalLinkDefaults } from "@/lib/external-links";
 
 const iconMap = {
   sparkles: Sparkles,
@@ -244,7 +245,7 @@ export function HomeExpandedSections({ initialResources }: { initialResources: R
 
     sections.push({
       id: "liens-partenaires",
-      label: sectionSettings["liens-partenaires"]?.title || "Liens partenaires",
+      label: "Liens externes",
       kind: "partner",
       order: Number.MAX_SAFE_INTEGER,
     });
@@ -493,7 +494,7 @@ export function HomeExpandedSections({ initialResources }: { initialResources: R
                                 <strong>{resource.titleFr}</strong>
                                 <span>{getPlayTestingApp(resource.id)
                                   ? <PlayTestingPrice priceEur={getPlayTestingApp(resource.id)!.priceEur} />
-                                  : `${resource.priceEur.toFixed(2)} EUR`}</span>
+                                  : getPublicPlayStoreApp(resource.id)?.priceEur === 0 ? "Gratuit" : `${(getPublicPlayStoreApp(resource.id)?.priceEur ?? resource.priceEur).toFixed(2)} EUR`}</span>
                               </div>
                               <p className="tiny">{homepageExcerpt(resource.homepageSummaryFr || resource.summaryFr) || "Ouvrez la fiche pour voir les détails et les options de téléchargement."}</p>
                               <span className="home-resource-carousel-meta">
@@ -585,7 +586,7 @@ export function HomeExpandedSections({ initialResources }: { initialResources: R
           );
         }
 
-        return <div key={section.id} style={{ order: section.order }}><PartnerLinksSection links={partnerLinks} sectionId={section.id} title={section.label} /></div>;
+        return <div key={section.id} style={{ order: section.order }}><PartnerLinksSection links={sectionSettings["liens-partenaires"]?.title === "Liens externes" ? partnerLinks : withExternalLinkDefaults(partnerLinks)} sectionId={section.id} title={section.label} /></div>;
       })}
     </>
   );

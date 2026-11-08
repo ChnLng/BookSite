@@ -4,7 +4,7 @@ import { isUuid } from "@/lib/database-identifiers";
 import { hasPurchasedResource } from "@/lib/purchase-access";
 import { applyDiscount } from "@/lib/promo";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
-import { getPlayTestingApp, playTestingApplicationUrl } from "@/lib/play-testing";
+import { getPlayTestingApp, getPublicPlayStoreUrl, playTestingApplicationUrl } from "@/lib/play-testing";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -41,6 +41,8 @@ export async function POST(request: Request, context: RouteContext) {
   }
   const testingApp = getPlayTestingApp(resource.id) || getPlayTestingApp(resource.slug);
   if (testingApp) return NextResponse.json({ ok: false, message: "Demandez votre accès gratuit au test Google Play.", applicationUrl: playTestingApplicationUrl(testingApp) }, { status: 409 });
+  const playStoreUrl = getPublicPlayStoreUrl(resource.id) || getPublicPlayStoreUrl(resource.slug);
+  if (playStoreUrl) return NextResponse.json({ ok: false, message: "Installez cette application depuis Google Play.", applicationUrl: playStoreUrl }, { status: 409 });
 
   const basePrice = Number(resource.price_eur || 0);
   const promoCode = String(payload?.promoCode || "").trim().toUpperCase();

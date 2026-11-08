@@ -480,6 +480,8 @@ export function HomeDesktopSidebar({ latestProducts }: { latestProducts: LatestP
                     <button
                       className={item.likedByViewer ? "comment-like-button liked" : "comment-like-button"}
                       type="button"
+                      aria-label={`Aimer le message de ${item.name}`}
+                      aria-pressed={item.likedByViewer}
                       disabled={item.id.startsWith("sample-")}
                       onClick={() => void toggleCommentLike(item.id)}
                     >
@@ -493,14 +495,18 @@ export function HomeDesktopSidebar({ latestProducts }: { latestProducts: LatestP
             ))}
           </div>
           <div className="input-group compact-form">
+            <label className="sr-only" htmlFor="guestbook-name">Votre nom ou pseudo</label>
             <input
+              id="guestbook-name"
               className="input compact-input"
               name="name"
               placeholder="Votre nom ou pseudo"
               value={commentName}
               onChange={(event) => setCommentName(event.target.value)}
             />
+            <label className="sr-only" htmlFor="guestbook-content">Votre impression, une pensée à partager</label>
             <textarea
+              id="guestbook-content"
               className="textarea comment-textarea compact-textarea"
               name="content"
               placeholder="Votre impression, une pensée à partager…"

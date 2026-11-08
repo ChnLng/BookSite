@@ -13,12 +13,10 @@ export const metadata: Metadata = {
 };
 
 const apps = [
-  ["Calendrier lunisolaire et signes astrologiques chinois", "com.visdar.calendrier", "https://play.google.com/store/apps/details?id=com.visdar.calendrier"],
   ["Dictionnaire contextuel français-chinois", "com.visdar.contextes", "https://play.google.com/store/apps/details?id=com.visdar.contextes"],
   ["Exprimer le temps en chinois", "com.visdar.temps", "https://play.google.com/store/apps/details?id=com.visdar.temps"],
   ["Locutions idiomatiques Chengyu", "com.visdar.expressions", "https://play.google.com/store/apps/details?id=com.visdar.expressions"],
   ["Liens de parenté", "com.visdar.famille", "https://play.google.com/store/apps/details?id=com.visdar.famille"],
-  ["Chinese For Two 中文双人游戏", "com.visdar.binome", "https://play.google.com/store/apps/details?id=com.visdar.binome"],
 ] as const;
 
 export default function GuideTesterPage() {

@@ -1,6 +1,8 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { isUuid } from "@/lib/database-identifiers";
 import { richTextToPlainText } from "@/lib/rich-text";
+import { getPublicPlayStoreApp } from "@/lib/play-testing";
+import { chineseForTwoResource } from "@/lib/public-android-resources";
 
 type ResourceItemRow = {
   id: string;
@@ -137,6 +139,26 @@ function normalizePrice(value: number | string | null | undefined) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function includePlayOnlyResources(resources: DisplayResource[]) {
+  if (resources.some((resource) => resource.slug === chineseForTwoResource.slug)) return resources;
+  const playApp = getPublicPlayStoreApp(chineseForTwoResource.slug);
+  return [...resources, {
+    id: chineseForTwoResource.id,
+    slug: chineseForTwoResource.slug,
+    titleFr: chineseForTwoResource.titleFr,
+    homepageSummaryFr: chineseForTwoResource.summaryFr,
+    summaryFr: chineseForTwoResource.summaryFr,
+    coverImageUrl: chineseForTwoResource.coverImageUrl,
+    qrImageUrl: chineseForTwoResource.coverImageUrl,
+    externalUrl: chineseForTwoResource.externalUrl,
+    visible: true,
+    sortOrder: chineseForTwoResource.sortOrder,
+    priceEur: playApp?.priceEur ?? 0,
+    galleryImages: [...chineseForTwoResource.galleryImages],
+    downloads: [],
+  }].sort((left, right) => left.sortOrder - right.sortOrder || left.titleFr.localeCompare(right.titleFr));
+}
+
 function clampHomepageSummary(value: string, maxLength = 150) {
   const normalized = richTextToPlainText(value);
   if (normalized.length <= maxLength) return normalized;
@@ -193,7 +215,7 @@ function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) 
         externalUrl: row.external_url || "",
         visible: row.visible !== false,
         sortOrder: row.sort_order ?? 0,
-        priceEur: normalizePrice(row.price_eur),
+        priceEur: getPublicPlayStoreApp(row.id)?.priceEur ?? getPublicPlayStoreApp(row.slug)?.priceEur ?? normalizePrice(row.price_eur),
         galleryImages: normalizeGalleryImages(row.gallery_images),
         downloads,
         titleRichFr,
@@ -211,7 +233,7 @@ async function fetchDisplayResources() {
   const supabase = getSupabaseBrowserClient();
 
   if (!supabase) {
-    return sampleResources;
+    return includePlayOnlyResources(sampleResources);
   }
 
   const resourceSelect = "id, slug, title_fr, homepage_summary_fr, summary_fr, cover_image_url, qr_image_url, external_url, visible, sort_order, price_eur, gallery_images";
@@ -234,7 +256,7 @@ async function fetchDisplayResources() {
     (filesResult.data || []) as ResourceItemFileRow[],
   );
 
-  return resourcesResult.error ? sampleResources : mapped;
+  return includePlayOnlyResources(resourcesResult.error ? sampleResources : mapped);
 }
 
 export async function loadDisplayResources() {

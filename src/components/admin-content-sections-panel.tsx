@@ -54,7 +54,7 @@ export function AdminContentSectionsPanel() {
       setMessage(`请先运行 content section SQL：${sectionResult.error.message}`);
       return;
     }
-    const nextSections = ((sectionResult.data || []) as SectionRow[]).sort((left, right) => {
+    const nextSections = ((sectionResult.data || []) as SectionRow[]).map((section) => section.section_key === "liens-partenaires" ? { ...section, title: "Liens externes" } : section).sort((left, right) => {
       if (left.section_key === "liens-partenaires") return 1;
       if (right.section_key === "liens-partenaires") return -1;
       return left.sort_order - right.sort_order;

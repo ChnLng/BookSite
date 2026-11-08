@@ -9,7 +9,7 @@ import { TopNav } from "@/components/top-nav";
 import { infoLinks } from "@/lib/legal-info";
 import type { DisplayBook } from "@/lib/books-service";
 import { loadDisplayResources } from "@/lib/resources-service";
-import { getPlayTestingApp, playTestingApplicationUrl } from "@/lib/play-testing";
+import { getPlayTestingApp, getPublicPlayStoreApp, getPublicPlayStoreUrl, playTestingApplicationUrl } from "@/lib/play-testing";
 import { PlayTestingPrice } from "@/components/play-testing-price";
 import { getExternalLinkLabel } from "@/lib/external-link-label";
 
@@ -88,6 +88,11 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
       window.location.href = playTestingApplicationUrl(testingApp);
       return;
     }
+    const playUrl = product.kind === "resource" ? getPublicPlayStoreUrl(product.id) : null;
+    if (playUrl) {
+      window.location.href = playUrl;
+      return;
+    }
     setPayingBookId(product.id);
     window.location.href = `${product.href}?buy=1`;
     setPayingBookId(null);
@@ -155,13 +160,13 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
                     <span>Prix</span>
                     {book.kind === "resource" && getPlayTestingApp(book.id)
                       ? <PlayTestingPrice priceEur={getPlayTestingApp(book.id)!.priceEur} />
-                      : <strong>{book.priceEur.toFixed(2)} EUR</strong>}
+                      : <strong>{book.priceEur === 0 ? "Gratuit" : `${book.priceEur.toFixed(2)} EUR`}</strong>}
                   </div>
                   <div className="catalogue-card-actions">
                     <button className={`cta-button catalogue-compact-button${book.kind === "resource" && getPlayTestingApp(book.id) ? " catalogue-testing-button" : ""}`} type="button" onClick={() => void handleBookCheckout(book)}>
-                      {book.kind === "resource" && getPlayTestingApp(book.id) ? "Test gratuit" : payingBookId === book.id ? "Paiement..." : "Acheter"}
+                      {book.kind === "resource" && getPlayTestingApp(book.id) ? "Test gratuit" : book.kind === "resource" && getPublicPlayStoreApp(book.id) ? (book.priceEur === 0 ? "Installer sur Google Play" : "Acheter sur Google Play") : payingBookId === book.id ? "Paiement..." : "Acheter"}
                     </button>
-                    {book.externalUrl && !(book.kind === "resource" && getPlayTestingApp(book.id)) ? <a className="pill-button catalogue-compact-button" href={book.externalUrl} target="_blank" rel="noreferrer">{getExternalLinkLabel(book.externalUrl)}</a> : null}
+                    {book.externalUrl && !(book.kind === "resource" && (getPlayTestingApp(book.id) || getPublicPlayStoreApp(book.id))) ? <a className="pill-button catalogue-compact-button" href={book.externalUrl} target="_blank" rel="noreferrer">{getExternalLinkLabel(book.externalUrl)}</a> : null}
                   </div>
                 </div>
               </article>

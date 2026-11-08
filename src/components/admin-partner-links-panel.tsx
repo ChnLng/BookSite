@@ -126,8 +126,8 @@ export function AdminPartnerLinksPanel() {
 
   const saveLink = async (overrides?: Partial<PartnerDraft>) => {
     const nextDraft = { ...draft, ...overrides };
-    if (!nextDraft.titleFr.trim() || !nextDraft.targetUrl.trim() || !nextDraft.iconUrl.trim()) {
-      setStatusMessage("Remplissez le titre, l'icone et l'URL cible.");
+    if (!nextDraft.titleFr.trim() || !nextDraft.targetUrl.trim()) {
+      setStatusMessage("Remplissez le titre et l'URL cible.");
       return;
     }
 
@@ -303,14 +303,14 @@ export function AdminPartnerLinksPanel() {
     <div className="section-block">
       <div className="split-line">
         <div>
-          <h3>Liens partenaires 友情链接</h3>
+          <h3>Liens externes 外部链接</h3>
           <p className="tiny" style={{ marginTop: 6 }}>
             Icônes only, ouverture en nouvel onglet, tri gauche / droite depuis l&apos;admin.
           </p>
         </div>
       </div>
 
-      <div className="admin-category-tabs" role="tablist" aria-label="Gestion des liens partenaires">
+      <div className="admin-category-tabs" role="tablist" aria-label="Gestion des liens externes">
         <button
           className={`admin-category-tab ${activeTab === "create" ? "active" : ""}`}
           type="button"

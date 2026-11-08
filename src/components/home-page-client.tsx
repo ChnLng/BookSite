@@ -106,7 +106,7 @@ export function HomePageClient({ initialMobile: _initialMobile, latestProducts, 
       <section className="home-story" aria-label="L’histoire de Visd">
         <div className="home-story-identity">
           <span className="home-story-kicker">À propos de</span>
-          <span className="home-story-name">Visd</span>
+          <h1 className="home-story-name" aria-label="Visd AR — livres et applications pour apprendre le chinois">Visd</h1>
           <div className="home-story-signature">
             <span className="home-story-line" aria-hidden="true" />
             <span className="home-story-ar">AR</span>

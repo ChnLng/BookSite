@@ -8,7 +8,7 @@ import { ChevronLeft, ChevronRight, ExternalLink, LayoutGrid } from "lucide-reac
 import { PartnerAdSlot } from "@/components/partner-ad-slot";
 import { AndroidDemoVideo } from "@/components/android-demo-video";
 import { PlayTestingNotice, PlayTestingPrice } from "@/components/play-testing-price";
-import { getPlayTestingApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
+import { getPlayTestingApp, getPublicPlayStoreApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
 import { FormattedInlineText, FormattedText } from "@/components/formatted-text";
 import { ProductDocumentsPanel } from "@/components/product-documents-panel";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
@@ -165,6 +165,7 @@ export default function ResourceDetailPage() {
   const processedStripeSessionRef = useRef<string | null>(null);
   const testingApp = getPlayTestingApp(resource?.id) || getPlayTestingApp(resource?.slug);
   const publicPlayStoreUrl = getPublicPlayStoreUrl(resource?.id) || getPublicPlayStoreUrl(resource?.slug);
+  const publicPlayApp = getPublicPlayStoreApp(resource?.id) || getPublicPlayStoreApp(resource?.slug);
   const resourceExternalUrl = resource?.externalUrl || "";
   const showResourceExternalUrl = Boolean(
     resourceExternalUrl
@@ -508,7 +509,7 @@ export default function ResourceDetailPage() {
   }, [actionBusy, appliedPromo?.code, resource, session?.access_token]);
 
   useEffect(() => {
-    if (!resource || testingApp || !openBuyImmediately || autoStartedCheckout) return;
+    if (!resource || testingApp || publicPlayStoreUrl || !openBuyImmediately || autoStartedCheckout) return;
     if (!session?.access_token) {
       setAutoStartedCheckout(true);
       setActionMessage("Connectez-vous pour passer commande.");
@@ -517,7 +518,7 @@ export default function ResourceDetailPage() {
     }
     setAutoStartedCheckout(true);
     if (finalPrice > 0) void startStripeCheckout();
-  }, [autoStartedCheckout, finalPrice, openBuyImmediately, resource, session?.access_token, startStripeCheckout, testingApp]);
+  }, [autoStartedCheckout, finalPrice, openBuyImmediately, publicPlayStoreUrl, resource, session?.access_token, startStripeCheckout, testingApp]);
 
   useEffect(() => {
     if (!purchaseSucceeded || !stripeSessionId || !resource || !session?.access_token) return;
@@ -980,9 +981,22 @@ export default function ResourceDetailPage() {
             <div className="resource-detail-content">
           <span className="badge">Coin ludique & Outils</span>
           <h1 className="book-detail-title" style={{ marginTop: 18 }}><FormattedInlineText text={resource.titleRichFr || resource.titleFr} /></h1>
-          {testingApp ? <AndroidDemoVideo packageName={testingApp.packageName} title={resource.titleFr} /> : null}
+          {testingApp || publicPlayApp ? <AndroidDemoVideo packageName={(testingApp || publicPlayApp)!.packageName} title={resource.titleFr} /> : null}
           {testingApp ? <PlayTestingNotice app={testingApp} priceEur={basePrice} /> : null}
-          {!effectiveHasAccess && !testingApp ? <div className="resource-action-stack">
+          {publicPlayStoreUrl && publicPlayApp ? (
+            <div className="resource-action-stack">
+              <div className="resource-inline-price">
+                <span className="resource-price-tag">{publicPlayApp.priceEur === 0 ? "Gratuit" : `${publicPlayApp.priceEur.toFixed(2)} €`}</span>
+                <span className="tiny">{publicPlayApp.priceEur === 0 ? "Installation sur Google Play" : "Paiement et installation sur Google Play"}</span>
+              </div>
+              <div className="resource-buy-row">
+                <a className="cta-button resource-buy-button" href={publicPlayStoreUrl} target="_blank" rel="noopener noreferrer">
+                  {publicPlayApp.priceEur === 0 ? "Installer sur Google Play" : "Acheter sur Google Play"}
+                </a>
+              </div>
+              <p className="tiny">L’achat et l’accès à cette application sont gérés par Google Play. Aucun second paiement sur visdar.fr.</p>
+            </div>
+          ) : !effectiveHasAccess && !testingApp ? <div className="resource-action-stack">
             <div className="resource-inline-price">
               <div className="promo-price-tag-wrap">
                 {hasAppliedPromo ? <span className="promo-original-price">{basePrice.toFixed(2)} EUR</span> : null}
