@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest, isAdminUser } from "@/lib/auth-request";
 import { getSupabaseRequestClient, getSupabaseServiceClient } from "@/lib/supabase-server";
+import { externalLinkDefaults } from "@/lib/external-links";
 
 type PartnerLinkPayload = {
   id?: string;
@@ -46,6 +47,27 @@ export async function GET(request: Request) {
   if (!supabase) {
     return NextResponse.json({ ok: false, message: "Client Supabase admin indisponible." }, { status: 503 });
   }
+
+  // Import the public defaults once an administrator opens this panel, so every
+  // external link can then be reordered, hidden or edited in the database.
+  const { data: existingLinks, error: existingError } = await supabase
+    .from("partner_links")
+    .select("target_url");
+  if (existingError) return NextResponse.json({ ok: false, message: existingError.message }, { status: 500 });
+  const existingUrls = new Set((existingLinks || []).map((link) => String(link.target_url)));
+  const missingLinks = externalLinkDefaults.filter((link) => !existingUrls.has(link.targetUrl));
+  if (missingLinks.length > 0) {
+    const { error: seedError } = await supabase.from("partner_links").insert(missingLinks.map((link) => ({
+      title_fr: link.titleFr,
+      icon_url: link.iconUrl,
+      target_url: link.targetUrl,
+      tooltip_text: link.tooltipText,
+      sort_order: link.sortOrder,
+      visible: true,
+    })));
+    if (seedError) return NextResponse.json({ ok: false, message: seedError.message }, { status: 500 });
+  }
+  await supabase.from("content_sections").update({ title: "Liens externes" }).eq("section_key", "liens-partenaires");
 
   const { data, error } = await supabase
     .from("partner_links")
