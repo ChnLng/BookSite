@@ -18,6 +18,7 @@ import { AuthModal } from "@/components/auth-modal";
 import { loadDisplayResources, type DisplayResource } from "@/lib/resources-service";
 import { randomPurchaseThankYouMessage } from "@/lib/purchase-thank-you";
 import { getExternalLinkLabel } from "@/lib/external-link-label";
+import { getPreviewAndroidApp } from "@/lib/public-android-resources";
 
 type ReviewRecord = {
   id: string;
@@ -166,6 +167,7 @@ export default function ResourceDetailPage() {
   const testingApp = getPlayTestingApp(resource?.id) || getPlayTestingApp(resource?.slug);
   const publicPlayStoreUrl = getPublicPlayStoreUrl(resource?.id) || getPublicPlayStoreUrl(resource?.slug);
   const publicPlayApp = getPublicPlayStoreApp(resource?.id) || getPublicPlayStoreApp(resource?.slug);
+  const previewApp = getPreviewAndroidApp(resource?.id) || getPreviewAndroidApp(resource?.slug);
   const resourceExternalUrl = resource?.externalUrl || "";
   const showResourceExternalUrl = Boolean(
     resourceExternalUrl
@@ -509,7 +511,7 @@ export default function ResourceDetailPage() {
   }, [actionBusy, appliedPromo?.code, resource, session?.access_token]);
 
   useEffect(() => {
-    if (!resource || testingApp || publicPlayStoreUrl || !openBuyImmediately || autoStartedCheckout) return;
+    if (!resource || testingApp || publicPlayStoreUrl || previewApp || !openBuyImmediately || autoStartedCheckout) return;
     if (!session?.access_token) {
       setAutoStartedCheckout(true);
       setActionMessage("Connectez-vous pour passer commande.");
@@ -518,7 +520,7 @@ export default function ResourceDetailPage() {
     }
     setAutoStartedCheckout(true);
     if (finalPrice > 0) void startStripeCheckout();
-  }, [autoStartedCheckout, finalPrice, openBuyImmediately, publicPlayStoreUrl, resource, session?.access_token, startStripeCheckout, testingApp]);
+  }, [autoStartedCheckout, finalPrice, openBuyImmediately, previewApp, publicPlayStoreUrl, resource, session?.access_token, startStripeCheckout, testingApp]);
 
   useEffect(() => {
     if (!purchaseSucceeded || !stripeSessionId || !resource || !session?.access_token) return;
@@ -841,7 +843,7 @@ export default function ResourceDetailPage() {
                     </div>
                     <div className="book-detail-related-copy">
                       <strong>{item.titleFr}</strong>
-                      <span className="tiny">{getPlayTestingApp(item.id) || getPlayTestingApp(item.slug) ? <PlayTestingPrice priceEur={(getPlayTestingApp(item.id) || getPlayTestingApp(item.slug))!.priceEur} /> : `${item.priceEur.toFixed(2)} EUR`}</span>
+                      <span className="tiny">{getPreviewAndroidApp(item.id)?.priceEur === null ? "Essai 14 jours · modules payants" : getPlayTestingApp(item.id) || getPlayTestingApp(item.slug) ? <PlayTestingPrice priceEur={(getPlayTestingApp(item.id) || getPlayTestingApp(item.slug))!.priceEur} /> : `${item.priceEur.toFixed(2)} EUR`}</span>
                     </div>
                   </Link>
                 ))
@@ -986,17 +988,26 @@ export default function ResourceDetailPage() {
           {publicPlayStoreUrl && publicPlayApp ? (
             <div className="resource-action-stack">
               <div className="resource-inline-price">
-                <span className="resource-price-tag">{publicPlayApp.priceEur === 0 ? "Gratuit" : `${publicPlayApp.priceEur.toFixed(2)} €`}</span>
-                <span className="tiny">{publicPlayApp.priceEur === 0 ? "Installation sur Google Play" : "Paiement et installation sur Google Play"}</span>
+                <span className="resource-price-tag">{`${publicPlayApp.priceEur.toFixed(2)} €`}</span>
+                <span className="tiny">Paiement et installation sur Google Play</span>
               </div>
               <div className="resource-buy-row">
                 <a className="cta-button resource-buy-button" href={publicPlayStoreUrl} target="_blank" rel="noopener noreferrer">
-                  {publicPlayApp.priceEur === 0 ? "Installer sur Google Play" : "Acheter sur Google Play"}
+                  Acheter sur Google Play
                 </a>
               </div>
               <p className="tiny">L’achat et l’accès à cette application sont gérés par Google Play. Aucun second paiement sur visdar.fr.</p>
             </div>
-          ) : !effectiveHasAccess && !testingApp ? <div className="resource-action-stack">
+          ) : previewApp ? <div className="resource-action-stack">
+            <div className="resource-inline-price">
+              <span className="resource-price-tag">{previewApp.priceEur === null ? "Essai 14 jours" : `${previewApp.priceEur.toFixed(2)} €`}</span>
+              <span className="tiny">{previewApp.priceEur === null ? "Modules en achat intégré sur Google Play" : "Prix normal sur Google Play"}</span>
+            </div>
+            <div className="resource-buy-row">
+              <a className="cta-button resource-buy-button" href={previewApp.externalUrl} target="_blank" rel="noopener noreferrer">Voir sur Google Play</a>
+            </div>
+            <p className="tiny">Cette application est encore en test fermé. Sa fiche Google Play et son installation sont réservées aux comptes invités. Aucun paiement pour cette application n’est collecté sur visdar.fr.</p>
+          </div> : !effectiveHasAccess && !testingApp ? <div className="resource-action-stack">
             <div className="resource-inline-price">
               <div className="promo-price-tag-wrap">
                 {hasAppliedPromo ? <span className="promo-original-price">{basePrice.toFixed(2)} EUR</span> : null}

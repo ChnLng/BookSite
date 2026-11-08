@@ -4788,18 +4788,29 @@ button,
 }
 
 .partner-links-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 10px;
   margin-top: 12px;
   overflow: visible;
 }
 
+#liens-partenaires {
+  position: relative;
+  overflow: visible;
+}
+
+#liens-partenaires:hover,
+#liens-partenaires:focus-within {
+  z-index: 40;
+}
+
 .partner-link-button {
   position: relative;
-  width: 72px;
-  height: 72px;
-  border-radius: 22px;
+  width: 100%;
+  max-width: 56px;
+  aspect-ratio: 1;
+  border-radius: 17px;
   border: 1px solid rgba(255, 255, 255, 0.9);
   background: rgba(255, 255, 255, 0.76);
   box-shadow: var(--shadow-glass);
@@ -4813,33 +4824,34 @@ button,
 }
 
 .partner-link-button:hover {
-  z-index: 30;
+  z-index: 100;
   transform: translateY(-2px);
   box-shadow: 0 12px 24px rgba(99, 102, 241, 0.14);
 }
 
 .partner-link-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   object-fit: cover;
 }
 
 .partner-link-monogram {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   background: linear-gradient(145deg, #f7f2ff, #e7ecff);
   color: #5543a0;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: -0.04em;
 }
 
 .partner-link-tooltip {
   position: absolute;
+  z-index: 200;
   left: 0;
   bottom: calc(100% + 12px);
   transform: translateY(6px);
@@ -4859,6 +4871,22 @@ button,
     opacity 0.2s ease,
     transform 0.2s ease;
   box-shadow: var(--shadow-glass);
+}
+
+.partner-links-grid > .partner-link-button:nth-child(12n + 10) .partner-link-tooltip,
+.partner-links-grid > .partner-link-button:nth-child(12n + 11) .partner-link-tooltip,
+.partner-links-grid > .partner-link-button:nth-child(12n + 12) .partner-link-tooltip,
+.partner-links-grid > .partner-link-button:last-child .partner-link-tooltip {
+  left: auto;
+  right: 0;
+}
+
+@media (max-width: 900px) {
+  .partner-links-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+}
+
+@media (max-width: 600px) {
+  .partner-links-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 
 .partner-link-button:hover .partner-link-tooltip,
@@ -5182,8 +5210,7 @@ button,
   }
 
   .partner-link-button {
-    width: 64px;
-    height: 64px;
+    max-width: 52px;
   }
 
   .section-heading {

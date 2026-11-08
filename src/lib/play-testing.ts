@@ -5,10 +5,10 @@ export type PlayTestingApp = {
   resourceRefs: readonly string[];
 };
 
-type PublicPlayStoreApp = Pick<PlayTestingApp, "packageName" | "resourceRefs" | "priceEur">;
+type PublicPlayStoreApp = Pick<PlayTestingApp, "packageName" | "resourceRefs" | "priceEur"> & { publishedAt: string };
 
-// Keep the catalogue prices intact. Remove an app here when its public launch
-// is ready; only these explicitly selected apps use the free testing flow.
+// Historical closed-test records are retained for administrative lookup only.
+// Their public listings and application flow are disabled elsewhere.
 export const playTestingApps: readonly PlayTestingApp[] = [
   { packageName: "com.visdar.temps", title: "Exprimer le temps en chinois", priceEur: 2.09, resourceRefs: ["8c237dca-1a31-4e4c-94d4-401d2edad04d", "exprimer-le-temps-android"] },
   { packageName: "com.visdar.expressions", title: "Locutions idiomatiques Chengyu", priceEur: 4.99, resourceRefs: ["3e86e9cd-e927-4265-b8ad-159bd998d64a", "expressions-idiomatiques-android"] },
@@ -16,18 +16,19 @@ export const playTestingApps: readonly PlayTestingApp[] = [
   { packageName: "com.visdar.famille", title: "Liens de parenté", priceEur: 2.09, resourceRefs: ["c50ce5e7-5693-4082-903f-fa8930fb28a4", "titres-de-parente-android"] },
 ];
 
-// French Google Play prices checked on 2026-11-08. Google Play handles payment
+// Regular EUR prices supplied by the publisher or checked on Google Play.
+// Google Play handles payment
 // and delivery for these apps; the website must never collect a second payment.
 const publicPlayStoreApps: readonly PublicPlayStoreApp[] = [
-  { packageName: "com.visdar.dialectes", priceEur: 0.99, resourceRefs: ["1bc12d70-12cf-4f55-a541-b40c60007410", "carte-des-dialectes-en-chine-android"] },
-  { packageName: "com.visdar.cles", priceEur: 2.09, resourceRefs: ["4f9a733d-d886-4220-885a-481d35deaaf4", "cles-des-sinogrammes-android"] },
-  { packageName: "com.visdar.heures", priceEur: 2.09, resourceRefs: ["1ff0db3f-cb45-4278-98ca-9e192294e81e", "heures-du-monde-android"] },
-  { packageName: "com.visdar.manuscrits", priceEur: 4.99, resourceRefs: ["45c5f379-faed-4987-91cb-515bd49475c2", "reconnaissance-de-sinogrammes-manuscrits-android"] },
-  { packageName: "com.visdar.couleurs", priceEur: 1.09, resourceRefs: ["a96d2feb-6bd6-4ce0-a61d-118d0e0c65ac", "roue-chromatique-se-pan-android-en-chinois"] },
-  { packageName: "com.visdar.calendrier", priceEur: 0.99, resourceRefs: ["d19bd070-c1ec-40fa-bb6f-e25dddcd0e92", "calendrier-lunisolaire-chinois-wannianli-android"] },
-  { packageName: "com.visdar.chiffres", priceEur: 2.09, resourceRefs: ["2d14fe16-d245-4c3e-a10d-c87233ef1100", "nombres-en-chinois-android"] },
-  { packageName: "com.visdar.classificateur", priceEur: 0, resourceRefs: ["bf964d2f-f0c4-4608-97d4-196469b53566", "classificateurs-chinois-liangci-android"] },
-  { packageName: "com.visdar.binome", priceEur: 6.49, resourceRefs: ["chinois-en-binome-android"] },
+  { packageName: "com.visdar.dialectes", priceEur: 0.99, publishedAt: "2026-10-08", resourceRefs: ["1bc12d70-12cf-4f55-a541-b40c60007410", "carte-des-dialectes-en-chine-android"] },
+  { packageName: "com.visdar.cles", priceEur: 2.09, publishedAt: "2026-10-08", resourceRefs: ["4f9a733d-d886-4220-885a-481d35deaaf4", "cles-des-sinogrammes-android"] },
+  { packageName: "com.visdar.heures", priceEur: 2.09, publishedAt: "2026-10-08", resourceRefs: ["1ff0db3f-cb45-4278-98ca-9e192294e81e", "heures-du-monde-android"] },
+  { packageName: "com.visdar.manuscrits", priceEur: 4.99, publishedAt: "2026-10-08", resourceRefs: ["45c5f379-faed-4987-91cb-515bd49475c2", "reconnaissance-de-sinogrammes-manuscrits-android"] },
+  { packageName: "com.visdar.couleurs", priceEur: 1.09, publishedAt: "2026-10-08", resourceRefs: ["a96d2feb-6bd6-4ce0-a61d-118d0e0c65ac", "roue-chromatique-se-pan-android-en-chinois"] },
+  { packageName: "com.visdar.calendrier", priceEur: 0.99, publishedAt: "2026-10-13", resourceRefs: ["d19bd070-c1ec-40fa-bb6f-e25dddcd0e92", "calendrier-lunisolaire-chinois-wannianli-android"] },
+  { packageName: "com.visdar.chiffres", priceEur: 2.09, publishedAt: "2026-10-13", resourceRefs: ["2d14fe16-d245-4c3e-a10d-c87233ef1100", "nombres-en-chinois-android"] },
+  { packageName: "com.visdar.classificateur", priceEur: 2.09, publishedAt: "2026-10-16", resourceRefs: ["bf964d2f-f0c4-4608-97d4-196469b53566", "classificateurs-chinois-liangci-android"] },
+  { packageName: "com.visdar.binome", priceEur: 6.49, publishedAt: "2026-11-08", resourceRefs: ["chinois-en-binome-android"] },
 ];
 
 export const playTestingGroupUrl = "https://groups.google.com/g/visdar";

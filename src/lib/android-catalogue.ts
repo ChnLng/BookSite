@@ -46,14 +46,25 @@ export const androidApps: CatalogueApp[] = [
   { packageName: "com.visdar.manuscrits", title: "Reconnaissance de sinogrammes manuscrits", chinese: "汉字手写识别", pinyin: "Hànzì shǒuxiě shíbié", subtitle: "Dessiner un sinogramme, le retrouver et comprendre son tracé.", description: "Un outil de recherche et de révision : l’apprenant dessine un sinogramme, obtient des propositions, puis consulte les lectures, définitions et tracés.", features: ["Reconnaissance manuscrite hors ligne", "Ordre des traits étape par étape", "Pinyin, définitions françaises et exemples d’emploi"], audience: "Tous niveaux, autonomie entre les cours et apprentissage de l’écriture.", visible: true },
   { packageName: "com.visdar.couleurs", title: "Roue chromatique en chinois", chinese: "色盘", pinyin: "Sè pán", subtitle: "Mémoriser les couleurs par une activité visuelle.", description: "Un jeu d’association qui fait découvrir le vocabulaire des couleurs, des teintes essentielles aux palettes professionnelles et traditionnelles chinoises.", features: ["Trois roues : essentiel, professionnel et couleurs traditionnelles", "Association par glisser-déposer", "Pinyin complet et interface chinois–français"], audience: "Débutants, ateliers ludiques, arts visuels et activités de révision.", visible: true },
   { packageName: "com.visdar.famille", title: "Termes de parenté", chinese: "亲属称呼", pinyin: "Qīnshǔ chēnghu", subtitle: "Comprendre la précision des liens familiaux en chinois.", description: "Une exploration guidée des termes de parenté chinois, qui distinguent les côtés paternel et maternel ainsi que les générations et les liens par alliance.", features: ["Arbre généalogique interactif", "Filtre par côté paternel, maternel ou lignée directe", "Quiz à quatre choix, pinyin et explications de mémoire"], audience: "Débutants, civilisation chinoise et vocabulaire de la vie quotidienne.", visible: true },
+  { packageName: "com.visdar.binome", title: "Chinois en binôme", chinese: "中文双人游戏", pinyin: "Zhōngwén shuāngrén yóuxì", subtitle: "Apprendre le chinois à deux sur un même écran.", description: "Sept jeux à deux pour associer pinyin et sinogrammes, improviser des dialogues et relever ensemble des défis de vocabulaire.", features: ["Sept jeux à deux", "Dialogues et vocabulaire", "Pinyin et sinogrammes"], audience: "Apprenants, ateliers et activités à deux.", visible: true },
+  { packageName: "com.visdar.verbes", title: "Verbes chinois en mime", chinese: "汉语动词", pinyin: "Hànyǔ dòngcí", subtitle: "Voir les verbes chinois en mouvement.", description: "Des poupées numériques miment les verbes chinois, avec pinyin, audio et réalité augmentée.", features: ["Gestes mimés", "Pinyin et audio", "Réalité augmentée"], audience: "Apprenants et activités de vocabulaire. Accès Google Play réservé aux comptes invités au test.", visible: true },
+  { packageName: "com.visdar.stroke", title: "Tracé des sinogrammes", chinese: "汉字笔顺", pinyin: "Hànzì bǐshùn", subtitle: "Observer le tracé des sinogrammes.", description: "Découvrez le tracé des sinogrammes et leur projection holographique.", features: ["Ordre des traits", "Tracé des sinogrammes", "Projection holographique"], audience: "Apprentissage de l’écriture. Accès Google Play réservé aux comptes invités au test.", visible: true },
+  { packageName: "com.visdar.hub", title: "Hub bilingue chinois-français", chinese: "中法双语", pinyin: "Zhōng-Fǎ shuāngyǔ", subtitle: "Douze modules dans un centre bilingue.", description: "Un centre bilingue chinois-français avec pinyin et espace traduction. Essai de 14 jours, puis achats intégrés selon les modules choisis.", features: ["Douze modules", "Pinyin et traduction", "Essai de 14 jours et achats intégrés"], audience: "Apprenants et enseignants. Accès Google Play réservé aux comptes invités au test.", visible: true },
 ];
-const consumerAppPackages = new Set(["com.visdar.calendrier", "com.visdar.heures", "com.visdar.manuscrits", "com.visdar.couleurs", "com.visdar.famille"]);
+const hiddenTestingPackages = new Set(["com.visdar.contextes", "com.visdar.expressions", "com.visdar.temps", "com.visdar.famille"]);
+export function publicCatalogue(config: CatalogueConfig): CatalogueConfig {
+  const apps = config.apps.filter((app) => !hiddenTestingPackages.has(app.packageName));
+  for (const app of androidApps) {
+    if (!hiddenTestingPackages.has(app.packageName) && !apps.some((item) => item.packageName === app.packageName)) apps.push(app);
+  }
+  return { ...config, apps, testEnabled: false, introduction: config.introduction.replace(/Douze applications Android/g, "Des applications Android").replace(/Cinq applications Android/g, "Des applications Android") };
+}
 export function defaultCatalogue(kind: CatalogueKind): CatalogueConfig {
-  return {
+  return publicCatalogue({
     enabled: true,
     title: kind === "android" ? "Le chinois, au creux de la main." : "Douze applications pour apprendre et transmettre le chinois.",
     introduction: kind === "android" ? "Cinq applications Android pour explorer, comprendre et apprendre à son rythme. Une collection imaginée par Visd AR, entre langues, culture et plaisir de découvrir." : "Douze applications Android conçues pour maîtriser la langue chinoise, avec pinyin et explications en français. Chaque application peut servir à un cours, une activité autonome ou un projet culturel.",
-    apps: structuredClone(kind === "android" ? androidApps.filter(app => consumerAppPackages.has(app.packageName)) : androidApps), testEnabled: true,
+    apps: structuredClone(androidApps), testEnabled: false,
     testTitle: "Découvrez nos applications en avant-première.",
     testText: "Nos applications sont en phase de test avant lancement. Vous pouvez demander à les essayer gratuitement, dans la limite des codes disponibles et de leur période de validité. L’accès nécessite de rejoindre le groupe et de s’inscrire au test de chaque application avec le même compte Google.",
     pricingDraft: true,
@@ -81,7 +92,7 @@ export function defaultCatalogue(kind: CatalogueKind): CatalogueConfig {
       "Aucune indemnité forfaitaire supplémentaire n’est promise. Sous réserve des règles impératives, les dommages indirects sont exclus et la responsabilité contractuelle pour dommages directs est plafonnée au montant total du contrat concerné. Ces limites ne s’appliquent notamment ni au dol, ni à la faute lourde, ni aux dommages corporels, et ne peuvent vider une obligation essentielle de sa substance.",
       "Aucune garantie de résultat scolaire, de revenus, de nombre de téléchargements ou d’acceptation par Google. Le client garantit les droits sur les contenus et marques fournis. Les responsabilités relatives aux données personnelles, à la sécurité et aux droits de propriété intellectuelle sont précisées au contrat. Ces indications ne remplacent pas les conditions contractuelles à faire vérifier avant signature.",
     ],
-  };
+  });
 }
 
 export function validateCatalogue(value: unknown): CatalogueConfig {
@@ -90,7 +101,7 @@ export function validateCatalogue(value: unknown): CatalogueConfig {
   const str = (x: unknown, max = 1800) => { if (typeof x !== "string" || !x.trim() || x.length > max) throw new Error("Texte manquant ou trop long."); return normalizeCatalogueCopy(x.trim()); };
   const bool = (x: unknown) => { if (typeof x !== "boolean") throw new Error("Option invalide."); return x; };
   const list = (x: unknown, min: number, max: number) => { if (!Array.isArray(x) || x.length < min || x.length > max) throw new Error("Nombre d’éléments invalide."); return x; };
-  const apps = list(v.apps, 1, 12).map((a): CatalogueApp => {
+  const apps = list(v.apps, 1, 16).map((a): CatalogueApp => {
     if (!a || !androidApps.some(app => app.packageName === a.packageName)) throw new Error("Application inconnue.");
     return { packageName: a.packageName, title: str(a.title, 100), chinese: str(a.chinese, 50), pinyin: str(a.pinyin, 80), subtitle: str(a.subtitle, 140), description: str(a.description, 700), features: list(a.features, 1, 4).map(x => str(x, 160)), audience: str(a.audience, 180), visible: bool(a.visible) };
   });

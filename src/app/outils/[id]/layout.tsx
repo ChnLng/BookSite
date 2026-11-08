@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { StructuredData } from "@/components/structured-data";
 import { getPlayTestingApp, getPublicPlayStoreApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
 import { loadPublicResourcesForSeo } from "@/lib/resources-public-server";
+import { getPreviewAndroidApp } from "@/lib/public-android-resources";
 
 type Props = { children: React.ReactNode; params: Promise<{ id: string }> };
 
@@ -36,26 +37,27 @@ export default async function ResourceSeoLayout({ children, params }: Props) {
   if (!resource) return children;
   const testingApp = getPlayTestingApp(resource.id) || getPlayTestingApp(resource.slug);
   const publicPlayApp = getPublicPlayStoreApp(resource.id) || getPublicPlayStoreApp(resource.slug);
+  const previewApp = getPreviewAndroidApp(resource.id) || getPreviewAndroidApp(resource.slug);
   const url = `https://www.visdar.fr/outils/${resource.slug}`;
   return <><StructuredData data={{
     "@context": "https://schema.org",
-    "@type": publicPlayApp ? "SoftwareApplication" : "Product",
+    "@type": publicPlayApp || previewApp ? "SoftwareApplication" : "Product",
     "@id": `${url}#product`,
     name: resource.titleFr,
     description: resource.summaryFr,
     image: [absoluteUrl(resource.coverImageUrl)],
     url,
     category: "Ressource numérique ludique pour apprendre le chinois",
-    ...(publicPlayApp ? { operatingSystem: "Android", applicationCategory: "EducationalApplication" } : {}),
+    ...(publicPlayApp || previewApp ? { operatingSystem: "Android", applicationCategory: "EducationalApplication" } : {}),
     brand: { "@type": "Brand", name: "Visd AR" },
-    offers: {
+    ...(previewApp ? {} : { offers: {
       "@type": "Offer",
       url: publicPlayApp ? getPublicPlayStoreUrl(resource.slug) : url,
       priceCurrency: "EUR",
-      price: (publicPlayApp?.priceEur ?? testingApp?.priceEur ?? resource.priceEur).toFixed(2),
+      price: (publicPlayApp?.priceEur ?? testingApp?.priceEur ?? resource.priceEur ?? 0).toFixed(2),
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: "Visd AR", url: "https://www.visdar.fr" },
-    },
+    } }),
   }} />{children}</>;
 }

@@ -4,7 +4,8 @@ import { isUuid } from "@/lib/database-identifiers";
 import { hasPurchasedResource } from "@/lib/purchase-access";
 import { applyDiscount } from "@/lib/promo";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
-import { getPlayTestingApp, getPublicPlayStoreUrl, playTestingApplicationUrl } from "@/lib/play-testing";
+import { getPlayTestingApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
+import { getPreviewAndroidApp } from "@/lib/public-android-resources";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -40,7 +41,9 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, message: "Ressource introuvable." }, { status: 404 });
   }
   const testingApp = getPlayTestingApp(resource.id) || getPlayTestingApp(resource.slug);
-  if (testingApp) return NextResponse.json({ ok: false, message: "Demandez votre accès gratuit au test Google Play.", applicationUrl: playTestingApplicationUrl(testingApp) }, { status: 409 });
+  if (testingApp) return NextResponse.json({ ok: false, message: "Cette application n’est plus proposée sur le site." }, { status: 410 });
+  const previewApp = getPreviewAndroidApp(resource.id) || getPreviewAndroidApp(resource.slug);
+  if (previewApp) return NextResponse.json({ ok: false, message: "Accès réservé aux comptes Google Play invités au test.", applicationUrl: previewApp.externalUrl }, { status: 409 });
   const playStoreUrl = getPublicPlayStoreUrl(resource.id) || getPublicPlayStoreUrl(resource.slug);
   if (playStoreUrl) return NextResponse.json({ ok: false, message: "Installez cette application depuis Google Play.", applicationUrl: playStoreUrl }, { status: 409 });
 

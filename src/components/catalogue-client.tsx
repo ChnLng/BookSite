@@ -12,6 +12,7 @@ import { loadDisplayResources } from "@/lib/resources-service";
 import { getPlayTestingApp, getPublicPlayStoreApp, getPublicPlayStoreUrl, playTestingApplicationUrl } from "@/lib/play-testing";
 import { PlayTestingPrice } from "@/components/play-testing-price";
 import { getExternalLinkLabel } from "@/lib/external-link-label";
+import { getPreviewAndroidApp } from "@/lib/public-android-resources";
 
 type CatalogueProduct = {
   id: string;
@@ -93,6 +94,11 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
       window.location.href = playUrl;
       return;
     }
+    const preview = product.kind === "resource" ? getPreviewAndroidApp(product.id) : null;
+    if (preview) {
+      window.location.href = preview.externalUrl;
+      return;
+    }
     setPayingBookId(product.id);
     window.location.href = `${product.href}?buy=1`;
     setPayingBookId(null);
@@ -158,15 +164,18 @@ export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
                   {book.titleZh ? <div className="tiny">{book.titleZh}</div> : null}
                   <div className="split-line">
                     <span>Prix</span>
-                    {book.kind === "resource" && getPlayTestingApp(book.id)
+                    {book.kind === "resource" && getPreviewAndroidApp(book.id)?.priceEur === null
+                      ? <strong>Essai 14 jours · modules payants</strong>
+                      : book.kind === "resource" && getPlayTestingApp(book.id)
                       ? <PlayTestingPrice priceEur={getPlayTestingApp(book.id)!.priceEur} />
-                      : <strong>{book.priceEur === 0 ? "Gratuit" : `${book.priceEur.toFixed(2)} EUR`}</strong>}
+                      : <strong>{`${book.priceEur.toFixed(2)} EUR`}</strong>}
                   </div>
                   <div className="catalogue-card-actions">
                     <button className={`cta-button catalogue-compact-button${book.kind === "resource" && getPlayTestingApp(book.id) ? " catalogue-testing-button" : ""}`} type="button" onClick={() => void handleBookCheckout(book)}>
-                      {book.kind === "resource" && getPlayTestingApp(book.id) ? "Test gratuit" : book.kind === "resource" && getPublicPlayStoreApp(book.id) ? (book.priceEur === 0 ? "Installer sur Google Play" : "Acheter sur Google Play") : payingBookId === book.id ? "Paiement..." : "Acheter"}
+                      {book.kind === "resource" && getPlayTestingApp(book.id) ? "Test gratuit" : book.kind === "resource" && getPreviewAndroidApp(book.id) ? "Voir sur Google Play" : book.kind === "resource" && getPublicPlayStoreApp(book.id) ? "Acheter sur Google Play" : payingBookId === book.id ? "Paiement..." : "Acheter"}
                     </button>
-                    {book.externalUrl && !(book.kind === "resource" && (getPlayTestingApp(book.id) || getPublicPlayStoreApp(book.id))) ? <a className="pill-button catalogue-compact-button" href={book.externalUrl} target="_blank" rel="noreferrer">{getExternalLinkLabel(book.externalUrl)}</a> : null}
+                    {book.externalUrl && !(book.kind === "resource" && (getPlayTestingApp(book.id) || getPublicPlayStoreApp(book.id) || getPreviewAndroidApp(book.id))) ? <a className="pill-button catalogue-compact-button" href={book.externalUrl} target="_blank" rel="noreferrer">{getExternalLinkLabel(book.externalUrl)}</a> : null}
+                    {book.kind === "resource" && getPreviewAndroidApp(book.id) ? <span className="tiny">Accès réservé aux comptes invités au test.</span> : null}
                   </div>
                 </div>
               </article>

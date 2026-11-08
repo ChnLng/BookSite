@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PlayTestingManualApplication } from "@/components/play-testing-manual-application";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Tester gratuitement nos applications Android",
@@ -7,6 +7,6 @@ export const metadata: Metadata = {
 };
 
 export default async function PlayTestingPage({ searchParams }: { searchParams: Promise<{ app?: string }> }) {
-  const { app } = await searchParams;
-  return <PlayTestingManualApplication initialPackageName={app} />;
+  await searchParams;
+  redirect("/catalogue");
 }

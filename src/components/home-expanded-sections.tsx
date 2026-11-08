@@ -25,6 +25,7 @@ import {
 import { loadHomepageResources } from "@/lib/homepage-resources";
 import { getPlayTestingApp, getPublicPlayStoreApp } from "@/lib/play-testing";
 import { PlayTestingPrice } from "@/components/play-testing-price";
+import { getPreviewAndroidApp } from "@/lib/public-android-resources";
 import { getExternalLinkLabel } from "@/lib/external-link-label";
 import { withExternalLinkDefaults } from "@/lib/external-links";
 
@@ -492,9 +493,11 @@ export function HomeExpandedSections({ initialResources }: { initialResources: R
                             <div className="home-resource-carousel-copy">
                               <div className="home-resource-carousel-title-row">
                                 <strong>{resource.titleFr}</strong>
-                                <span>{getPlayTestingApp(resource.id)
+                                <span>{getPreviewAndroidApp(resource.id)?.priceEur === null
+                                  ? "Essai 14 jours · modules payants"
+                                  : getPlayTestingApp(resource.id)
                                   ? <PlayTestingPrice priceEur={getPlayTestingApp(resource.id)!.priceEur} />
-                                  : getPublicPlayStoreApp(resource.id)?.priceEur === 0 ? "Gratuit" : `${(getPublicPlayStoreApp(resource.id)?.priceEur ?? resource.priceEur).toFixed(2)} EUR`}</span>
+                                  : `${(getPublicPlayStoreApp(resource.id)?.priceEur ?? resource.priceEur).toFixed(2)} EUR`}</span>
                               </div>
                               <p className="tiny">{homepageExcerpt(resource.homepageSummaryFr || resource.summaryFr) || "Ouvrez la fiche pour voir les détails et les options de téléchargement."}</p>
                               <span className="home-resource-carousel-meta">

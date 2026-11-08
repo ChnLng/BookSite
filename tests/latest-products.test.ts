@@ -31,6 +31,14 @@ describe("homepage latest products", () => {
     ]).map((item) => item.id)).toEqual(["resource-tool-a", "resource-tool-b"]);
   });
 
+  it("sorts a newly published app by its launch date rather than its old draft creation date", () => {
+    const result = selectLatestProducts([], [
+      product("newly-published", "2026-08-01", { published_at: "2026-11-08" }),
+      product("recently-created", "2026-11-06"),
+    ]);
+    expect(result.map((item) => item.href)).toEqual(["/outils/newly-published", "/outils/recently-created"]);
+  });
+
   it("uses the public slug, cleans formatting, and preserves free pricing", () => {
     const [result] = selectLatestProducts([], [product("uuid", "2026-08-30", {
       slug: "outil-français", title_fr: "**Mon outil**", price_eur: "0", qr_image_url: "/images/tool.png",

@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ edition: 
   const { edition } = await params;
   const mobileGuide = edition === "android-mobile";
   const title = mobileGuide ? "Applications Android — Guide mobile" : edition === "android-professionnels" ? "Applications Android — Catalogue professionnel" : "Applications Android — La collection";
-  const description = mobileGuide ? "Douze applications Android pour apprendre le chinois, pensées pour les apprenants francophones." : "Feuilletez la collection d’applications Android Visd AR : chinois, pinyin et français.";
+  const description = mobileGuide ? "Les applications Android Visd AR pour apprendre le chinois, pensées pour les apprenants francophones." : "Feuilletez la collection d’applications Android Visd AR : chinois, pinyin et français.";
   return { title, description, openGraph: { title, description, images: ["/images/logo.png"] }, twitter: { title, description, images: ["/images/logo.png"] }, robots: { index: false, follow: false, googleBot: { index: false, follow: false, noimageindex: true } }, referrer: "no-referrer" };
 }
 export default async function CataloguePage({ params }: { params: Promise<{ edition: string }> }) {

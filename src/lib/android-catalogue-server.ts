@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { siteConfig } from "@/lib/site-config";
-import { defaultCatalogue, validateCatalogue, type CatalogueKind } from "@/lib/android-catalogue";
+import { defaultCatalogue, publicCatalogue, validateCatalogue, type CatalogueKind } from "@/lib/android-catalogue";
 
 export async function loadAndroidCatalogue(kind: CatalogueKind) {
   if (!siteConfig.supabaseUrl || !siteConfig.supabaseAnonKey) return { config: defaultCatalogue(kind), setupNeeded: true };
@@ -20,6 +20,6 @@ export async function loadAndroidCatalogue(kind: CatalogueKind) {
     if (data?.disabled) return { config: null, disabled: true };
     if (data?.configured === false) return { config: defaultCatalogue(kind), setupNeeded: false };
     const config = validateCatalogue(data?.config);
-    return config.enabled ? { config, setupNeeded: false } : { config: null, disabled: true };
+    return config.enabled ? { config: publicCatalogue(config), setupNeeded: false } : { config: null, disabled: true };
   } catch { return { config: null, unavailable: true }; }
 }

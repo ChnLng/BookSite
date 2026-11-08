@@ -7,6 +7,7 @@ export type LatestProductRow = {
   title_fr: string | null;
   price_eur: number | string | null;
   created_at: string | null;
+  published_at?: string | null;
   visible: boolean | null;
   deleted_at: string | null;
   cover_image?: string | null;
@@ -25,6 +26,9 @@ export type LatestProduct = {
 };
 
 export function selectLatestProducts(books: LatestProductRow[], resources: LatestProductRow[]): LatestProduct[] {
+  const latestDate = (row: LatestProductRow) => [row.created_at, row.published_at]
+    .filter((date): date is string => Boolean(date) && Number.isFinite(Date.parse(date!)))
+    .sort((left, right) => Date.parse(right) - Date.parse(left))[0] || "";
   const mapProduct = (row: LatestProductRow, kind: LatestProduct["kind"]): LatestProduct => {
     const slug = row.slug || row.id;
     const price = Number(row.price_eur || 0);
@@ -37,11 +41,11 @@ export function selectLatestProducts(books: LatestProductRow[], resources: Lates
         ? row.cover_image || bookCoverPath(slug, bookAssetExtensions[slug] || "jpg")
         : row.cover_image_url || row.qr_image_url || "/images/logo.png",
       priceEur: Number.isFinite(price) ? Math.max(0, price) : 0,
-      createdAt: row.created_at!,
+      createdAt: latestDate(row),
     };
   };
   const isPublished = (row: LatestProductRow) =>
-    row.visible === true && !row.deleted_at && Boolean(row.created_at) && Number.isFinite(Date.parse(row.created_at!));
+    row.visible === true && !row.deleted_at && Boolean(latestDate(row));
 
   return [
     ...books.filter(isPublished).map((row) => mapProduct(row, "book")),

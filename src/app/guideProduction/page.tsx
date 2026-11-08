@@ -49,7 +49,7 @@ export default function GuideProductionPage() {
           <h1>Installation gratuite avec un code</h1>
           <p className="guide-tester-subtitle">Applications Android Visd AR disponibles sur Google Play</p>
           <p className="guide-tester-guide-label">Guide d’installation · production</p>
-          <p className="lead">Bienvenue. Ces applications sont déjà publiées sur Google Play. Pour les applications payantes, votre code promotionnel personnel permet de les obtenir gratuitement. « Classificateurs chinois » est actuellement gratuit sur Google Play et s’installe directement.</p>
+          <p className="lead">Bienvenue. Ces applications sont publiées sur Google Play au prix normal indiqué sur leur fiche. Si vous avez reçu un code promotionnel personnel, vous pouvez l’utiliser pour obtenir l’application concernée sans paiement.</p>
         </div>
 
         <section className="guide-tester-notice" aria-labelledby="production-before-title">
@@ -84,7 +84,7 @@ export default function GuideProductionPage() {
 
         <section className="guide-tester-directory" aria-labelledby="production-directory-title">
           <h2 id="production-directory-title">Liens directs des applications publiées</h2>
-          <p>Choisissez l’application pour laquelle vous avez reçu un code, puis ouvrez sa fiche Google Play. Pour « Classificateurs chinois », aucun code n’est nécessaire tant que Google Play affiche « Installer ».</p>
+          <p>Choisissez l’application pour laquelle vous avez reçu un code, puis ouvrez sa fiche Google Play. Le prix passe à 0 € uniquement après validation d’un code promotionnel applicable.</p>
           <div className="guide-tester-app-list">
             {apps.map(([title, packageName, url]) => (
               <article key={packageName}>

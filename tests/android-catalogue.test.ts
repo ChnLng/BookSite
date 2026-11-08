@@ -1,8 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { defaultCatalogue, validateCatalogue } from '../src/lib/android-catalogue';
+import { androidApps, defaultCatalogue, publicCatalogue, validateCatalogue } from '../src/lib/android-catalogue';
 import { parsePlayCodesCsv, playCodeError } from '../src/lib/play-code-inventory';
 
 describe('catalogue editor trust boundary', () => {
+  it('keeps the 16-app inventory while publishing 12 distinct listings', () => {
+    expect(androidApps).toHaveLength(16);
+    const catalogue = publicCatalogue(defaultCatalogue('android-professionnels'));
+    const packages = catalogue.apps.map(app => app.packageName);
+    expect(packages).toHaveLength(12);
+    expect(new Set(packages).size).toBe(12);
+    expect(packages).toContain('com.visdar.verbes');
+    expect(packages).toContain('com.visdar.stroke');
+    expect(packages).toContain('com.visdar.hub');
+    expect(packages).not.toContain('com.visdar.temps');
+    expect(catalogue.testEnabled).toBe(false);
+  });
   it('accepts both editions and keeps mutable drafts independent', () => {
     const consumer=defaultCatalogue('android'), business=defaultCatalogue('android-professionnels');
     expect(validateCatalogue(consumer)).toEqual(consumer);

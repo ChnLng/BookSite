@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ResourceItem } from "@/lib/home-sections";
 import { richTextToPlainText } from "./rich-text";
-import { chineseForTwoResource } from "./public-android-resources";
-import { getPublicPlayStoreApp } from "./play-testing";
+import { chineseForTwoResource, getPreviewAndroidApp, previewAndroidResources } from "./public-android-resources";
+import { getPlayTestingApp, getPublicPlayStoreApp } from "./play-testing";
 
 type HomepageResourceRow = {
   id: string;
@@ -30,7 +30,7 @@ export function mapHomepageResource(row: HomepageResourceRow): ResourceItem {
     coverImageUrl: row.cover_image_url || row.qr_image_url || "/images/logo.png",
     qrImageUrl: "",
     externalUrl: "",
-    priceEur: getPublicPlayStoreApp(row.id)?.priceEur ?? getPublicPlayStoreApp(row.slug)?.priceEur ?? (Number.isFinite(price) ? Math.max(0, price) : 0),
+    priceEur: getPublicPlayStoreApp(row.id)?.priceEur ?? getPublicPlayStoreApp(row.slug)?.priceEur ?? getPreviewAndroidApp(row.slug)?.priceEur ?? (Number.isFinite(price) ? Math.max(0, price) : 0),
     visible: true,
     sortOrder: row.sort_order ?? 0,
     // The homepage links to the product page, never to protected downloads.
@@ -49,22 +49,25 @@ export async function loadHomepageResources(supabase: SupabaseClient): Promise<R
       .abortSignal(AbortSignal.timeout(5000));
 
     if (error) return null;
-    const resources = ((data || []) as HomepageResourceRow[]).map(mapHomepageResource);
-    if (!resources.some((item) => item.slug === chineseForTwoResource.slug)) {
-      const androidCategoryId = resources.find((item) => getPublicPlayStoreApp(item.id))?.categoryId ?? null;
+    const resources = ((data || []) as HomepageResourceRow[])
+      .filter((row) => !getPlayTestingApp(row.id) && !getPlayTestingApp(row.slug))
+      .map(mapHomepageResource);
+    const androidCategoryId = resources.find((item) => getPublicPlayStoreApp(item.id))?.categoryId ?? null;
+    for (const item of [chineseForTwoResource, ...previewAndroidResources]) {
+      if (resources.some((resource) => resource.slug === item.slug)) continue;
       resources.push({
-        id: chineseForTwoResource.id,
-        slug: chineseForTwoResource.slug,
+        id: item.id,
+        slug: item.slug,
         categoryId: androidCategoryId,
-        titleFr: chineseForTwoResource.titleFr,
-        homepageSummaryFr: chineseForTwoResource.summaryFr,
-        summaryFr: chineseForTwoResource.summaryFr,
-        coverImageUrl: chineseForTwoResource.coverImageUrl,
+        titleFr: item.titleFr,
+        homepageSummaryFr: item.summaryFr,
+        summaryFr: item.summaryFr,
+        coverImageUrl: item.coverImageUrl,
         qrImageUrl: "",
-        externalUrl: chineseForTwoResource.externalUrl,
-        priceEur: getPublicPlayStoreApp(chineseForTwoResource.slug)?.priceEur ?? 0,
+        externalUrl: item.externalUrl,
+        priceEur: getPublicPlayStoreApp(item.slug)?.priceEur ?? ("priceEur" in item && item.priceEur !== null ? item.priceEur : 0),
         visible: true,
-        sortOrder: chineseForTwoResource.sortOrder,
+        sortOrder: item.sortOrder,
         downloads: [],
       });
     }

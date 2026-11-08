@@ -26,7 +26,7 @@ describe("closed testing selection", () => {
     expect(getPublicPlayStoreUrl("reconnaissance-de-sinogrammes-manuscrits-android")).toBe("https://play.google.com/store/apps/details?id=com.visdar.manuscrits");
     expect(getPublicPlayStoreUrl("com.visdar.cles")).toBe("https://play.google.com/store/apps/details?id=com.visdar.cles");
     expect(getPublicPlayStoreUrl("chinois-en-binome-android")).toBe("https://play.google.com/store/apps/details?id=com.visdar.binome");
-    expect(getPublicPlayStoreApp("com.visdar.classificateur")?.priceEur).toBe(0);
+    expect(getPublicPlayStoreApp("com.visdar.classificateur")?.priceEur).toBe(2.09);
     expect(getPublicPlayStoreApp("com.visdar.couleurs")?.priceEur).toBe(1.09);
   });
 });

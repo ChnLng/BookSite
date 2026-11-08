@@ -7,7 +7,8 @@ import { isUuid } from "@/lib/database-identifiers";
 import { applyDiscount } from "@/lib/promo";
 import { hasPurchasedBook, hasPurchasedResource } from "@/lib/purchase-access";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
-import { getPlayTestingApp, getPublicPlayStoreUrl, playTestingApplicationUrl } from "@/lib/play-testing";
+import { getPlayTestingApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
+import { getPreviewAndroidApp } from "@/lib/public-android-resources";
 
 type CheckoutProduct = {
   kind: "book" | "resource";
@@ -184,7 +185,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Produit introuvable." }, { status: 404 });
   }
   const testingApp = product.kind === "resource" ? getPlayTestingApp(product.id) || getPlayTestingApp(product.slug) : null;
-  if (testingApp) return NextResponse.json({ ok: false, message: "Cette application est proposée gratuitement pendant sa phase de test avant lancement.", applicationUrl: playTestingApplicationUrl(testingApp) }, { status: 409 });
+  if (testingApp) return NextResponse.json({ ok: false, message: "Cette application n’est plus proposée sur le site." }, { status: 410 });
+  const previewApp = product.kind === "resource" ? getPreviewAndroidApp(product.id) || getPreviewAndroidApp(product.slug) : null;
+  if (previewApp) return NextResponse.json({ ok: false, message: "Accès réservé aux comptes Google Play invités au test.", applicationUrl: previewApp.externalUrl }, { status: 409 });
   const playStoreUrl = product.kind === "resource" ? getPublicPlayStoreUrl(product.id) || getPublicPlayStoreUrl(product.slug) : null;
   if (playStoreUrl) return NextResponse.json({ ok: false, message: "Achetez cette application directement sur Google Play.", applicationUrl: playStoreUrl }, { status: 409 });
 

@@ -31,4 +31,4 @@ async function handle(request: Request, claim: boolean) {
   return json({ ok: true, ...result, message: playCodeMessage(result) });
 }
 export const GET = (request: Request) => handle(request, false);
-export const POST = (request: Request) => handle(request, true);
+export const POST = () => json({ ok: false, message: "Les demandes de test sont closes." }, 410);

@@ -1,8 +1,8 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { isUuid } from "@/lib/database-identifiers";
 import { richTextToPlainText } from "@/lib/rich-text";
-import { getPublicPlayStoreApp } from "@/lib/play-testing";
-import { chineseForTwoResource } from "@/lib/public-android-resources";
+import { getPlayTestingApp, getPublicPlayStoreApp } from "@/lib/play-testing";
+import { chineseForTwoResource, getPreviewAndroidApp, previewAndroidResources } from "@/lib/public-android-resources";
 
 type ResourceItemRow = {
   id: string;
@@ -140,23 +140,23 @@ function normalizePrice(value: number | string | null | undefined) {
 }
 
 function includePlayOnlyResources(resources: DisplayResource[]) {
-  if (resources.some((resource) => resource.slug === chineseForTwoResource.slug)) return resources;
-  const playApp = getPublicPlayStoreApp(chineseForTwoResource.slug);
-  return [...resources, {
-    id: chineseForTwoResource.id,
-    slug: chineseForTwoResource.slug,
-    titleFr: chineseForTwoResource.titleFr,
-    homepageSummaryFr: chineseForTwoResource.summaryFr,
-    summaryFr: chineseForTwoResource.summaryFr,
-    coverImageUrl: chineseForTwoResource.coverImageUrl,
-    qrImageUrl: chineseForTwoResource.coverImageUrl,
-    externalUrl: chineseForTwoResource.externalUrl,
+  const siteOnlyResources = [chineseForTwoResource, ...previewAndroidResources];
+  const missing = siteOnlyResources.filter((item) => !resources.some((resource) => resource.slug === item.slug));
+  return [...resources, ...missing.map((item): DisplayResource => ({
+    id: item.id,
+    slug: item.slug,
+    titleFr: item.titleFr,
+    homepageSummaryFr: item.summaryFr,
+    summaryFr: item.summaryFr,
+    coverImageUrl: item.coverImageUrl,
+    qrImageUrl: item.coverImageUrl,
+    externalUrl: item.externalUrl,
     visible: true,
-    sortOrder: chineseForTwoResource.sortOrder,
-    priceEur: playApp?.priceEur ?? 0,
-    galleryImages: [...chineseForTwoResource.galleryImages],
+    sortOrder: item.sortOrder,
+    priceEur: getPublicPlayStoreApp(item.slug)?.priceEur ?? ("priceEur" in item && item.priceEur !== null ? item.priceEur : 0),
+    galleryImages: [...item.galleryImages],
     downloads: [],
-  }].sort((left, right) => left.sortOrder - right.sortOrder || left.titleFr.localeCompare(right.titleFr));
+  }))].sort((left, right) => left.sortOrder - right.sortOrder || left.titleFr.localeCompare(right.titleFr));
 }
 
 function clampHomepageSummary(value: string, maxLength = 150) {
@@ -185,7 +185,7 @@ function sortDownloads(left: DisplayResourceDownload, right: DisplayResourceDown
 
 function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) {
   return rows
-    .filter((row) => row.visible !== false)
+    .filter((row) => row.visible !== false && !getPlayTestingApp(row.id) && !getPlayTestingApp(row.slug))
     .map<DisplayResource>((row) => {
       const downloads = fileRows
         .filter((fileRow) => fileRow.resource_id === row.id)
@@ -215,7 +215,7 @@ function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) 
         externalUrl: row.external_url || "",
         visible: row.visible !== false,
         sortOrder: row.sort_order ?? 0,
-        priceEur: getPublicPlayStoreApp(row.id)?.priceEur ?? getPublicPlayStoreApp(row.slug)?.priceEur ?? normalizePrice(row.price_eur),
+        priceEur: getPublicPlayStoreApp(row.id)?.priceEur ?? getPublicPlayStoreApp(row.slug)?.priceEur ?? getPreviewAndroidApp(row.slug)?.priceEur ?? normalizePrice(row.price_eur),
         galleryImages: normalizeGalleryImages(row.gallery_images),
         downloads,
         titleRichFr,
