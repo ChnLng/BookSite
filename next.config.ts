@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      { source: "/&", destination: "/", permanent: true },
+      { source: "/favicon.ico", destination: "/images/logo.png", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

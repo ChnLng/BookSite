@@ -45,11 +45,11 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Visd AR — apprendre le chinois par les histoires", description: "Livres bilingues chinois-français et outils numériques pour débutants.", images: ["/images/logo.png"] },
   icons: {
     icon: [
-      { url: "/images/logo.png?v=20260822", type: "image/png", sizes: "200x200" },
+      { url: "/images/logo.png?v=20261109", type: "image/png", sizes: "200x200" },
     ],
-    shortcut: "/images/logo.png?v=20260822",
+    shortcut: "/images/logo.png?v=20261109",
     apple: [
-      { url: "/images/logo.png?v=20260822", type: "image/png", sizes: "200x200" },
+      { url: "/images/logo.png?v=20261109", type: "image/png", sizes: "200x200" },
     ],
   },
 };

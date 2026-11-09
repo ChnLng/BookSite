@@ -14,7 +14,7 @@ import { PlayTestingPrice } from "@/components/play-testing-price";
 import { getExternalLinkLabel } from "@/lib/external-link-label";
 import { getPreviewAndroidApp } from "@/lib/public-android-resources";
 
-type CatalogueProduct = {
+export type CatalogueProduct = {
   id: string;
   kind: "book" | "resource";
   titleFr: string;
@@ -27,14 +27,15 @@ type CatalogueProduct = {
 
 type CatalogueClientProps = {
   initialBooks: DisplayBook[];
+  initialResources?: CatalogueProduct[];
 };
 
-export function CatalogueClient({ initialBooks }: CatalogueClientProps) {
+export function CatalogueClient({ initialBooks, initialResources = [] }: CatalogueClientProps) {
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [payingBookId, setPayingBookId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchUrlReady, setSearchUrlReady] = useState(false);
-  const [resources, setResources] = useState<CatalogueProduct[]>([]);
+  const [resources, setResources] = useState<CatalogueProduct[]>(initialResources);
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
 
   useEffect(() => {

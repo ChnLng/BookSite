@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
+import { cache } from "react";
 import { siteConfig } from "@/lib/site-config";
 import { loadHomepageResources } from "@/lib/homepage-resources";
 import { getPlayTestingApp, getPublicPlayStoreApp } from "@/lib/play-testing";
@@ -28,7 +29,7 @@ export type PublicResourceSeo = {
   createdAt: string | null;
 };
 
-export async function loadPublicResourcesForSeo(): Promise<PublicResourceSeo[]> {
+export const loadPublicResourcesForSeo = cache(async (): Promise<PublicResourceSeo[]> => {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || siteConfig.supabaseAnonKey;
   if (!siteConfig.supabaseUrl || !key) return playOnlySeoResources();
 
@@ -54,7 +55,7 @@ export async function loadPublicResourcesForSeo(): Promise<PublicResourceSeo[]> 
     createdAt: row.created_at ? String(row.created_at) : null,
   }));
   return [...resources, ...playOnlySeoResources().filter((item) => !resources.some((resource) => resource.slug === item.slug))];
-}
+});
 
 function playOnlySeoResources(): PublicResourceSeo[] {
   const app = getPublicPlayStoreApp(chineseForTwoResource.slug);

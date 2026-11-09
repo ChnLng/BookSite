@@ -1,25 +1,38 @@
 import type { Metadata } from "next";
 import { CatalogueClient } from "@/components/catalogue-client";
 import { loadCachedPublicDisplayBooks } from "@/lib/books-public-server";
+import { loadPublicResourcesForSeo } from "@/lib/resources-public-server";
+import { getPublicPlayStoreUrl } from "@/lib/play-testing";
+import { getPreviewAndroidApp } from "@/lib/public-android-resources";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Livres chinois pour débutants — pinyin et traduction française",
-  description: "Découvrez les ebooks Visd AR pour lire le chinois avec sinogrammes, pinyin et traduction française : histoires illustrées et accessibles aux débutants.",
+  title: "Catalogue chinois-français — livres et applications Android",
+  description: "Livres illustrés et applications Android pour apprendre le chinois en français : pinyin, sinogrammes, vocabulaire et culture chinoise.",
   alternates: { canonical: "/catalogue" },
   openGraph: {
     type: "website",
     locale: "fr_FR",
     url: "/catalogue",
-    title: "Catalogue de livres bilingues chinois-français | Visd AR",
-    description: "Histoires chinoises illustrées avec pinyin et traduction française pour progresser en lecture.",
+    title: "Livres bilingues et applications Android | Visd AR",
+    description: "Histoires chinoises illustrées et applications Android avec pinyin et explications en français.",
   },
 };
 
 export default async function CataloguePage() {
-  const initialBooks = await loadCachedPublicDisplayBooks();
+  const [initialBooks, publicResources] = await Promise.all([loadCachedPublicDisplayBooks(), loadPublicResourcesForSeo()]);
+  const initialResources = publicResources.map((item) => ({
+    id: item.slug,
+    kind: "resource" as const,
+    titleFr: item.titleFr,
+    titleZh: "",
+    image: item.coverImageUrl,
+    priceEur: item.priceEur ?? 0,
+    href: `/outils/${item.slug}`,
+    externalUrl: getPublicPlayStoreUrl(item.slug) || getPreviewAndroidApp(item.slug)?.externalUrl || "",
+  }));
 
-  return <CatalogueClient initialBooks={initialBooks} />;
+  return <CatalogueClient initialBooks={initialBooks} initialResources={initialResources} />;
 }

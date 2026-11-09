@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
+import { cache } from "react";
 import { books as staticBooks } from "@/data/books";
 import {
   BOOK_PUBLIC_SELECT,
@@ -26,7 +27,7 @@ function createSupabaseServerClient() {
   });
 }
 
-export async function loadCachedPublicDisplayBooks(): Promise<DisplayBook[]> {
+export const loadCachedPublicDisplayBooks = cache(async (): Promise<DisplayBook[]> => {
   const supabase = createSupabaseServerClient();
 
   if (!supabase) {
@@ -49,4 +50,4 @@ export async function loadCachedPublicDisplayBooks(): Promise<DisplayBook[]> {
     const fallback = staticBooks.find((book) => book.id === (row.slug || row.id));
     return mapBookRow(row, fallback);
   });
-}
+});

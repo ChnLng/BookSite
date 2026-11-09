@@ -15,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: siteUrl, changeFrequency: "weekly", priority: 1 },
     { url: `${siteUrl}/catalogue`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${siteUrl}/applications-android-chinois`, changeFrequency: "weekly", priority: 0.9 },
     {
       url: `${siteUrl}/blog/lecture-chinois-pinyin-traduction`,
       lastModified: new Date("2026-08-09"),
