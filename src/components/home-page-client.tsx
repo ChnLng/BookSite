@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { HomeExpandedSections } from "@/components/home-expanded-sections";
+import { MobileMarquee } from "@/components/mobile-marquee";
 import { PromoBanner } from "@/components/promo-banner";
 import { TopNav } from "@/components/top-nav";
 import { AuthModal } from "@/components/auth-modal";
@@ -141,7 +142,7 @@ export function HomePageClient({ initialMobile: _initialMobile, latestProducts, 
             </div>
             <p className="collection-intro">Des histoires à lire, deux langues à explorer.</p>
 
-            <div className="marquee-shell">
+            <MobileMarquee label="Albums illustrés bilingues">
               <div className="marquee-inner">
                 <div className="marquee-track">
                   {displayBooks.map((book, index) => (
@@ -187,7 +188,7 @@ export function HomePageClient({ initialMobile: _initialMobile, latestProducts, 
                   ))}
                 </div>
               </div>
-            </div>
+            </MobileMarquee>
 
             <div className="scene-actions">
               <Link className="cta-button" href="/catalogue">

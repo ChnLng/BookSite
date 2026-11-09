@@ -183,6 +183,19 @@ body {
 .home-resource-marquee-inner { animation-duration: 40s; }
 .marquee-shell:hover .marquee-inner,
 .marquee-shell:focus-within .marquee-inner { animation-play-state: paused; }
+.mobile-marquee-frame { position: relative; min-width: 0; }
+.mobile-marquee-arrow { display: none; }
+@media (max-width: 767px) {
+  html:not([data-preferred-view="desktop"]) .mobile-marquee-frame .marquee-shell { overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  html:not([data-preferred-view="desktop"]) .mobile-marquee-frame .marquee-shell::-webkit-scrollbar { display: none; }
+  html:not([data-preferred-view="desktop"]) .mobile-marquee-frame .marquee-inner { animation: none; transform: none; }
+  html:not([data-preferred-view="desktop"]) .mobile-marquee-frame .marquee-track[aria-hidden="true"] { display: none; }
+  html:not([data-preferred-view="desktop"]) .mobile-marquee-frame .carousel-card,
+  html:not([data-preferred-view="desktop"]) .mobile-marquee-frame .home-resource-carousel-card { scroll-snap-align: start; }
+  html:not([data-preferred-view="desktop"]) .mobile-marquee-arrow { display: grid; place-items: center; position: absolute; top: 50%; z-index: 5; width: 42px; height: 42px; padding: 0; border: 1px solid #cbbdea; border-radius: 50%; color: #55448c; background: rgba(255,255,255,.9); box-shadow: 0 5px 16px #352d6340; transform: translateY(-50%); cursor: pointer; }
+  html:not([data-preferred-view="desktop"]) .mobile-marquee-arrow-left { left: 6px; }
+  html:not([data-preferred-view="desktop"]) .mobile-marquee-arrow-right { right: 6px; }
+}
 
 .latest-product-card {
   background: linear-gradient(140deg, rgba(255, 255, 255, 0.72), rgba(241, 245, 255, 0.42));

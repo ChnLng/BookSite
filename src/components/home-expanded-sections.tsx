@@ -13,6 +13,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { PartnerLinksSection } from "@/components/partner-links-section";
+import { MobileMarquee } from "@/components/mobile-marquee";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import {
   loadExpandedHomeMetadata,
@@ -465,7 +466,7 @@ export function HomeExpandedSections({ initialResources }: { initialResources: R
                   ? "Les outils sont momentanément indisponibles. Actualisez la page pour réessayer."
                   : "De nouveaux outils seront bientôt disponibles."}</p>
               ) : (
-                <div className="marquee-shell home-resource-marquee-shell" role="list">
+                <MobileMarquee className="home-resource-marquee-shell" role="list" label={section.label}>
                   <div className="marquee-inner home-resource-marquee-inner">
                     {[0, 1].map((trackIndex) => (
                       <div
@@ -509,7 +510,7 @@ export function HomeExpandedSections({ initialResources }: { initialResources: R
                       </div>
                     ))}
                   </div>
-                </div>
+                </MobileMarquee>
               )}
             </section>
           );
