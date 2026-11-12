@@ -61,14 +61,10 @@ export default async function ApplicationsAndroidPage() {
     <main className="page-shell">
       <TopNav className="topbar-luxury" showAdmin showLogout />
       <div className={styles.layout}>
-        <section className={styles.hero}>
-          <span className={styles.eyebrow}>Collection Visd AR · Android</span>
-          <h1>Apprendre le chinois, <em>à portée de main.</em></h1>
-          <p>Des applications Android pour les apprenants francophones : sinogrammes, pinyin, explications en français et découvertes de la culture chinoise. Choisissez un outil selon ce que vous souhaitez apprendre, puis retrouvez son prix et son installation sur Google Play.</p>
-          <div className={styles.heroActions}>
-            <a className={styles.primaryButton} href="#applications">Explorer les applications</a>
-            <Link className={styles.secondaryButton} href="/catalogue">Voir tout le catalogue</Link>
-          </div>
+        <section id="applications" className={styles.catalogueIntro}>
+          <span className={styles.eyebrow}>Collection Android · Visd AR</span>
+          <h1>Applications Android pour apprendre le chinois</h1>
+          <p>Vous débutez ? Le calendrier, les couleurs et les nombres donnent des repères visuels. Pour travailler l’écriture, découvrez les clés des sinogrammes et la reconnaissance manuscrite. Chaque fiche présente les fonctions de l’application avant de vous diriger vers Google Play.</p>
         </section>
 
         <nav className={styles.quickNav} aria-label="Choisir un parcours">
@@ -77,12 +73,6 @@ export default async function ApplicationsAndroidPage() {
           <a href="#autrement">Activités ludiques</a>
           <a href="#offrir">Offrir une découverte</a>
         </nav>
-
-        <section id="applications" className={styles.catalogueIntro}>
-          <span className={styles.eyebrow}>Trouver votre point de départ</span>
-          <h2>Une application pour chaque curiosité</h2>
-          <p>Vous débutez ? Le calendrier, les couleurs et les nombres donnent des repères visuels. Pour travailler l’écriture, découvrez les clés des sinogrammes et la reconnaissance manuscrite. Chaque fiche présente les fonctions de l’application avant de vous diriger vers Google Play.</p>
-        </section>
 
         {groups.map((group, index) => (
           <section className={styles.group} id={["sinogrammes", "langue-culture", "autrement"][index]} key={group.title}>

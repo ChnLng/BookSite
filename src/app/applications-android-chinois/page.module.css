@@ -1,18 +1,10 @@
-.layout { display: grid; gap: 42px; padding: 24px 0 64px; }
-.hero { position: relative; overflow: hidden; padding: clamp(32px, 6vw, 76px); border: 1px solid #e3d9f2; border-radius: 32px; background: radial-gradient(circle at 88% 22%, #ddd6fb 0, transparent 35%), linear-gradient(130deg, #fff 0%, #f7f4fd 64%, #f2effc 100%); box-shadow: 0 22px 60px rgba(54, 37, 98, .09); }
-.hero::after { content: "中"; position: absolute; right: 4%; bottom: -94px; color: #6653a4; opacity: .045; font-size: clamp(280px, 30vw, 420px); line-height: 1; pointer-events: none; }
+.layout { display: grid; gap: 34px; padding: 28px 0 64px; }
 .eyebrow { display: inline-block; color: #6a55a2; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-.hero h1 { position: relative; z-index: 1; max-width: 760px; margin: 18px 0 20px; color: #27213b; font-family: var(--font-heading), Georgia, serif; font-size: clamp(3rem, 6vw, 5.6rem); line-height: .98; font-weight: 600; letter-spacing: -.035em; }
-.hero h1 em { display: block; color: #7056b0; font-style: normal; }
-.hero p { position: relative; z-index: 1; max-width: 670px; color: #4d4a62; font-size: clamp(1rem, 1.7vw, 1.18rem); line-height: 1.75; }
-.heroActions { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
-.primaryButton, .secondaryButton { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; padding: 11px 21px; border-radius: 999px; font-weight: 800; }
-.primaryButton { background: #6248a5; color: white; box-shadow: 0 8px 20px rgba(98,72,165,.22); }
-.secondaryButton { border: 1px solid #c9bce6; color: #573d96; background: #fff9; }
 .quickNav { display: flex; flex-wrap: wrap; gap: 10px; margin: -18px 0 0; }
 .quickNav a { padding: 8px 14px; border: 1px solid #e2dcee; border-radius: 999px; background: #fff9; color: #514476; font-size: .9rem; font-weight: 700; }
-.catalogueIntro { max-width: 780px; }
-.catalogueIntro h2, .group h2, .gift h2 { margin: 8px 0 10px; color: #302743; font-family: var(--font-heading), Georgia, serif; font-size: clamp(2.15rem, 3.5vw, 3.25rem); line-height: 1.05; font-weight: 600; }
+.catalogueIntro { max-width: 820px; padding: 0 8px; }
+.catalogueIntro h1 { margin: 8px 0 10px; color: #302743; font-family: var(--font-heading), Georgia, serif; font-size: clamp(2.6rem, 4.4vw, 4rem); line-height: 1.05; font-weight: 600; }
+.group h2, .gift h2 { margin: 8px 0 10px; color: #302743; font-family: var(--font-heading), Georgia, serif; font-size: clamp(2.15rem, 3.5vw, 3.25rem); line-height: 1.05; font-weight: 600; }
 .catalogueIntro p, .groupHeading p, .gift p { margin: 0; color: #55516b; line-height: 1.7; }
 .group { display: grid; gap: 22px; scroll-margin-top: 25px; }
 .groupHeading { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; border-bottom: 1px solid #ded7ed; padding-bottom: 16px; }
@@ -37,4 +29,4 @@
 .giftAside li + li { margin-top: 9px; }
 .priceNote { margin: -22px 0 0; color: #736e81; font-size: .82rem; line-height: 1.5; }
 @media (max-width: 900px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .gift { grid-template-columns: 1fr; } }
-@media (max-width: 620px) { .layout { gap: 32px; padding-top: 16px; } .hero { border-radius: 24px; } .groupHeading { display: block; } .groupHeading p { margin-top: 10px; } .cards { grid-template-columns: 1fr; } .cardImage { height: 230px; } .gift { padding: 28px; } }
+@media (max-width: 620px) { .layout { gap: 32px; padding-top: 16px; } .groupHeading { display: block; } .groupHeading p { margin-top: 10px; } .cards { grid-template-columns: 1fr; } .cardImage { height: 230px; } .gift { padding: 28px; } }

@@ -179,6 +179,8 @@ body {
 .marquee-shell { background: rgba(255, 255, 255, 0.18); }
 .marquee-shell::before { background: linear-gradient(90deg, rgba(242, 246, 255, 0.86), transparent); }
 .marquee-shell::after { background: linear-gradient(270deg, rgba(246, 243, 255, 0.86), transparent); }
+.mobile-marquee-frame .marquee-shell::before,
+.mobile-marquee-frame .marquee-shell::after { display: none; }
 .marquee-inner { animation-duration: 34s; }
 .home-resource-marquee-inner { animation-duration: 40s; }
 .marquee-shell:hover .marquee-inner,

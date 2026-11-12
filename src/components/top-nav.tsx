@@ -158,7 +158,6 @@ export function TopNav({
         <nav className="nav-links">
           {!isHomePage ? <Link href="/">Accueil</Link> : null}
           {!hideCatalogueLink ? <Link href="/catalogue">Catalogue</Link> : null}
-          <Link href="/applications-android-chinois">Applications Android</Link>
           {dynamicLinks.map((link) => (
             <Link href={link.href} key={link.id}>
               {link.label}

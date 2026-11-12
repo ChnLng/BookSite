@@ -138,6 +138,10 @@ export function CatalogueClient({ initialBooks, initialResources = [] }: Catalog
               </p>
             </div>
           </div>
+          <Link className="panel glass catalogue-android-entry" href="/applications-android-chinois">
+            <span>Applications Android</span>
+            <span aria-hidden="true">→</span>
+          </Link>
           <PartnerAdSlot />
         </aside>
 

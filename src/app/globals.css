@@ -303,6 +303,33 @@ button,
   }
 }
 
+@media (max-width: 767px) {
+  .home-story {
+    gap: 4px;
+    margin-top: 8px;
+    padding: 8px 12px;
+  }
+
+  .home-story-identity {
+    padding-bottom: 6px;
+  }
+
+  .home-story-kicker { font-size: 0.62rem; }
+  .home-story-name { font-size: 1.7rem; }
+  .home-story-ar { font-size: 1.1rem; }
+  .home-story-line { width: 28px; margin-top: 7px; }
+
+  .home-story-pane-left { padding: 5px 8px 17px; }
+  .home-story-pane-right { margin-top: -14px; padding: 25px 8px 7px; }
+  .home-story-pane-right::before { top: 8px; height: 9px; }
+
+  .home-story-lead,
+  .home-story-conclusion {
+    font-size: 1.05rem;
+    line-height: 1.43;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-story-pane-left,
   .home-story-pane-right {
@@ -664,6 +691,21 @@ button,
 
 .catalogue-search-panel .section-block {
   margin-top: 0;
+}
+
+.catalogue-android-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #574394;
+  font-weight: 800;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.catalogue-android-entry:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(70, 48, 115, 0.12);
 }
 
 .catalogue-product-card .book-meta {
@@ -3516,6 +3558,13 @@ button,
   .book-detail-sidebar {
     display: none;
   }
+
+  .catalogue-sidebar {
+    display: grid;
+    gap: 12px;
+  }
+
+  .catalogue-sidebar .partner-ad-panel { display: none; }
 
   .hero-scene,
   .homepage-responsive-grid {
