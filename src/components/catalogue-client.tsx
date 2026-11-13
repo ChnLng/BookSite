@@ -28,19 +28,29 @@ export type CatalogueProduct = {
 type CatalogueClientProps = {
   initialBooks: DisplayBook[];
   initialResources?: CatalogueProduct[];
+  initialSearchTerm?: string;
+  initialOtherOnly?: boolean;
 };
 
-export function CatalogueClient({ initialBooks, initialResources = [] }: CatalogueClientProps) {
+function matchesCatalogueSearch(product: CatalogueProduct, keyword: string) {
+  const searchText = [product.titleFr, product.titleZh, product.kind === "book" ? "album illustré" : ""].join(" ").toLowerCase();
+  return searchText.includes(keyword);
+}
+
+export function CatalogueClient({ initialBooks, initialResources = [], initialSearchTerm = "", initialOtherOnly = false }: CatalogueClientProps) {
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [payingBookId, setPayingBookId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+  const [otherOnly, setOtherOnly] = useState(initialOtherOnly);
   const [searchUrlReady, setSearchUrlReady] = useState(false);
   const [resources, setResources] = useState<CatalogueProduct[]>(initialResources);
   const activeInfo = infoLinks.find((item) => item.id === activeInfoId);
 
   useEffect(() => {
     const syncSearchFromUrl = () => {
-      setSearchTerm(new URLSearchParams(window.location.search).get("q") || "");
+      const params = new URLSearchParams(window.location.search);
+      setSearchTerm(params.get("q") || "");
+      setOtherOnly(params.get("view") === "autres");
     };
     syncSearchFromUrl();
     setSearchUrlReady(true);
@@ -54,8 +64,10 @@ export function CatalogueClient({ initialBooks, initialResources = [] }: Catalog
     const query = searchTerm.trim();
     if (query) url.searchParams.set("q", query);
     else url.searchParams.delete("q");
+    if (otherOnly) url.searchParams.set("view", "autres");
+    else url.searchParams.delete("view");
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-  }, [searchTerm, searchUrlReady]);
+  }, [searchTerm, otherOnly, searchUrlReady]);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,15 +86,11 @@ export function CatalogueClient({ initialBooks, initialResources = [] }: Catalog
   const filteredBooks = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
 
-    if (!keyword) {
-      return products;
-    }
-
     return products.filter((book) => {
-      const haystack = [book.titleFr, book.titleZh].join(" ").toLowerCase();
-      return haystack.includes(keyword);
+      if (otherOnly) return !matchesCatalogueSearch(book, "android") && !matchesCatalogueSearch(book, "album");
+      return !keyword || matchesCatalogueSearch(book, keyword);
     });
-  }, [products, searchTerm]);
+  }, [products, searchTerm, otherOnly]);
 
   const handleBookCheckout = async (product: CatalogueProduct) => {
     const testingApp = product.kind === "resource" ? getPlayTestingApp(product.id) : null;
@@ -131,17 +139,27 @@ export function CatalogueClient({ initialBooks, initialResources = [] }: Catalog
                 className="input"
                 placeholder="Tapez un titre FR ou ZH"
                 value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
+                onChange={(event) => { setOtherOnly(false); setSearchTerm(event.target.value); }}
               />
               <p className="tiny" style={{ marginTop: 10, marginBottom: 0 }}>
                 Entrez un titre en français ou en chinois pour afficher le produit correspondant.
               </p>
             </div>
           </div>
-          <Link className="panel glass catalogue-android-entry" href="/catalogue?q=android">
-            <span>Applications Android</span>
-            <span aria-hidden="true">→</span>
-          </Link>
+          <nav className="catalogue-filter-links" aria-label="Parcourir le catalogue">
+            <Link className="panel glass catalogue-filter-link" href="/catalogue?q=android" onClick={() => { setOtherOnly(false); setSearchTerm("android"); }}>
+              <span>Applications Android</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+            <Link className="panel glass catalogue-filter-link" href="/catalogue?q=album" onClick={() => { setOtherOnly(false); setSearchTerm("album"); }}>
+              <span>Albums illustrés</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+            <Link className="panel glass catalogue-filter-link" href="/catalogue?view=autres" onClick={() => { setSearchTerm(""); setOtherOnly(true); }}>
+              <span>Autres</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          </nav>
           <PartnerAdSlot />
         </aside>
 

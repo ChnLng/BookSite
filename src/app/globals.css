@@ -693,7 +693,12 @@ button,
   margin-top: 0;
 }
 
-.catalogue-android-entry {
+.catalogue-filter-links {
+  display: grid;
+  gap: 10px;
+}
+
+.catalogue-filter-link {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -703,7 +708,7 @@ button,
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
-.catalogue-android-entry:hover {
+.catalogue-filter-link:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 28px rgba(70, 48, 115, 0.12);
 }

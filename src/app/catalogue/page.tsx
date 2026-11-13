@@ -21,7 +21,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function CataloguePage() {
+export default async function CataloguePage({ searchParams }: { searchParams: Promise<{ q?: string; view?: string }> }) {
+  const { q, view } = await searchParams;
   const [initialBooks, publicResources] = await Promise.all([loadCachedPublicDisplayBooks(), loadPublicResourcesForSeo()]);
   const initialResources = publicResources.map((item) => ({
     id: item.slug,
@@ -34,5 +35,5 @@ export default async function CataloguePage() {
     externalUrl: getPublicPlayStoreUrl(item.slug) || getPreviewAndroidApp(item.slug)?.externalUrl || "",
   }));
 
-  return <CatalogueClient initialBooks={initialBooks} initialResources={initialResources} />;
+  return <CatalogueClient initialBooks={initialBooks} initialResources={initialResources} initialSearchTerm={q || ""} initialOtherOnly={view === "autres"} />;
 }
