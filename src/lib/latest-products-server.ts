@@ -4,10 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 import { selectLatestProducts, type LatestProduct, type LatestProductRow } from "@/lib/latest-products";
 import { siteConfig } from "@/lib/site-config";
 import { getPlayTestingApp, getPublicPlayStoreApp } from "@/lib/play-testing";
-import { chineseForTwoResource, getPreviewAndroidApp, previewAndroidResources } from "@/lib/public-android-resources";
+import { chineseForTwoResource, getPreviewAndroidApp, newlyPublishedAndroidResources, previewAndroidResources } from "@/lib/public-android-resources";
 
 function playOnlyLatestRows(): LatestProductRow[] {
-  return [chineseForTwoResource, ...previewAndroidResources].map((item) => ({
+  return [chineseForTwoResource, ...newlyPublishedAndroidResources, ...previewAndroidResources].map((item) => ({
     id: item.id,
     slug: item.slug,
     title_fr: item.titleFr,

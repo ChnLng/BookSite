@@ -5,7 +5,7 @@ import { cache } from "react";
 import { siteConfig } from "@/lib/site-config";
 import { loadHomepageResources } from "@/lib/homepage-resources";
 import { getPlayTestingApp, getPublicPlayStoreApp } from "@/lib/play-testing";
-import { chineseForTwoResource, previewAndroidResources } from "@/lib/public-android-resources";
+import { chineseForTwoResource, newlyPublishedAndroidResources, previewAndroidResources } from "@/lib/public-android-resources";
 
 export async function loadInitialHomepageResources() {
   if (!siteConfig.supabaseUrl || !siteConfig.supabaseAnonKey) return null;
@@ -67,13 +67,13 @@ function playOnlySeoResources(): PublicResourceSeo[] {
     coverImageUrl: chineseForTwoResource.coverImageUrl,
     priceEur: app?.priceEur ?? 0,
     createdAt: chineseForTwoResource.createdAt,
-  }, ...previewAndroidResources.map((item): PublicResourceSeo => ({
+  }, ...[...newlyPublishedAndroidResources, ...previewAndroidResources].map((item): PublicResourceSeo => ({
     id: item.id,
     slug: item.slug,
     titleFr: item.titleFr,
     summaryFr: item.summaryFr,
     coverImageUrl: item.coverImageUrl,
-    priceEur: item.priceEur,
+    priceEur: getPublicPlayStoreApp(item.slug)?.priceEur ?? ("priceEur" in item ? item.priceEur : null),
     createdAt: item.createdAt,
   }))];
 }

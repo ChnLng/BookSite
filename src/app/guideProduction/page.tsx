@@ -26,6 +26,11 @@ const apps = [
   ["Classificateurs chinois 量词", "com.visdar.classificateur", "https://play.google.com/store/apps/details?id=com.visdar.classificateur"],
   ["Calendrier lunisolaire chinois 万年历", "com.visdar.calendrier", "https://play.google.com/store/apps/details?id=com.visdar.calendrier"],
   ["Chinois en binôme — 7 jeux à deux", "com.visdar.binome", "https://play.google.com/store/apps/details?id=com.visdar.binome"],
+  ["Exprimer le temps en chinois 表述时间", "com.visdar.temps", "https://play.google.com/store/apps/details?id=com.visdar.temps"],
+  ["Expressions idiomatiques chinoises 成语", "com.visdar.expressions", "https://play.google.com/store/apps/details?id=com.visdar.expressions"],
+  ["Dico contextuel du chinois 语境词典", "com.visdar.contextes", "https://play.google.com/store/apps/details?id=com.visdar.contextes"],
+  ["Termes de parenté chinois 亲属称呼", "com.visdar.famille", "https://play.google.com/store/apps/details?id=com.visdar.famille"],
+  ["Tracé des sinogrammes 汉字笔顺", "com.visdar.stroke", "https://play.google.com/store/apps/details?id=com.visdar.stroke"],
 ] as const;
 
 const screenshots = [

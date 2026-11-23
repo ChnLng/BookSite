@@ -7,14 +7,8 @@ export type PlayTestingApp = {
 
 type PublicPlayStoreApp = Pick<PlayTestingApp, "packageName" | "resourceRefs" | "priceEur"> & { publishedAt: string };
 
-// Historical closed-test records are retained for administrative lookup only.
-// Their public listings and application flow are disabled elsewhere.
-export const playTestingApps: readonly PlayTestingApp[] = [
-  { packageName: "com.visdar.temps", title: "Exprimer le temps en chinois", priceEur: 2.09, resourceRefs: ["8c237dca-1a31-4e4c-94d4-401d2edad04d", "exprimer-le-temps-android"] },
-  { packageName: "com.visdar.expressions", title: "Locutions idiomatiques Chengyu", priceEur: 4.99, resourceRefs: ["3e86e9cd-e927-4265-b8ad-159bd998d64a", "expressions-idiomatiques-android"] },
-  { packageName: "com.visdar.contextes", title: "Dictionnaire contextuel français-chinois", priceEur: 0.19, resourceRefs: ["3e85be85-5d94-43c5-a20c-215212acdf83", "dico-contextuel-du-chinois-android"] },
-  { packageName: "com.visdar.famille", title: "Liens de parenté", priceEur: 2.09, resourceRefs: ["c50ce5e7-5693-4082-903f-fa8930fb28a4", "titres-de-parente-android"] },
-];
+// No applications currently require the former closed-test application flow.
+export const playTestingApps: readonly PlayTestingApp[] = [];
 
 // Regular EUR prices supplied by the publisher or checked on Google Play.
 // Google Play handles payment
@@ -29,6 +23,11 @@ const publicPlayStoreApps: readonly PublicPlayStoreApp[] = [
   { packageName: "com.visdar.chiffres", priceEur: 2.09, publishedAt: "2026-10-13", resourceRefs: ["2d14fe16-d245-4c3e-a10d-c87233ef1100", "nombres-en-chinois-android"] },
   { packageName: "com.visdar.classificateur", priceEur: 2.09, publishedAt: "2026-10-16", resourceRefs: ["bf964d2f-f0c4-4608-97d4-196469b53566", "classificateurs-chinois-liangci-android"] },
   { packageName: "com.visdar.binome", priceEur: 6.49, publishedAt: "2026-11-08", resourceRefs: ["chinois-en-binome-android"] },
+  { packageName: "com.visdar.temps", priceEur: 2.09, publishedAt: "2026-11-23", resourceRefs: ["8c237dca-1a31-4e4c-94d4-401d2edad04d", "exprimer-le-temps-android"] },
+  { packageName: "com.visdar.expressions", priceEur: 4.99, publishedAt: "2026-11-23", resourceRefs: ["3e86e9cd-e927-4265-b8ad-159bd998d64a", "expressions-idiomatiques-android"] },
+  { packageName: "com.visdar.contextes", priceEur: 2.19, publishedAt: "2026-11-23", resourceRefs: ["3e85be85-5d94-43c5-a20c-215212acdf83", "dico-contextuel-du-chinois-android"] },
+  { packageName: "com.visdar.famille", priceEur: 2.09, publishedAt: "2026-11-23", resourceRefs: ["c50ce5e7-5693-4082-903f-fa8930fb28a4", "titres-de-parente-android"] },
+  { packageName: "com.visdar.stroke", priceEur: 2.19, publishedAt: "2026-11-23", resourceRefs: ["trace-des-sinogrammes-android"] },
 ];
 
 export const playTestingGroupUrl = "https://groups.google.com/g/visdar";

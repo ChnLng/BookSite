@@ -2,7 +2,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { isUuid } from "@/lib/database-identifiers";
 import { richTextToPlainText } from "@/lib/rich-text";
 import { getPlayTestingApp, getPublicPlayStoreApp } from "@/lib/play-testing";
-import { chineseForTwoResource, getPreviewAndroidApp, previewAndroidResources } from "@/lib/public-android-resources";
+import { chineseForTwoResource, getPreviewAndroidApp, newlyPublishedAndroidResources, previewAndroidResources } from "@/lib/public-android-resources";
 
 type ResourceItemRow = {
   id: string;
@@ -140,7 +140,7 @@ function normalizePrice(value: number | string | null | undefined) {
 }
 
 function includePlayOnlyResources(resources: DisplayResource[]) {
-  const siteOnlyResources = [chineseForTwoResource, ...previewAndroidResources];
+  const siteOnlyResources = [chineseForTwoResource, ...newlyPublishedAndroidResources, ...previewAndroidResources];
   const missing = siteOnlyResources.filter((item) => !resources.some((resource) => resource.slug === item.slug));
   return [...resources, ...missing.map((item): DisplayResource => ({
     id: item.id,

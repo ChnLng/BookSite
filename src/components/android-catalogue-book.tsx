@@ -12,7 +12,7 @@ const themes = ["jade", "sky", "ink", "prism", "rose", "jade", "sky", "ink", "pr
 const publicPrices: Record<string, number> = {
   "com.visdar.calendrier": 0.99, "com.visdar.dialectes": 0.99,
   "com.visdar.classificateur": 2.09, "com.visdar.cles": 2.09,
-  "com.visdar.contextes": 0.19, "com.visdar.expressions": 4.99,
+  "com.visdar.contextes": 2.19, "com.visdar.expressions": 4.99,
   "com.visdar.temps": 2.09, "com.visdar.heures": 2.09,
   "com.visdar.chiffres": 2.09, "com.visdar.manuscrits": 4.99,
   "com.visdar.couleurs": 1.09, "com.visdar.famille": 2.09,

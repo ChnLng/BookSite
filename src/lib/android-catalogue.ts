@@ -51,18 +51,17 @@ export const androidApps: CatalogueApp[] = [
   { packageName: "com.visdar.stroke", title: "Tracé des sinogrammes", chinese: "汉字笔顺", pinyin: "Hànzì bǐshùn", subtitle: "Observer le tracé des sinogrammes.", description: "Découvrez le tracé des sinogrammes et leur projection holographique.", features: ["Ordre des traits", "Tracé des sinogrammes", "Projection holographique"], audience: "Apprentissage de l’écriture. Accès Google Play réservé aux comptes invités au test.", visible: true },
   { packageName: "com.visdar.hub", title: "Hub bilingue chinois-français", chinese: "中法双语", pinyin: "Zhōng-Fǎ shuāngyǔ", subtitle: "Douze modules dans un centre bilingue.", description: "Un centre bilingue chinois-français avec pinyin et espace traduction. Essai de 14 jours, puis achats intégrés selon les modules choisis.", features: ["Douze modules", "Pinyin et traduction", "Essai de 14 jours et achats intégrés"], audience: "Apprenants et enseignants. Accès Google Play réservé aux comptes invités au test.", visible: true },
 ];
-const hiddenTestingPackages = new Set(["com.visdar.contextes", "com.visdar.expressions", "com.visdar.temps", "com.visdar.famille"]);
 export function publicCatalogue(config: CatalogueConfig): CatalogueConfig {
-  const apps = config.apps.filter((app) => !hiddenTestingPackages.has(app.packageName));
+  const apps = [...config.apps];
   for (const app of androidApps) {
-    if (!hiddenTestingPackages.has(app.packageName) && !apps.some((item) => item.packageName === app.packageName)) apps.push(app);
+    if (!apps.some((item) => item.packageName === app.packageName)) apps.push(app);
   }
   return { ...config, apps, testEnabled: false, introduction: config.introduction.replace(/Douze applications Android/g, "Des applications Android").replace(/Cinq applications Android/g, "Des applications Android") };
 }
 export function defaultCatalogue(kind: CatalogueKind): CatalogueConfig {
   return publicCatalogue({
     enabled: true,
-    title: kind === "android" ? "Le chinois, au creux de la main." : "Douze applications pour apprendre et transmettre le chinois.",
+    title: kind === "android" ? "Le chinois, au creux de la main." : "Des applications pour apprendre et transmettre le chinois.",
     introduction: kind === "android" ? "Cinq applications Android pour explorer, comprendre et apprendre à son rythme. Une collection imaginée par Visd AR, entre langues, culture et plaisir de découvrir." : "Douze applications Android conçues pour maîtriser la langue chinoise, avec pinyin et explications en français. Chaque application peut servir à un cours, une activité autonome ou un projet culturel.",
     apps: structuredClone(androidApps), testEnabled: false,
     testTitle: "Découvrez nos applications en avant-première.",

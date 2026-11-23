@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import ResourceDetailPage from "./resource-detail-client";
 import { getPlayTestingApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
-import { getPreviewAndroidApp } from "@/lib/public-android-resources";
+import { getPreviewAndroidApp, newlyPublishedAndroidResources } from "@/lib/public-android-resources";
 import { loadPublicResourcesForSeo } from "@/lib/resources-public-server";
 import type { DisplayResource } from "@/lib/resources-service";
 
@@ -12,6 +12,7 @@ export default async function ResourcePage({ params }: { params: Promise<{ id: s
   const resources = await loadPublicResourcesForSeo();
   const entry = resources.find((item) => item.id === id || item.slug === id);
   const preview = getPreviewAndroidApp(id);
+  const publishedFallback = newlyPublishedAndroidResources.find((item) => item.id === id || item.slug === id);
   const initialResource: DisplayResource | null = entry ? {
     id: entry.id,
     slug: entry.slug,
@@ -25,7 +26,7 @@ export default async function ResourcePage({ params }: { params: Promise<{ id: s
     sortOrder: 0,
     priceEur: entry.priceEur ?? 0,
     downloads: [],
-    galleryImages: preview ? [...preview.galleryImages] : [],
+    galleryImages: preview ? [...preview.galleryImages] : publishedFallback ? [...publishedFallback.galleryImages] : [],
   } : null;
 
   return <ResourceDetailPage initialResource={initialResource} />;

@@ -26,12 +26,12 @@ const groups = [
   {
     title: "Lire et écrire les sinogrammes",
     description: "Pour reconnaître les caractères chinois, comprendre leurs composants et s’entraîner à les tracer.",
-    packages: ["com.visdar.cles", "com.visdar.manuscrits"],
+    packages: ["com.visdar.cles", "com.visdar.manuscrits", "com.visdar.stroke"],
   },
   {
     title: "Comprendre la langue et la culture",
-    description: "Des repères concrets pour les nombres, les classificateurs, les dialectes et le calendrier chinois.",
-    packages: ["com.visdar.chiffres", "com.visdar.classificateur", "com.visdar.dialectes", "com.visdar.calendrier"],
+    description: "Des repères concrets pour les nombres, les classificateurs, les expressions, les liens familiaux et la culture chinoise.",
+    packages: ["com.visdar.chiffres", "com.visdar.classificateur", "com.visdar.temps", "com.visdar.expressions", "com.visdar.contextes", "com.visdar.famille", "com.visdar.dialectes", "com.visdar.calendrier"],
   },
   {
     title: "Apprendre autrement",

@@ -3,16 +3,19 @@ import { androidApps, defaultCatalogue, publicCatalogue, validateCatalogue } fro
 import { parsePlayCodesCsv, playCodeError } from '../src/lib/play-code-inventory';
 
 describe('catalogue editor trust boundary', () => {
-  it('keeps the 16-app inventory while publishing 12 distinct listings', () => {
+  it('keeps the 16-app inventory while publishing 16 distinct listings', () => {
     expect(androidApps).toHaveLength(16);
     const catalogue = publicCatalogue(defaultCatalogue('android-professionnels'));
     const packages = catalogue.apps.map(app => app.packageName);
-    expect(packages).toHaveLength(12);
-    expect(new Set(packages).size).toBe(12);
+    expect(packages).toHaveLength(16);
+    expect(new Set(packages).size).toBe(16);
     expect(packages).toContain('com.visdar.verbes');
     expect(packages).toContain('com.visdar.stroke');
     expect(packages).toContain('com.visdar.hub');
-    expect(packages).not.toContain('com.visdar.temps');
+    expect(packages).toContain('com.visdar.temps');
+    expect(packages).toContain('com.visdar.expressions');
+    expect(packages).toContain('com.visdar.contextes');
+    expect(packages).toContain('com.visdar.famille');
     expect(catalogue.testEnabled).toBe(false);
   });
   it('accepts both editions and keeps mutable drafts independent', () => {
