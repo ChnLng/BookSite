@@ -98,7 +98,7 @@ export default async function ApplicationsAndroidPage() {
                       <h3><Link href={href}>{app.title}</Link></h3>
                       <p>{packageName === "com.visdar.classificateur" ? "Choisir le classificateur adapté à chaque phrase." : app.subtitle}</p>
                       <div className={styles.cardFooter}>
-                        <span>Prix indicatif : {playApp.priceEur.toFixed(2).replace(".", ",")} €</span>
+                        <span>Prix indicatif : {(resources.find((item) => playApp.resourceRefs.includes(item.slug) || playApp.resourceRefs.includes(item.id))?.priceEur ?? playApp.priceEur).toFixed(2).replace(".", ",")} €</span>
                         <Link href={href}>Découvrir <span aria-hidden="true">↗</span></Link>
                       </div>
                     </div>

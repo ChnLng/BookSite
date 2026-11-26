@@ -38,23 +38,24 @@ export const loadPublicResourcesForSeo = cache(async (): Promise<PublicResourceS
   });
   const { data, error } = await supabase
     .from("resource_items")
-    .select("id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, price_eur, created_at")
-    .eq("visible", true)
-    .is("deleted_at", null)
+    .select("id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, price_eur, created_at, visible, deleted_at")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
   if (error) return playOnlySeoResources();
-  const resources = (data || []).filter((row) => !getPlayTestingApp(String(row.id)) && !getPlayTestingApp(String(row.slug))).map((row) => ({
+  const knownSlugs = new Set((data || []).map((row) => String(row.slug || "")));
+  const resources = (data || []).filter((row) => row.visible === true && !row.deleted_at && !getPlayTestingApp(String(row.id)) && !getPlayTestingApp(String(row.slug))).map((row) => ({
     id: String(row.id),
     slug: String(row.slug || row.id),
     titleFr: String(row.title_fr || "Ressource numérique"),
     summaryFr: String(row.summary_fr || "Ressource numérique pour apprendre le chinois en français."),
     coverImageUrl: String(row.cover_image_url || row.qr_image_url || "/images/logo.png"),
-    priceEur: getPublicPlayStoreApp(String(row.id))?.priceEur ?? getPublicPlayStoreApp(String(row.slug))?.priceEur ?? previewAndroidResources.find((item) => item.slug === row.slug)?.priceEur ?? Number(row.price_eur || 0),
+    priceEur: newlyPublishedAndroidResources.some((item) => item.slug === row.slug)
+      ? Number(row.price_eur || 0)
+      : getPublicPlayStoreApp(String(row.id))?.priceEur ?? getPublicPlayStoreApp(String(row.slug))?.priceEur ?? previewAndroidResources.find((item) => item.slug === row.slug)?.priceEur ?? Number(row.price_eur || 0),
     createdAt: row.created_at ? String(row.created_at) : null,
   }));
-  return [...resources, ...playOnlySeoResources().filter((item) => !resources.some((resource) => resource.slug === item.slug))];
+  return [...resources, ...playOnlySeoResources().filter((item) => !knownSlugs.has(item.slug))];
 });
 
 function playOnlySeoResources(): PublicResourceSeo[] {

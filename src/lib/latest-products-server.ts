@@ -38,22 +38,24 @@ export async function loadLatestProducts(): Promise<LatestProduct[]> {
         .order("created_at", { ascending: false }).order("id", { ascending: true }).limit(2)
         .abortSignal(AbortSignal.timeout(5000)),
       supabase.from("resource_items").select(`${commonFields}, cover_image_url, qr_image_url`)
-        .eq("visible", true).is("deleted_at", null).not("created_at", "is", null)
-        .order("created_at", { ascending: false }).order("id", { ascending: true }).limit(100)
+        .not("created_at", "is", null)
+        .order("created_at", { ascending: false }).order("id", { ascending: true })
         .abortSignal(AbortSignal.timeout(5000)),
     ]);
 
     // A partial list could misidentify older items as the newest products.
     if (books.error || resources.error) return selectLatestProducts([], playOnlyRows);
-    const resourceRows = ((resources.data || []) as LatestProductRow[])
+    const allResourceRows = (resources.data || []) as LatestProductRow[];
+    const resourceRows = allResourceRows
+      .filter((row) => row.visible === true && !row.deleted_at)
       .filter((row) => !getPlayTestingApp(row.id) && !getPlayTestingApp(row.slug));
     const candidates = resourceRows.map((row) => {
       const playApp = getPublicPlayStoreApp(row.id) || getPublicPlayStoreApp(row.slug);
-      if (playApp) return { ...row, price_eur: playApp.priceEur, published_at: playApp.publishedAt };
+      if (playApp) return { ...row, price_eur: newlyPublishedAndroidResources.some((item) => item.slug === row.slug) ? row.price_eur : playApp.priceEur, published_at: playApp.publishedAt };
       const previewApp = getPreviewAndroidApp(row.id) || getPreviewAndroidApp(row.slug);
       return previewApp ? { ...row, price_eur: previewApp.priceEur, published_at: previewApp.createdAt } : row;
     });
-    for (const item of playOnlyRows) if (!candidates.some((row) => row.slug === item.slug)) candidates.push(item);
+    for (const item of playOnlyRows) if (!allResourceRows.some((row) => row.slug === item.slug)) candidates.push(item);
     return selectLatestProducts(books.data as LatestProductRow[], candidates);
   } catch {
     return selectLatestProducts([], playOnlyRows);

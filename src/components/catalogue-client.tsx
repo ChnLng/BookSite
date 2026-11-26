@@ -73,7 +73,8 @@ export function CatalogueClient({ initialBooks, initialResources = [], initialSe
     let cancelled = false;
     void loadDisplayResources().then((items) => {
       if (cancelled) return;
-      setResources(items.filter((item) => item.visible).map((item) => ({ id: item.slug || item.id, kind: "resource", titleFr: item.titleFr, titleZh: "", image: item.coverImageUrl || item.qrImageUrl, priceEur: item.priceEur, href: `/outils/${item.slug || item.id}`, externalUrl: item.externalUrl })));
+      const loaded = items.filter((item) => item.visible).map((item) => ({ id: item.slug || item.id, kind: "resource" as const, titleFr: item.titleFr, titleZh: "", image: item.coverImageUrl || item.qrImageUrl, priceEur: item.priceEur, href: `/outils/${item.slug || item.id}`, externalUrl: item.externalUrl }));
+      setResources([...loaded, ...initialResources.filter((item) => !loaded.some((entry) => entry.id === item.id))]);
     });
     return () => { cancelled = true; };
   }, []);

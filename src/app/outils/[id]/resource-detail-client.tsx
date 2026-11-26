@@ -18,7 +18,7 @@ import { AuthModal } from "@/components/auth-modal";
 import { loadDisplayResources, type DisplayResource } from "@/lib/resources-service";
 import { randomPurchaseThankYouMessage } from "@/lib/purchase-thank-you";
 import { getExternalLinkLabel } from "@/lib/external-link-label";
-import { getPreviewAndroidApp } from "@/lib/public-android-resources";
+import { getPreviewAndroidApp, newlyPublishedAndroidResources } from "@/lib/public-android-resources";
 
 type ReviewRecord = {
   id: string;
@@ -270,7 +270,7 @@ export default function ResourceDetailPage({ initialResource = null }: { initial
         return;
       }
 
-      setResource(resolvedResource);
+      setResource(resolvedResource || initialResource);
       setOptimisticSharedUnlock(false);
       setShareUnlockPending(false);
       setRelatedResources(
@@ -988,7 +988,7 @@ export default function ResourceDetailPage({ initialResource = null }: { initial
           {publicPlayStoreUrl && publicPlayApp ? (
             <div className="resource-action-stack">
               <div className="resource-inline-price">
-                <span className="resource-price-tag">{`${publicPlayApp.priceEur.toFixed(2)} €`}</span>
+                <span className="resource-price-tag">{`${(newlyPublishedAndroidResources.some((item) => item.slug === resource.slug) ? resource.priceEur : publicPlayApp.priceEur).toFixed(2)} €`}</span>
                 <span className="tiny">Paiement et installation sur Google Play</span>
               </div>
               <div className="resource-buy-row">

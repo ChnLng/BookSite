@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { AdminProductDocumentsPanel } from "@/components/admin-product-documents-panel";
 import { RichTextEditor } from "@/components/rich-text-editor";
+import { getPublicPlayStoreApp } from "@/lib/play-testing";
 
 type CategoryOption = {
   id: string;
@@ -147,7 +148,7 @@ export function AdminResourcesPanel() {
     return result.assetPath;
   };
 
-  const loadData = async () => {
+  const loadData = async (syncMissing = false) => {
     if (authLoading) {
       return;
     }
@@ -160,6 +161,16 @@ export function AdminResourcesPanel() {
     setLoading(true);
 
     try {
+      let syncWarning = "";
+      if (syncMissing) {
+        try {
+          const syncResponse = await authorizedFetch("/api/admin/resources/sync", { method: "POST" });
+          const syncResult = (await syncResponse.json()) as { ok?: boolean; message?: string };
+          if (!syncResponse.ok || !syncResult.ok) syncWarning = syncResult.message || "Synchronisation des applications impossible.";
+        } catch (error) {
+          syncWarning = error instanceof Error ? error.message : "Synchronisation des applications impossible.";
+        }
+      }
       const response = await authorizedFetch("/api/admin/resources", { cache: "no-store" });
       const result = (await response.json()) as {
         ok?: boolean;
@@ -192,7 +203,7 @@ export function AdminResourcesPanel() {
       setCategories(nextCategories);
       setResources(nextResources);
       setFilesByResource(nextFilesByResource);
-      setStatusMessage(result.warnings?.length ? result.warnings.join(" | ") : "");
+      setStatusMessage([syncWarning, ...(result.warnings || [])].filter(Boolean).join(" | "));
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Chargement des outils impossible.");
       setCategories([]);
@@ -204,7 +215,7 @@ export function AdminResourcesPanel() {
   };
 
   useEffect(() => {
-    void loadData();
+    void loadData(true);
   }, [authLoading, session?.access_token]);
 
   const resetDraft = () => {
@@ -465,7 +476,7 @@ export function AdminResourcesPanel() {
         <div className="admin-form-section-heading"><strong>① 商品基本信息 · Informations du produit</strong><p className="tiny">这些内容展示在商品页。Slug 是网页地址代号，不会向用户展示。</p></div>
         <div className="input-group admin-form-grid">
           <label className="admin-field-label"><span>商品类目 · Catégorie</span><select className="input" value={draft.categoryId} onChange={(event) => setDraft({ ...draft, categoryId: event.target.value })}><option value="">选择类目 · Choisir une catégorie</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.titleFr} · {category.kind}</option>)}</select></label>
-          <label className="admin-field-label"><span>网页地址代号 · Slug</span><input className="input" placeholder="calendrier-chinois-android" value={draft.slug} onChange={(event) => setDraft({ ...draft, slug: slugify(event.target.value) })} /><small>小写英文与连字符，例如 calendrier-chinois-android。</small></label>
+          <label className="admin-field-label"><span>网页地址代号 · Slug</span><input className="input" placeholder="calendrier-chinois-android" value={draft.slug} disabled={Boolean(editingId && getPublicPlayStoreApp(draft.slug))} onChange={(event) => setDraft({ ...draft, slug: slugify(event.target.value) })} /><small>{editingId && getPublicPlayStoreApp(draft.slug) ? "Google Play 商品的地址固定，以免旧链接失效。" : "小写英文与连字符，例如 calendrier-chinois-android。"}</small></label>
           <div className="admin-field-label admin-field-full"><span>商品标题 · Titre affiché</span><RichTextEditor placeholder="例如：Calendrier lunisolaire chinois (Android)" value={draft.titleFr} onChange={(titleFr) => setDraft({ ...draft, titleFr })} rows={2} /></div>
           <label className="admin-field-label"><span>售价（欧元）· Prix EUR</span><input className="input" inputMode="decimal" placeholder="例如 1.68" value={draft.priceEur} onChange={(event) => setDraft({ ...draft, priceEur: event.target.value })} /><small>0 = 免费；付费商品请填写大于 0 的金额。</small></label>
           <label className="admin-field-label"><span>首页排序 · Ordre</span><input className="input" inputMode="numeric" placeholder="10" value={draft.sortOrder} onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} /><small>数字小的排在前面：10、20、30。</small></label>
