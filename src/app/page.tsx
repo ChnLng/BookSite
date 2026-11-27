@@ -1,26 +1,14 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { HomePageClient } from "@/components/home-page-client";
-import { loadLatestProducts } from "@/lib/latest-products-server";
-import { loadInitialHomepageResources } from "@/lib/resources-public-server";
+import { HomeExperience } from "@/components/home-experience";
+import { loadHomeExperience } from "@/lib/home-experience-server";
 
 export const metadata: Metadata = {
   title: "Livres bilingues et outils pour apprendre le chinois",
   alternates: { canonical: "/" },
 };
 
-function isMobileUserAgent(userAgent: string) {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(userAgent);
-}
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const headerStore = await headers();
-  const userAgent = headerStore.get("user-agent") || "";
-
-  const [latestProducts, homepageResources] = await Promise.all([
-    loadLatestProducts(),
-    loadInitialHomepageResources(),
-  ]);
-
-  return <HomePageClient initialMobile={isMobileUserAgent(userAgent)} latestProducts={latestProducts} homepageResources={homepageResources} />;
+  return <HomeExperience {...await loadHomeExperience()} />;
 }
