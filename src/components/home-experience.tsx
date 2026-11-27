@@ -53,7 +53,6 @@ function Artwork({ image, ...props }: { image: string; className?: string; loadi
 export function HomeExperience({ tools, books, latest, links }: HomeExperienceProps) {
   const root = useRef<HTMLDivElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
-  const albumSelect = useRef<HTMLSelectElement>(null);
   const drawerTrigger = useRef<HTMLElement | null>(null);
   const mobileTrigger = useRef<HTMLButtonElement>(null);
   const closeDrawerButton = useRef<HTMLButtonElement>(null);
@@ -62,7 +61,6 @@ export function HomeExperience({ tools, books, latest, links }: HomeExperiencePr
   const [authOpen, setAuthOpen] = useState(false);
   const [previews, setPreviews] = useState(latest);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [albumOpen, setAlbumOpen] = useState(false);
   const [activeInfo, setActiveInfo] = useState<InfoLink>();
   const [promo, setPromo] = useState<PromoCode | null>(null);
   const initial = Math.max(0, tools.findIndex((item) => item.href === latest[0]?.href));
@@ -106,11 +104,9 @@ export function HomeExperience({ tools, books, latest, links }: HomeExperiencePr
 
   useEffect(() => {
     if (drawerOpen && window.matchMedia("(max-width: 720px)").matches) {
-      (albumOpen ? albumSelect.current : closeDrawerButton.current)?.focus({ preventScroll: true });
-    } else if (albumOpen) {
-      albumSelect.current?.focus({ preventScroll: true });
+      closeDrawerButton.current?.focus({ preventScroll: true });
     }
-  }, [drawerOpen, albumOpen]);
+  }, [drawerOpen]);
 
   useEffect(() => {
     if (activeInfo && dialog.current && !dialog.current.open) dialog.current.showModal();
@@ -125,16 +121,6 @@ export function HomeExperience({ tools, books, latest, links }: HomeExperiencePr
       window.removeEventListener("resize", hide);
     };
   }, []);
-
-  function toggleAlbums(event: MouseEvent<HTMLButtonElement>) {
-    const opening = !albumOpen || (window.matchMedia("(max-width: 720px)").matches && !drawerOpen);
-    setAlbumOpen(opening);
-    if (!opening) return;
-    const firstBook = books[0];
-    if (firstBook && !previews.some((item) => item.kind === "book")) select(firstBook);
-    drawerTrigger.current = event.currentTarget;
-    setDrawerOpen(true);
-  }
 
   function closeDrawer() {
     setDrawerOpen(false);
@@ -164,8 +150,9 @@ export function HomeExperience({ tools, books, latest, links }: HomeExperiencePr
           <span>Visd <span className="brand-ar">AR</span><small>Hub bilingue 🇨🇳 Chinois - Français 🇫🇷</small></span>
         </a>
         <nav aria-label="Navigation principale">
-          <a href="#outils">Outils ludiques</a>
-          <button type="button" id="browse-albums" aria-controls="album-picker" aria-expanded={albumOpen} aria-pressed={albumOpen} onClick={toggleAlbums}>Albums illustrés</button>
+          <a className="catalogue-shortcut" href="/catalogue?q=android">Applications Android</a>
+          <a className="catalogue-shortcut" href="/catalogue?view=autres">Autres outils ludiques</a>
+          <a href="/catalogue?q=album">Albums illustrés</a>
           <a href="/catalogue">Catalogue <span aria-hidden="true">↗</span></a>
         </nav>
         <div className="top-actions">
@@ -223,16 +210,17 @@ export function HomeExperience({ tools, books, latest, links }: HomeExperiencePr
         <aside className={`rail${drawerOpen ? " is-open" : ""}`} id="apercus" aria-labelledby="rail-title">
           <div className="rail-head"><h2 id="rail-title">Nouveautés</h2><button type="button" className="rail-close" ref={closeDrawerButton} aria-label="Fermer les aperçus" onClick={closeDrawer}>×</button></div>
           <p id="rail-help">Cliquez sur un produit pour l’ajouter à vos aperçus.</p>
-          <div id="album-picker" className="album-picker" hidden={!albumOpen}>
-            <label htmlFor="album-choice">Albums illustrés</label>
-            <select id="album-choice" ref={albumSelect} value="" onChange={(event) => {
+          {books.length > 0 && <details className="album-picker">
+            <summary>Aperçu des albums</summary>
+            <label className="sr-only" htmlFor="album-choice">Choisir un album</label>
+            <select id="album-choice" value="" onChange={(event) => {
               const book = books.find((item) => item.id === event.target.value);
               if (book) select(book);
             }}>
               <option value="">Choisir un album</option>
               {books.map((book) => <option key={book.id} value={book.id}>{book.title}</option>)}
             </select>
-          </div>
+          </details>}
           <ol className="rail-list" id="rail-list" aria-live="polite">
             {previews.map((item) => (
               <li key={item.href} className="rail-item enter" data-kind={item.kind}>

@@ -14,15 +14,20 @@
 .visd-home { margin: 0; font: 15px/1.5 var(--sans); color: var(--ink); background: var(--paper); }
 .visd-home a { color: inherit; text-decoration: none; }
 .visd-home button { font: inherit; color: inherit; cursor: pointer; }
-.visd-home button:focus-visible, .visd-home a:focus-visible, .visd-home [tabindex]:focus-visible { outline: 2px solid #8e66d3; outline-offset: 5px; }
+.visd-home button:focus-visible, .visd-home a:focus-visible, .visd-home summary:focus-visible, .visd-home [tabindex]:focus-visible { outline: 2px solid #8e66d3; outline-offset: 5px; }
 .visd-home img { display: block; max-width: 100%; }
 .visd-home h1,.visd-home h2,.visd-home p { margin: 0; }
 .visd-home .top { min-height: 75px; max-width: 1600px; margin: auto; padding: 0 4vw; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); gap: 24px; position: relative; z-index: 4; }
 .visd-home .brand { display: flex; align-items: center; gap: 11px; font: 700 27px/.95 var(--serif); flex: none; }
 .visd-home .brand img { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; background: #fff; }
 .visd-home .brand small { display: block; margin-top: 5px; font: 600 14px/1.3 var(--sans); }
-.visd-home .top nav { display: flex; gap: clamp(17px, 3.4vw, 52px); font-size: 13px; font-weight: 650; }
-.visd-home .top nav a:hover, .visd-home .top nav button:hover, .visd-home .top nav button[aria-pressed="true"] { color: var(--purple); }
+.visd-home .top nav { display: flex; align-items: center; gap: clamp(8px, 1.55vw, 24px); font-size: 13px; font-weight: 650; }
+.visd-home .top nav a:hover { color: var(--purple); }
+.visd-home .top nav .catalogue-shortcut {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 32px;
+  padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: #ffffff82;
+}
+.visd-home .top nav .catalogue-shortcut:hover { background: #fff; border-color: #bca5d6; }
 .visd-home .top-actions { display: flex; align-items: center; gap: 8px; }
 .visd-home .pause,.visd-home .account-link { border: 1px solid var(--line); background: #ffffff82; border-radius: 100px; padding: 7px 10px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .visd-home .pause { width: 31px; padding-inline: 0; color: var(--purple); }
@@ -62,7 +67,8 @@
 .visd-home #rail-help { color: var(--muted); font-size: 11.5px; margin: 9px 6px 15px; }
 .visd-home .rail-list { list-style: none; margin: 0; padding: 0 2px 4px; display: grid; gap: 9px; }
 .visd-home .album-picker { margin: 0 2px 12px; }
-.visd-home .album-picker label { display: block; color: var(--purple); font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+.visd-home .album-picker summary { color: var(--purple); font-size: 11.5px; font-weight: 700; cursor: pointer; }
+.visd-home .album-picker[open] summary { margin-bottom: 5px; }
 .visd-home .album-picker select { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: white; color: inherit; font: inherit; font-size: 12px; }
 .visd-home .rail-item { border-radius: 13px; background: #fff; border: 1px solid #e4daee; min-width: 0; }
 .visd-home .rail-item.enter { animation: visd-reveal 600ms cubic-bezier(.22,.79,.23,1) both; }
@@ -135,7 +141,6 @@
 }
 
 .visd-home .brand-ar { color: var(--purple); font-style: normal; }
-.visd-home .top nav button { border: 0; background: none; padding: 0; font: inherit; }
 .visd-home .intro { display: grid; grid-template-columns: 112px minmax(0,1fr); align-items: stretch; gap: clamp(14px,2vw,30px); padding: 10px 0 18px; }
 .visd-home .story-identity { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; border-right: 1px solid #685ba72b; padding-right: 12px; }
 .visd-home .story-identity > span { color: #72699c; text-transform: uppercase; letter-spacing: .15em; font-size: 10px; font-weight: 800; }
@@ -186,9 +191,9 @@
   .visd-home .intro { grid-template-columns: 80px minmax(0,1fr); }
   .visd-home .intro-copy p { font-size: 14px; }
 }
-@media (max-width: 850px) {
+@media (max-width: 980px) {
   .visd-home .top { flex-wrap: wrap; gap: 6px 10px; padding-block: 8px; }
-  .visd-home .top nav { order: 3; width: 100%; gap: 0; justify-content: space-between; padding-top: 4px; }
+  .visd-home .top nav { order: 3; width: 100%; gap: 6px; justify-content: space-between; padding-top: 4px; }
 }
 @media (max-width: 720px) {
   .visd-home { --main-gutter: 4vw; }
@@ -237,10 +242,14 @@
 .visd-home dialog button { float: right; }
 .visd-home .wheel:not([data-initialized]) .wheel-card { transform: translate(-50%, -50%); }
 .visd-home .wheel:not([data-initialized]) .wheel-card:not([data-front="true"]) { visibility: hidden; }
-.visd-home .floating-book[hidden], .visd-home .album-picker[hidden], .visd-home .partner-tooltip[hidden] { display: none; }
+.visd-home .floating-book[hidden], .visd-home .partner-tooltip[hidden] { display: none; }
 .visd-home .empty-tools { margin: 24px 0; }
 .visd-home .empty-tools a { text-decoration: underline; }
 .visd-home .top-actions a { display: inline-flex; align-items: center; }
+@media (max-width: 460px) {
+  .visd-home .top nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); text-align: center; }
+  .visd-home .top nav a { padding: 5px 3px; }
+}
 @media (max-width: 360px) {
   .visd-home .brand small { font-size: 10px; }
   .visd-home .top-actions { gap: 4px; }
