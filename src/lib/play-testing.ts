@@ -45,6 +45,11 @@ export function getPublicPlayStoreApp(resourceRef: string | undefined | null) {
   return publicPlayStoreApps.find((item) => item.packageName === ref || item.resourceRefs.includes(ref)) || null;
 }
 
+export function getPriceSyncedPlayApp(resourceRef: string | undefined | null) {
+  const app = getPublicPlayStoreApp(resourceRef);
+  return app?.packageName === "com.visdar.expressions" ? app : null;
+}
+
 export function getPublicPlayStoreUrl(resourceRef: string | undefined | null) {
   const app = getPublicPlayStoreApp(resourceRef);
   return app ? playTestingStoreUrl(app) : null;

@@ -215,9 +215,10 @@ function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) 
         externalUrl: row.external_url || "",
         visible: row.visible !== false,
         sortOrder: row.sort_order ?? 0,
-        priceEur: newlyPublishedAndroidResources.some((item) => item.slug === row.slug)
-          ? normalizePrice(row.price_eur)
-          : getPublicPlayStoreApp(row.id)?.priceEur ?? getPublicPlayStoreApp(row.slug)?.priceEur ?? getPreviewAndroidApp(row.slug)?.priceEur ?? normalizePrice(row.price_eur),
+        priceEur: getPublicPlayStoreApp(row.id)?.priceEur
+          ?? getPublicPlayStoreApp(row.slug)?.priceEur
+          ?? getPreviewAndroidApp(row.slug)?.priceEur
+          ?? normalizePrice(row.price_eur),
         galleryImages: normalizeGalleryImages(row.gallery_images),
         downloads,
         titleRichFr,

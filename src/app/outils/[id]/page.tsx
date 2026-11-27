@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import ResourceDetailPage from "./resource-detail-client";
-import { getPlayTestingApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
+import { getPlayTestingApp, getPriceSyncedPlayApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
 import { getPreviewAndroidApp, newlyPublishedAndroidResources } from "@/lib/public-android-resources";
 import { loadPublicResourcesForSeo } from "@/lib/resources-public-server";
 import type { DisplayResource } from "@/lib/resources-service";
@@ -29,5 +29,6 @@ export default async function ResourcePage({ params }: { params: Promise<{ id: s
     galleryImages: preview ? [...preview.galleryImages] : publishedFallback ? [...publishedFallback.galleryImages] : [],
   } : null;
 
-  return <ResourceDetailPage initialResource={initialResource} />;
+  const syncedPlayPrice = resources.find((item) => getPriceSyncedPlayApp(item.slug))?.priceEur ?? null;
+  return <ResourceDetailPage initialResource={initialResource} syncedPlayPrice={syncedPlayPrice} />;
 }

@@ -4,8 +4,9 @@ import { createClient } from "@supabase/supabase-js";
 import { cache } from "react";
 import { siteConfig } from "@/lib/site-config";
 import { loadHomepageResources } from "@/lib/homepage-resources";
-import { getPlayTestingApp, getPublicPlayStoreApp } from "@/lib/play-testing";
+import { getPlayTestingApp, getPriceSyncedPlayApp, getPublicPlayStoreApp } from "@/lib/play-testing";
 import { chineseForTwoResource, getAndroidResourceCover, newlyPublishedAndroidResources, previewAndroidResources } from "@/lib/public-android-resources";
+import { loadSyncedFrenchPlayPrice } from "@/lib/play-store-price-server";
 
 export async function loadInitialHomepageResources() {
   if (!siteConfig.supabaseUrl || !siteConfig.supabaseAnonKey) return null;
@@ -31,18 +32,21 @@ export type PublicResourceSeo = {
 
 export const loadPublicResourcesForSeo = cache(async (): Promise<PublicResourceSeo[]> => {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || siteConfig.supabaseAnonKey;
-  if (!siteConfig.supabaseUrl || !key) return playOnlySeoResources();
+  const playPrice = loadSyncedFrenchPlayPrice();
+  if (!siteConfig.supabaseUrl || !key) return playOnlySeoResources(await playPrice);
 
   const supabase = createClient(siteConfig.supabaseUrl, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data, error } = await supabase
-    .from("resource_items")
-    .select("id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, price_eur, created_at, visible, deleted_at")
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
+  const [{ data, error }, syncedPrice] = await Promise.all([
+    supabase.from("resource_items")
+      .select("id, slug, title_fr, summary_fr, cover_image_url, qr_image_url, price_eur, created_at, visible, deleted_at")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    playPrice,
+  ]);
 
-  if (error) return playOnlySeoResources();
+  if (error) return playOnlySeoResources(syncedPrice);
   const knownSlugs = new Set((data || []).map((row) => String(row.slug || "")));
   const resources = (data || []).filter((row) => row.visible === true && !row.deleted_at && !getPlayTestingApp(String(row.id)) && !getPlayTestingApp(String(row.slug))).map((row) => ({
     id: String(row.id),
@@ -50,15 +54,18 @@ export const loadPublicResourcesForSeo = cache(async (): Promise<PublicResourceS
     titleFr: String(row.title_fr || "Ressource numérique"),
     summaryFr: String(row.summary_fr || "Ressource numérique pour apprendre le chinois en français."),
     coverImageUrl: getAndroidResourceCover(String(row.slug || row.id), row.cover_image_url || row.qr_image_url),
-    priceEur: newlyPublishedAndroidResources.some((item) => item.slug === row.slug)
-      ? Number(row.price_eur || 0)
-      : getPublicPlayStoreApp(String(row.id))?.priceEur ?? getPublicPlayStoreApp(String(row.slug))?.priceEur ?? previewAndroidResources.find((item) => item.slug === row.slug)?.priceEur ?? Number(row.price_eur || 0),
+    priceEur: getPriceSyncedPlayApp(row.slug) || getPriceSyncedPlayApp(row.id)
+      ? syncedPrice
+      : getPublicPlayStoreApp(String(row.id))?.priceEur
+        ?? getPublicPlayStoreApp(String(row.slug))?.priceEur
+        ?? previewAndroidResources.find((item) => item.slug === row.slug)?.priceEur
+        ?? Number(row.price_eur || 0),
     createdAt: row.created_at ? String(row.created_at) : null,
   }));
-  return [...resources, ...playOnlySeoResources().filter((item) => !knownSlugs.has(item.slug))];
+  return [...resources, ...playOnlySeoResources(syncedPrice).filter((item) => !knownSlugs.has(item.slug))];
 });
 
-function playOnlySeoResources(): PublicResourceSeo[] {
+function playOnlySeoResources(syncedPrice: number): PublicResourceSeo[] {
   const app = getPublicPlayStoreApp(chineseForTwoResource.slug);
   return [{
     id: chineseForTwoResource.id,
@@ -74,7 +81,7 @@ function playOnlySeoResources(): PublicResourceSeo[] {
     titleFr: item.titleFr,
     summaryFr: item.summaryFr,
     coverImageUrl: item.coverImageUrl,
-    priceEur: getPublicPlayStoreApp(item.slug)?.priceEur ?? ("priceEur" in item ? item.priceEur : null),
+    priceEur: getPriceSyncedPlayApp(item.slug) ? syncedPrice : getPublicPlayStoreApp(item.slug)?.priceEur ?? ("priceEur" in item ? item.priceEur : null),
     createdAt: item.createdAt,
   }))];
 }

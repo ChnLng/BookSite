@@ -51,7 +51,7 @@ export async function loadLatestProducts(): Promise<LatestProduct[]> {
       .filter((row) => !getPlayTestingApp(row.id) && !getPlayTestingApp(row.slug));
     const candidates = resourceRows.map((row) => {
       const playApp = getPublicPlayStoreApp(row.id) || getPublicPlayStoreApp(row.slug);
-      if (playApp) return { ...row, price_eur: newlyPublishedAndroidResources.some((item) => item.slug === row.slug) ? row.price_eur : playApp.priceEur, published_at: playApp.publishedAt };
+      if (playApp) return { ...row, price_eur: playApp.priceEur, published_at: playApp.publishedAt };
       const previewApp = getPreviewAndroidApp(row.id) || getPreviewAndroidApp(row.slug);
       return previewApp ? { ...row, price_eur: previewApp.priceEur, published_at: previewApp.createdAt } : row;
     });

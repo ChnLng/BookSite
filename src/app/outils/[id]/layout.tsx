@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { StructuredData } from "@/components/structured-data";
 import { getPlayTestingApp, getPublicPlayStoreApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
 import { loadPublicResourcesForSeo } from "@/lib/resources-public-server";
-import { getPreviewAndroidApp, newlyPublishedAndroidResources } from "@/lib/public-android-resources";
+import { getPreviewAndroidApp } from "@/lib/public-android-resources";
 
 type Props = { children: React.ReactNode; params: Promise<{ id: string }> };
 
@@ -54,7 +54,7 @@ export default async function ResourceSeoLayout({ children, params }: Props) {
       "@type": "Offer",
       url: publicPlayApp ? getPublicPlayStoreUrl(resource.slug) : url,
       priceCurrency: "EUR",
-      price: (newlyPublishedAndroidResources.some((item) => item.slug === resource.slug) ? (resource.priceEur ?? 0) : (publicPlayApp?.priceEur ?? testingApp?.priceEur ?? resource.priceEur ?? 0)).toFixed(2),
+      price: (testingApp?.priceEur ?? resource.priceEur ?? 0).toFixed(2),
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: "Visd AR", url: "https://www.visdar.fr" },

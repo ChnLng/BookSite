@@ -58,19 +58,21 @@ export async function loadHomeExperience() {
     loadLatestProducts(),
     loadBooksAndLinks(),
   ]);
-  const tools: HomeProduct[] = resources.map((item) => ({
-    id: item.slug,
-    kind: "tool",
-    title: richTextToPlainText(item.titleFr) || "Ressource numérique",
-    href: "/outils/" + encodeURIComponent(item.slug),
-    image: homeImage(item.coverImageUrl),
-    price: item.priceEur,
-    contain: ["pinyin", "echecschinois"].includes(item.slug),
-  }));
+  const tools: HomeProduct[] = resources
+    .filter((item) => item.slug !== "hub-bilingue-chinois-francais-android")
+    .map((item) => ({
+      id: item.slug,
+      kind: "tool",
+      title: richTextToPlainText(item.titleFr) || "Ressource numérique",
+      href: "/outils/" + encodeURIComponent(item.slug),
+      image: homeImage(item.coverImageUrl),
+      price: item.priceEur,
+      contain: ["pinyin", "echecschinois"].includes(item.slug),
+    }));
   const products = [...tools, ...books];
   const latest: HomeProduct[] = recent.flatMap((item) => {
     const product = products.find((candidate) => candidate.href === item.href);
-    return product ? [{ ...product, price: item.priceEur }] : [];
+    return product ? [product] : [];
   });
   return { tools, books, latest, links };
 }

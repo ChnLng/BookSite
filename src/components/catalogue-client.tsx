@@ -9,7 +9,7 @@ import { TopNav } from "@/components/top-nav";
 import { infoLinks } from "@/lib/legal-info";
 import type { DisplayBook } from "@/lib/books-service";
 import { loadDisplayResources } from "@/lib/resources-service";
-import { getPlayTestingApp, getPublicPlayStoreApp, getPublicPlayStoreUrl, playTestingApplicationUrl } from "@/lib/play-testing";
+import { getPlayTestingApp, getPriceSyncedPlayApp, getPublicPlayStoreApp, getPublicPlayStoreUrl, playTestingApplicationUrl } from "@/lib/play-testing";
 import { PlayTestingPrice } from "@/components/play-testing-price";
 import { getExternalLinkLabel } from "@/lib/external-link-label";
 import { getPreviewAndroidApp } from "@/lib/public-android-resources";
@@ -37,7 +37,9 @@ function matchesCatalogueSearch(product: CatalogueProduct, keyword: string) {
   return searchText.includes(keyword);
 }
 
-export function CatalogueClient({ initialBooks, initialResources = [], initialSearchTerm = "", initialOtherOnly = false }: CatalogueClientProps) {
+const emptyCatalogueResources: CatalogueProduct[] = [];
+
+export function CatalogueClient({ initialBooks, initialResources = emptyCatalogueResources, initialSearchTerm = "", initialOtherOnly = false }: CatalogueClientProps) {
   const [activeInfoId, setActiveInfoId] = useState<string | null>(null);
   const [payingBookId, setPayingBookId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
@@ -73,11 +75,25 @@ export function CatalogueClient({ initialBooks, initialResources = [], initialSe
     let cancelled = false;
     void loadDisplayResources().then((items) => {
       if (cancelled) return;
-      const loaded = items.filter((item) => item.visible).map((item) => ({ id: item.slug || item.id, kind: "resource" as const, titleFr: item.titleFr, titleZh: "", image: item.coverImageUrl || item.qrImageUrl, priceEur: item.priceEur, href: `/outils/${item.slug || item.id}`, externalUrl: item.externalUrl }));
+      const initialById = new Map(initialResources.map((item) => [item.id, item]));
+      const loaded = items.filter((item) => item.visible).map((item) => {
+        const id = item.slug || item.id;
+        const storePrice = getPriceSyncedPlayApp(id) ? initialById.get(id)?.priceEur : undefined;
+        return {
+          id,
+          kind: "resource" as const,
+          titleFr: item.titleFr,
+          titleZh: "",
+          image: item.coverImageUrl || item.qrImageUrl,
+          priceEur: storePrice ?? item.priceEur,
+          href: `/outils/${id}`,
+          externalUrl: item.externalUrl,
+        };
+      });
       setResources([...loaded, ...initialResources.filter((item) => !loaded.some((entry) => entry.id === item.id))]);
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [initialResources]);
 
   const products = useMemo<CatalogueProduct[]>(() => [
     ...initialBooks.map((book) => ({ id: book.id, kind: "book" as const, titleFr: book.titleFr, titleZh: book.titleZh, image: book.coverImage, priceEur: book.priceEur, href: `/livres/${book.id}`, externalUrl: book.amazonEbookUrl })),

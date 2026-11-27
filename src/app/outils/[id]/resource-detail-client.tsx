@@ -8,7 +8,7 @@ import { ChevronLeft, ChevronRight, ExternalLink, LayoutGrid } from "lucide-reac
 import { PartnerAdSlot } from "@/components/partner-ad-slot";
 import { AndroidDemoVideo } from "@/components/android-demo-video";
 import { PlayTestingNotice, PlayTestingPrice } from "@/components/play-testing-price";
-import { getPlayTestingApp, getPublicPlayStoreApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
+import { getPlayTestingApp, getPriceSyncedPlayApp, getPublicPlayStoreApp, getPublicPlayStoreUrl } from "@/lib/play-testing";
 import { FormattedInlineText, FormattedText } from "@/components/formatted-text";
 import { ProductDocumentsPanel } from "@/components/product-documents-panel";
 import { SecurePaymentNote } from "@/components/shared/secure-payment-note";
@@ -18,7 +18,7 @@ import { AuthModal } from "@/components/auth-modal";
 import { loadDisplayResources, type DisplayResource } from "@/lib/resources-service";
 import { randomPurchaseThankYouMessage } from "@/lib/purchase-thank-you";
 import { getExternalLinkLabel } from "@/lib/external-link-label";
-import { getPreviewAndroidApp, newlyPublishedAndroidResources } from "@/lib/public-android-resources";
+import { getPreviewAndroidApp } from "@/lib/public-android-resources";
 
 type ReviewRecord = {
   id: string;
@@ -115,7 +115,10 @@ function renderFixedStars(activeCount: number, className: string) {
   });
 }
 
-export default function ResourceDetailPage({ initialResource = null }: { initialResource?: DisplayResource | null }) {
+export default function ResourceDetailPage({
+  initialResource = null,
+  syncedPlayPrice = null,
+}: { initialResource?: DisplayResource | null; syncedPlayPrice?: number | null }) {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const { user, session } = useAuth();
@@ -263,7 +266,11 @@ export default function ResourceDetailPage({ initialResource = null }: { initial
 
       const resourcesPromise = loadDisplayResources();
       const reviewsPromise = fetchReviewData(resourceId);
-      const allResources = await resourcesPromise;
+      const allResources = (await resourcesPromise).map((item) =>
+        syncedPlayPrice !== null && getPriceSyncedPlayApp(item.slug)
+          ? { ...item, priceEur: syncedPlayPrice }
+          : item,
+      );
       const resolvedResource = allResources.find((item) => item.id === resourceId || item.slug === resourceId) || null;
 
       if (cancelled) {
@@ -294,7 +301,7 @@ export default function ResourceDetailPage({ initialResource = null }: { initial
     return () => {
       cancelled = true;
     };
-  }, [fetchReviewData, initialResource, resourceId]);
+  }, [fetchReviewData, initialResource, resourceId, syncedPlayPrice]);
 
   useEffect(() => {
     setReviewForm((current) => {
@@ -988,7 +995,7 @@ export default function ResourceDetailPage({ initialResource = null }: { initial
           {publicPlayStoreUrl && publicPlayApp ? (
             <div className="resource-action-stack">
               <div className="resource-inline-price">
-                <span className="resource-price-tag">{`${(newlyPublishedAndroidResources.some((item) => item.slug === resource.slug) ? resource.priceEur : publicPlayApp.priceEur).toFixed(2)} €`}</span>
+                <span className="resource-price-tag">{`${resource.priceEur.toFixed(2)} €`}</span>
                 <span className="tiny">Paiement et installation sur Google Play</span>
               </div>
               <div className="resource-buy-row">
