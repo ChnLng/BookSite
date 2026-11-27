@@ -68,7 +68,7 @@ export const newlyPublishedAndroidResources = [
     slug: "trace-des-sinogrammes-android",
     titleFr: "Tracé des sinogrammes 汉字笔顺 (Android)",
     summaryFr: "Découvrez l’ordre des traits et le tracé des sinogrammes, avec une projection holographique pour observer l’écriture chinoise autrement.",
-    coverImageUrl: "/images/android/visdar-app-icon.webp",
+    coverImageUrl: "/images/android/stroke-cover.webp",
     galleryImages: ["/images/android/stroke-1.webp", "/images/android/stroke-2.webp", "/images/android/stroke-3.webp"],
     externalUrl: "https://play.google.com/store/apps/details?id=com.visdar.stroke",
     sortOrder: 14,
@@ -85,7 +85,7 @@ export const previewAndroidResources = [
     packageName: "com.visdar.verbes",
     titleFr: "Verbes chinois en mime (Android)",
     summaryFr: "Des poupées numériques miment les verbes chinois. Découvrez les gestes avec le pinyin, l’audio et la réalité augmentée.",
-    coverImageUrl: "/images/android/visdar-app-icon.webp",
+    coverImageUrl: "/images/android/verbes-cover.webp",
     galleryImages: ["/images/android/verbes-1.webp", "/images/android/verbes-2.webp"],
     externalUrl: "https://play.google.com/store/apps/details?id=com.visdar.verbes",
     priceEur: 4.29,
@@ -110,4 +110,15 @@ export const previewAndroidResources = [
 
 export function getPreviewAndroidApp(ref: string | null | undefined) {
   return previewAndroidResources.find((app) => ref === app.id || ref === app.slug || ref === app.packageName) || null;
+}
+
+// Earlier imports used the shared icon as the main image. Respect a custom
+// cover while upgrading those original placeholders to the product screenshots.
+export function getAndroidResourceCover(ref: string, currentCover?: string | null) {
+  const app = [...newlyPublishedAndroidResources, ...previewAndroidResources].find((item) => item.slug === ref);
+  const sharedIcon = "/images/android/visdar-app-icon.webp";
+  if (app && app.coverImageUrl !== sharedIcon && (!currentCover || currentCover === sharedIcon)) {
+    return app.coverImageUrl;
+  }
+  return currentCover || "/images/logo.png";
 }

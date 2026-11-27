@@ -2,7 +2,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { isUuid } from "@/lib/database-identifiers";
 import { richTextToPlainText } from "@/lib/rich-text";
 import { getPlayTestingApp, getPublicPlayStoreApp } from "@/lib/play-testing";
-import { chineseForTwoResource, getPreviewAndroidApp, newlyPublishedAndroidResources, previewAndroidResources } from "@/lib/public-android-resources";
+import { chineseForTwoResource, getAndroidResourceCover, getPreviewAndroidApp, newlyPublishedAndroidResources, previewAndroidResources } from "@/lib/public-android-resources";
 
 type ResourceItemRow = {
   id: string;
@@ -210,7 +210,7 @@ function mapResources(rows: ResourceItemRow[], fileRows: ResourceItemFileRow[]) 
         titleFr: richTextToPlainText(titleRichFr),
         homepageSummaryFr: clampHomepageSummary(homepageSummaryRichFr),
         summaryFr: richTextToPlainText(summaryRichFr),
-        coverImageUrl: row.cover_image_url || row.qr_image_url || "/images/logo.png",
+        coverImageUrl: getAndroidResourceCover(row.slug || row.id, row.cover_image_url || row.qr_image_url),
         qrImageUrl: row.qr_image_url || row.cover_image_url || "/images/logo.png",
         externalUrl: row.external_url || "",
         visible: row.visible !== false,

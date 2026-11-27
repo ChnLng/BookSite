@@ -5,7 +5,7 @@ import { cache } from "react";
 import { siteConfig } from "@/lib/site-config";
 import { loadHomepageResources } from "@/lib/homepage-resources";
 import { getPlayTestingApp, getPublicPlayStoreApp } from "@/lib/play-testing";
-import { chineseForTwoResource, newlyPublishedAndroidResources, previewAndroidResources } from "@/lib/public-android-resources";
+import { chineseForTwoResource, getAndroidResourceCover, newlyPublishedAndroidResources, previewAndroidResources } from "@/lib/public-android-resources";
 
 export async function loadInitialHomepageResources() {
   if (!siteConfig.supabaseUrl || !siteConfig.supabaseAnonKey) return null;
@@ -49,7 +49,7 @@ export const loadPublicResourcesForSeo = cache(async (): Promise<PublicResourceS
     slug: String(row.slug || row.id),
     titleFr: String(row.title_fr || "Ressource numérique"),
     summaryFr: String(row.summary_fr || "Ressource numérique pour apprendre le chinois en français."),
-    coverImageUrl: String(row.cover_image_url || row.qr_image_url || "/images/logo.png"),
+    coverImageUrl: getAndroidResourceCover(String(row.slug || row.id), row.cover_image_url || row.qr_image_url),
     priceEur: newlyPublishedAndroidResources.some((item) => item.slug === row.slug)
       ? Number(row.price_eur || 0)
       : getPublicPlayStoreApp(String(row.id))?.priceEur ?? getPublicPlayStoreApp(String(row.slug))?.priceEur ?? previewAndroidResources.find((item) => item.slug === row.slug)?.priceEur ?? Number(row.price_eur || 0),
